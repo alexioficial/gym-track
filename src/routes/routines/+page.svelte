@@ -19,29 +19,28 @@
 	let showNew = $state(false);
 	let editingId = $state<string | null>(null);
 
-	// Assignment state for the currently open form: exerciseId -> planned sets.
-	// Only one form (create or edit) is open at a time, so a single map is enough.
-	let assignSets = $state<Record<string, number>>({});
+	// Assignment state for the currently open form, kept as an ordered list so the
+	// exercise order is exactly how they'll be logged. Only one form is open at a time.
+	type Assigned = { exerciseId: string; sets: number };
+	let assigned = $state<Assigned[]>([]);
 
 	const exerciseName = $derived(new Map(data.exercises.map((e) => [e.id, e.name])));
+	const exerciseMg = $derived(new Map(data.exercises.map((e) => [e.id, e.muscleGroup])));
 	const routineById = $derived(new Map(data.routines.map((r) => [r.id, r])));
 
-	// Serialized for the hidden form field, in the exercise-list order.
-	const assignPayload = $derived(
-		data.exercises
-			.filter((e) => e.id in assignSets)
-			.map((e) => ({ exerciseId: e.id, sets: assignSets[e.id] }))
-	);
+	// Exercises not in the routine yet (available to add), in catalog order.
+	const assignedIds = $derived(new Set(assigned.map((a) => a.exerciseId)));
+	const available = $derived(data.exercises.filter((e) => !assignedIds.has(e.id)));
 
 	function startNew() {
 		editingId = null;
-		assignSets = {};
+		assigned = [];
 		showNew = true;
 	}
 	function startEdit(id: string) {
 		showNew = false;
 		const r = routineById.get(id);
-		assignSets = r ? Object.fromEntries(r.exercises.map((e) => [e.exerciseId, e.sets])) : {};
+		assigned = r ? r.exercises.map((e) => ({ exerciseId: e.exerciseId, sets: e.sets })) : [];
 		editingId = id;
 	}
 	function close() {
@@ -49,18 +48,26 @@
 		editingId = null;
 	}
 
-	function toggleExercise(id: string) {
-		if (id in assignSets) {
-			const { [id]: _drop, ...rest } = assignSets;
-			assignSets = rest;
-		} else {
-			assignSets = { ...assignSets, [id]: DEFAULT_ROUTINE_SETS };
-		}
+	function addExercise(id: string) {
+		if (assigned.some((a) => a.exerciseId === id)) return;
+		assigned = [...assigned, { exerciseId: id, sets: DEFAULT_ROUTINE_SETS }];
+	}
+	function removeExercise(id: string) {
+		assigned = assigned.filter((a) => a.exerciseId !== id);
 	}
 	function changeSets(id: string, delta: number) {
-		const current = assignSets[id] ?? DEFAULT_ROUTINE_SETS;
-		const next = Math.min(MAX_ROUTINE_SETS, Math.max(MIN_ROUTINE_SETS, current + delta));
-		assignSets = { ...assignSets, [id]: next };
+		assigned = assigned.map((a) =>
+			a.exerciseId === id
+				? { ...a, sets: Math.min(MAX_ROUTINE_SETS, Math.max(MIN_ROUTINE_SETS, a.sets + delta)) }
+				: a
+		);
+	}
+	function move(index: number, dir: -1 | 1) {
+		const to = index + dir;
+		if (to < 0 || to >= assigned.length) return;
+		const next = [...assigned];
+		[next[index], next[to]] = [next[to], next[index]];
+		assigned = next;
 	}
 </script>
 
@@ -137,42 +144,84 @@
 		{#if data.exercises.length === 0}
 			<p class="muted hint">First create exercises in the <a href="/exercises" class="accent">Exercises</a> tab.</p>
 		{:else}
-			<input type="hidden" name="exercises" value={JSON.stringify(assignPayload)} />
-			<div class="checks">
-				{#each data.exercises as ex (ex.id)}
-					{@const on = ex.id in assignSets}
-					<div class="check" class:on>
-						<button type="button" class="check-toggle" onclick={() => toggleExercise(ex.id)}>
-							<span class="check-box"><Icon name="check" size={13} stroke={3} /></span>
-							<span class="check-label">{ex.name}</span>
-							{#if ex.muscleGroup}<span class="muted check-mg">{ex.muscleGroup}</span>{/if}
-						</button>
-						{#if on}
+			<input type="hidden" name="exercises" value={JSON.stringify(assigned)} />
+
+			{#if assigned.length > 0}
+				<p class="muted micro">In the order you'll do them — use ↑ ↓ to reorder.</p>
+				<div class="assigned">
+					{#each assigned as a, i (a.exerciseId)}
+						<div class="arow">
+							<div class="reorder">
+								<button
+									type="button"
+									class="reo"
+									aria-label="Move up"
+									disabled={i === 0}
+									onclick={() => move(i, -1)}
+								>
+									<Icon name="up" size={14} />
+								</button>
+								<button
+									type="button"
+									class="reo"
+									aria-label="Move down"
+									disabled={i === assigned.length - 1}
+									onclick={() => move(i, 1)}
+								>
+									<Icon name="down" size={14} />
+								</button>
+							</div>
+							<div class="arow-info">
+								<span class="arow-name">{exerciseName.get(a.exerciseId)}</span>
+								{#if exerciseMg.get(a.exerciseId)}
+									<span class="muted arow-mg">{exerciseMg.get(a.exerciseId)}</span>
+								{/if}
+							</div>
 							<div class="stepper">
 								<button
 									type="button"
 									class="step"
 									aria-label="Fewer sets"
-									disabled={assignSets[ex.id] <= MIN_ROUTINE_SETS}
-									onclick={() => changeSets(ex.id, -1)}
+									disabled={a.sets <= MIN_ROUTINE_SETS}
+									onclick={() => changeSets(a.exerciseId, -1)}
 								>
 									<Icon name="minus" size={14} />
 								</button>
-								<span class="step-val stat-num">{assignSets[ex.id]}</span>
+								<span class="step-val stat-num">{a.sets}</span>
 								<button
 									type="button"
 									class="step"
 									aria-label="More sets"
-									disabled={assignSets[ex.id] >= MAX_ROUTINE_SETS}
-									onclick={() => changeSets(ex.id, 1)}
+									disabled={a.sets >= MAX_ROUTINE_SETS}
+									onclick={() => changeSets(a.exerciseId, 1)}
 								>
 									<Icon name="plus" size={14} />
 								</button>
 							</div>
-						{/if}
-					</div>
-				{/each}
-			</div>
+							<button
+								type="button"
+								class="arow-del"
+								aria-label="Remove"
+								onclick={() => removeExercise(a.exerciseId)}
+							>
+								<Icon name="x" size={16} />
+							</button>
+						</div>
+					{/each}
+				</div>
+			{/if}
+
+			{#if available.length > 0}
+				<div class="add-list">
+					{#each available as ex (ex.id)}
+						<button type="button" class="add-row" onclick={() => addExercise(ex.id)}>
+							<span class="add-plus"><Icon name="plus" size={14} stroke={2.5} /></span>
+							<span class="add-name">{ex.name}</span>
+							{#if ex.muscleGroup}<span class="muted add-mg">{ex.muscleGroup}</span>{/if}
+						</button>
+					{/each}
+				</div>
+			{/if}
 		{/if}
 	</div>
 {/snippet}
@@ -362,59 +411,140 @@
 		transform: scale(1.12);
 	}
 
-	.checks {
+	.micro {
+		font-size: 0.78rem;
+		margin-bottom: 0.5rem;
+	}
+
+	.assigned {
 		display: flex;
 		flex-direction: column;
 		gap: 0.4rem;
-		max-height: 20rem;
-		overflow-y: auto;
+		margin-bottom: 0.6rem;
 	}
-	.check {
+	.arow {
 		display: flex;
 		align-items: center;
 		gap: 0.4rem;
-		padding: 0.25rem 0.4rem 0.25rem 0.25rem;
+		padding: 0.35rem 0.4rem;
 		border-radius: 0.6rem;
 		background: var(--color-surface-2);
-		border: 1px solid transparent;
-		transition: border-color 0.12s ease;
+		border: 1px solid var(--color-border);
 	}
-	.check.on {
-		border-color: var(--color-border);
-	}
-	.check-toggle {
+	.reorder {
 		display: flex;
-		align-items: center;
-		gap: 0.6rem;
+		flex-direction: column;
+		gap: 0.15rem;
+		flex-shrink: 0;
+	}
+	.reo {
+		display: grid;
+		place-items: center;
+		width: 1.6rem;
+		height: 1.15rem;
+		border-radius: 0.35rem;
+		background: var(--color-bg);
+		border: 1px solid var(--color-border);
+		color: var(--color-subtle);
+		cursor: pointer;
+		transition:
+			color 0.12s ease,
+			border-color 0.12s ease;
+	}
+	@media (hover: hover) {
+		.reo:hover:not(:disabled) {
+			color: var(--color-accent-bright);
+			border-color: var(--color-accent);
+		}
+	}
+	.reo:disabled {
+		opacity: 0.3;
+		cursor: default;
+	}
+	.arow-info {
+		display: flex;
+		flex-direction: column;
 		flex: 1;
 		min-width: 0;
-		padding: 0.35rem;
-		background: none;
-		border: none;
+	}
+	.arow-name {
+		font-size: 0.9rem;
+		font-weight: 600;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.arow-mg {
+		font-size: 0.72rem;
+	}
+	.arow-del {
+		display: grid;
+		place-items: center;
+		width: 2rem;
+		height: 2rem;
+		border-radius: 0.5rem;
+		background: transparent;
+		border: 1px solid transparent;
+		color: var(--color-muted);
+		cursor: pointer;
+		flex-shrink: 0;
+		transition:
+			color 0.12s ease,
+			transform 0.1s ease;
+	}
+	@media (hover: hover) {
+		.arow-del:hover {
+			color: var(--color-bad);
+		}
+	}
+	.arow-del:active {
+		transform: scale(0.9);
+	}
+
+	.add-list {
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+		max-height: 15rem;
+		overflow-y: auto;
+	}
+	.add-row {
+		display: flex;
+		align-items: center;
+		gap: 0.55rem;
+		padding: 0.55rem 0.6rem;
+		border-radius: 0.6rem;
+		background: transparent;
+		border: 1px dashed var(--color-border);
 		color: var(--color-text);
 		text-align: left;
 		cursor: pointer;
+		transition:
+			border-color 0.12s ease,
+			background 0.12s ease,
+			transform 0.1s ease;
 	}
-	.check-box {
+	@media (hover: hover) {
+		.add-row:hover {
+			border-color: var(--color-accent);
+			background: var(--color-surface-2);
+		}
+	}
+	.add-row:active {
+		transform: scale(0.995);
+	}
+	.add-plus {
 		display: grid;
 		place-items: center;
 		width: 1.25rem;
 		height: 1.25rem;
 		border-radius: 0.4rem;
+		background: var(--color-surface-2);
 		border: 1px solid var(--color-border);
-		background: var(--color-bg);
-		color: transparent;
+		color: var(--color-accent-bright);
 		flex-shrink: 0;
-		transition:
-			background 0.12s ease,
-			color 0.12s ease;
 	}
-	.check.on .check-box {
-		background: var(--color-accent);
-		border-color: var(--color-accent);
-		color: #0a0a0a;
-	}
-	.check-label {
+	.add-name {
 		font-size: 0.9rem;
 		font-weight: 500;
 		flex: 1;
@@ -423,8 +553,8 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
-	.check-mg {
-		font-size: 0.75rem;
+	.add-mg {
+		font-size: 0.72rem;
 		flex-shrink: 0;
 	}
 
