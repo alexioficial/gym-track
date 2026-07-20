@@ -1,67 +1,67 @@
 # 🏋️ Gym Tracker
 
-Tracker personal de gimnasio con foco en **sobrecarga progresiva**: registra tus rutinas, los ejercicios de
-cada día y tus sesiones, y cada semana te dice en qué mejoraste por ejercicio (más peso, más reps, ambos o más
-volumen).
+Personal gym tracker focused on **progressive overload**: log your routines, the exercises for each day and
+your sessions, and every week it tells you where you improved on each exercise (more weight, more reps, both or
+more volume).
 
 - **SvelteKit** (Svelte 5 runes) + **TypeScript**
-- **MongoDB** (driver oficial)
-- **Bun** como runtime/gestor de paquetes
-- **Tailwind 4**, tema oscuro (amarillo + grises/negros), minimalista, mobile-first
-- **Dockerfile** listo para deploy en **Coolify**
-- Protección con **PIN** (una sola persona)
+- **MongoDB** (official driver)
+- **Bun** as runtime / package manager
+- **Tailwind 4**, dark theme (yellow + grays/blacks), minimalist, mobile-first
+- **Dockerfile** ready to deploy on **Coolify**
+- **PIN** protection (single user)
 
-## Cómo funciona la sobrecarga progresiva
+## How progressive overload works
 
-Por cada ejercicio, agrupamos tus sets por **semana** y calculamos:
+For each exercise, we group your sets by **week** and compute:
 
-- **Volumen** = Σ (peso × reps) de todos los sets.
-- **e1RM (1RM estimado)** con la fórmula de **Epley**: `1RM = peso × (1 + reps / 30)` — buena aproximación en 2–10 reps.
-- **Top set** = tu mejor set (más peso, y las reps a ese peso).
+- **Volume** = Σ (weight × reps) of all sets.
+- **e1RM (estimated 1RM)** with the **Epley** formula: `1RM = weight × (1 + reps / 30)` — a good approximation in the 2–10 rep range.
+- **Top set** = your best set (heaviest weight, and the reps at that weight).
 
-Comparamos la última semana contra la anterior y te decimos el veredicto: **más peso**, **más reps**, **ambos**,
-**más volumen**, igual o bajó.
+We compare the latest week against the previous one and give you a verdict: **more weight**, **more reps**, **both**,
+**more volume**, same or down.
 
-## Desarrollo local
+## Local development
 
-Requisitos: [Bun](https://bun.sh) y una instancia de MongoDB (Atlas gratis, o un Mongo local).
+Requirements: [Bun](https://bun.sh) and a MongoDB instance (free Atlas cluster, or a local Mongo).
 
 ```bash
-# 1. Instalar dependencias
+# 1. Install dependencies
 bun install
 
-# 2. Variables de entorno
+# 2. Environment variables
 cp .env.example .env
-# edita .env con tu MONGODB_URI, AUTH_PIN y SESSION_SECRET
+# edit .env with your MONGODB_URI, AUTH_PIN and SESSION_SECRET
 
-# 3. Arrancar en modo dev
+# 3. Start in dev mode
 bun run dev
 ```
 
-Abre http://localhost:5173, entra con tu `AUTH_PIN` y empieza a registrar.
+Open http://localhost:5173, sign in with your `AUTH_PIN` and start logging.
 
-Verificar tipos: `bun run check`
+Type checking: `bun run check`
 
-## Variables de entorno
+## Environment variables
 
-| Variable | Descripción |
+| Variable | Description |
 | --- | --- |
-| `MONGODB_URI` | Cadena de conexión a MongoDB. |
-| `MONGODB_DB` | Nombre de la base de datos (ej. `gym_tracker`). |
-| `AUTH_PIN` | PIN/contraseña para entrar. |
-| `SESSION_SECRET` | Secreto para firmar la cookie de sesión (`openssl rand -hex 32`). |
-| `ORIGIN` | URL pública. **Obligatoria en prod** para los form actions (CSRF). |
-| `PORT` | Puerto del servidor (default 3000). |
+| `MONGODB_URI` | MongoDB connection string. |
+| `MONGODB_DB` | Database name (e.g. `gym_tracker`). |
+| `AUTH_PIN` | PIN/password to sign in. |
+| `SESSION_SECRET` | Secret used to sign the session cookie (`openssl rand -hex 32`). |
+| `ORIGIN` | Public URL. **Required in production** for form actions (CSRF). |
+| `PORT` | Server port (defaults to 3000). |
 
-## Deploy en Coolify
+## Deploy on Coolify
 
-1. Sube este proyecto a un repo de GitHub.
-2. En Coolify crea una aplicación desde ese repo y cambia el **Build Pack** de Nixpacks a **Dockerfile** (usa el `Dockerfile` de la raíz).
-3. Define las variables de entorno de la tabla anterior. `ORIGIN` debe ser la URL final con `https://` (ej. `https://gym.tudominio.com`).
-4. La app escucha en el puerto **3000** (ya expuesto en el Dockerfile).
-5. Para `MONGODB_URI` usa un MongoDB Atlas o un servicio MongoDB creado en el mismo Coolify.
+1. Push this project to a GitHub repo.
+2. In Coolify create an application from that repo and switch the **Build Pack** from Nixpacks to **Dockerfile** (uses the `Dockerfile` at the root).
+3. Set the environment variables from the table above. `ORIGIN` must be the final URL with `https://` (e.g. `https://gym.yourdomain.com`).
+4. The app listens on port **3000** (already exposed in the Dockerfile).
+5. For `MONGODB_URI` use a MongoDB Atlas cluster or a MongoDB service created within the same Coolify.
 
-## Build de producción (local)
+## Production build (local)
 
 ```bash
 docker build -t gym-tracker .

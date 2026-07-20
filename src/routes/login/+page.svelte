@@ -7,13 +7,13 @@
 	let loading = $state(false);
 </script>
 
-<svelte:head><title>Entrar · Gym Tracker</title></svelte:head>
+<svelte:head><title>Sign in · Gym Tracker</title></svelte:head>
 
 <div class="login-wrap">
 	<div class="login-card card">
 		<div class="brand-mark"><Icon name="dumbbell" size={26} stroke={2.5} /></div>
 		<h1 class="login-title">GYM<span class="accent">TRACK</span></h1>
-		<p class="muted login-sub">Tu tracker de sobrecarga progresiva</p>
+		<p class="muted login-sub">Your progressive overload tracker</p>
 
 		<form
 			method="POST"
@@ -25,7 +25,7 @@
 				};
 			}}
 		>
-			<label class="label" for="pin">PIN de acceso</label>
+			<label class="label" for="pin">Access PIN</label>
 			<input
 				id="pin"
 				name="pin"
@@ -42,7 +42,7 @@
 			{/if}
 
 			<button type="submit" class="btn btn-primary login-btn" disabled={loading}>
-				{#if loading}Entrando…{:else}<Icon name="lock" size={16} /> Entrar{/if}
+				{#if loading}Signing in…{:else}<Icon name="lock" size={16} /> Sign in{/if}
 			</button>
 		</form>
 	</div>

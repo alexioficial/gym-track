@@ -26,7 +26,7 @@
 				sets: e.sets.map((s) => ({ id: nextId(), weight: s.weight, reps: s.reps }))
 			}));
 		}
-		// Al crear con una rutina preseleccionada, precargamos sus ejercicios.
+		// When creating with a preselected routine, preload its exercises.
 		const routine = routines.find((r) => r.id === initialRoutineId);
 		if (routine) {
 			return routine.exerciseIds
@@ -97,13 +97,13 @@
 
 	<div class="top card">
 		<div class="field">
-			<label class="label" for="date">Fecha</label>
+			<label class="label" for="date">Date</label>
 			<input id="date" name="date" type="date" class="input" bind:value={date} required />
 		</div>
 		<div class="field">
-			<label class="label" for="routine">Rutina</label>
+			<label class="label" for="routine">Routine</label>
 			<select id="routine" name="routineId" class="input" bind:value={routineId}>
-				<option value="">Sesión libre</option>
+				<option value="">Free session</option>
 				{#each routines as r (r.id)}
 					<option value={r.id}>{r.name}</option>
 				{/each}
@@ -111,18 +111,18 @@
 		</div>
 		{#if selectedRoutine}
 			<button type="button" class="btn btn-ghost load-btn" onclick={loadRoutine}>
-				<Icon name="plus" size={15} stroke={2.5} /> Cargar ejercicios de {selectedRoutine.name}
+				<Icon name="plus" size={15} stroke={2.5} /> Load exercises from {selectedRoutine.name}
 			</button>
 		{/if}
 	</div>
 
-	<!-- Ejercicios -->
+	<!-- Exercises -->
 	<div class="entries">
 		{#each entries as entry (entry.exerciseId)}
 			<div class="entry card">
 				<div class="entry-head">
 					<div class="entry-title">
-						<span class="entry-name">{exerciseName.get(entry.exerciseId) ?? 'Ejercicio'}</span>
+						<span class="entry-name">{exerciseName.get(entry.exerciseId) ?? 'Exercise'}</span>
 						{#if exerciseMg.get(entry.exerciseId)}
 							<span class="muted entry-mg">{exerciseMg.get(entry.exerciseId)}</span>
 						{/if}
@@ -130,7 +130,7 @@
 					<button
 						type="button"
 						class="icon-action"
-						aria-label="Quitar ejercicio"
+						aria-label="Remove exercise"
 						onclick={() => removeEntry(entry.exerciseId)}
 					>
 						<Icon name="x" size={16} />
@@ -140,7 +140,7 @@
 				<div class="sets">
 					<div class="set-head muted">
 						<span>#</span>
-						<span>Peso ({UNIT})</span>
+						<span>Weight ({UNIT})</span>
 						<span>Reps</span>
 						<span></span>
 					</div>
@@ -168,7 +168,7 @@
 							<button
 								type="button"
 								class="set-del"
-								aria-label="Quitar set"
+								aria-label="Remove set"
 								onclick={() => removeSet(entry, set.id)}
 							>
 								<Icon name="minus" size={15} />
@@ -178,34 +178,34 @@
 				</div>
 
 				<button type="button" class="btn btn-subtle add-set" onclick={() => addSet(entry)}>
-					<Icon name="plus" size={14} stroke={2.5} /> Añadir set
+					<Icon name="plus" size={14} stroke={2.5} /> Add set
 				</button>
 			</div>
 		{/each}
 	</div>
 
-	<!-- Añadir ejercicio -->
+	<!-- Add exercise -->
 	{#if available.length > 0}
 		<div class="add-ex card">
 			<select class="input" bind:value={pick}>
-				<option value="">Añadir ejercicio…</option>
+				<option value="">Add exercise…</option>
 				{#each available as ex (ex.id)}
 					<option value={ex.id}>{ex.name}</option>
 				{/each}
 			</select>
 			<button type="button" class="btn btn-primary" disabled={!pick} onclick={() => addExercise(pick)}>
-				<Icon name="plus" size={16} stroke={2.5} /> Añadir
+				<Icon name="plus" size={16} stroke={2.5} /> Add
 			</button>
 		</div>
 	{:else if entries.length === 0}
 		<p class="muted empty-note">
-			No tienes ejercicios. Créalos en <a href="/exercises" class="accent">Ejercicios</a>.
+			You have no exercises. Create them in <a href="/exercises" class="accent">Exercises</a>.
 		</p>
 	{/if}
 
 	<div class="field">
-		<label class="label" for="notes">Notas (opcional)</label>
-		<input id="notes" name="notes" class="input" placeholder="Cómo te sentiste, molestias…" bind:value={notes} />
+		<label class="label" for="notes">Notes (optional)</label>
+		<input id="notes" name="notes" class="input" placeholder="How you felt, any pain…" bind:value={notes} />
 	</div>
 
 	<div class="submit-row">
@@ -216,15 +216,15 @@
 				formnovalidate
 				class="btn btn-danger"
 				onclick={(e) => {
-					if (!confirm('¿Eliminar esta sesión?')) e.preventDefault();
+					if (!confirm('Delete this session?')) e.preventDefault();
 				}}
 			>
-				<Icon name="trash" size={15} /> Eliminar
+				<Icon name="trash" size={15} /> Delete
 			</button>
 		{/if}
 		<div class="spacer"></div>
 		<button type="submit" class="btn btn-primary save-btn" disabled={!canSave}>
-			<Icon name="check" size={17} stroke={2.5} /> Guardar sesión
+			<Icon name="check" size={17} stroke={2.5} /> Save session
 		</button>
 	</div>
 </form>

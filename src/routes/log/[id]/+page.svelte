@@ -7,14 +7,14 @@
 	let { data }: { data: PageData } = $props();
 </script>
 
-<svelte:head><title>Editar sesión · Gym Tracker</title></svelte:head>
+<svelte:head><title>Edit session · Gym Tracker</title></svelte:head>
 
 <a href="/log" class="back">
-	<Icon name="back" size={16} /> Volver
+	<Icon name="back" size={16} /> Back
 </a>
 
 <header class="head">
-	<h1 class="head-title">Editar sesión</h1>
+	<h1 class="head-title">Edit session</h1>
 	<p class="muted head-sub">{formatDate(data.session.date)}</p>
 </header>
 

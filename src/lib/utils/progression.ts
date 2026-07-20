@@ -8,18 +8,18 @@ import type {
 	WorkoutSet
 } from '$lib/types';
 
-/** 1RM estimado con la fórmula de Epley. Fiable en 2–10 reps. */
+/** Estimated 1RM with the Epley formula. Reliable in the 2–10 rep range. */
 export function epley1RM(weight: number, reps: number): number {
 	if (weight <= 0 || reps <= 0) return 0;
 	return weight * (1 + reps / 30);
 }
 
-/** Volumen total de una lista de sets: Σ (peso × reps). */
+/** Total volume of a list of sets: Σ (weight × reps). */
 export function volume(sets: WorkoutSet[]): number {
 	return sets.reduce((acc, s) => acc + s.weight * s.reps, 0);
 }
 
-/** El mejor set: el de más peso; a igualdad de peso, el de más reps. */
+/** The best set: heaviest weight; on a tie, the one with more reps. */
 export function topSet(sets: WorkoutSet[]): WorkoutSet | null {
 	let best: WorkoutSet | null = null;
 	for (const s of sets) {
@@ -30,7 +30,7 @@ export function topSet(sets: WorkoutSet[]): WorkoutSet | null {
 	return best;
 }
 
-// ---- Semana ISO ----
+// ---- ISO week ----
 
 function parseDate(ymd: string): Date {
 	const [y, m, d] = ymd.split('-').map(Number);
@@ -45,19 +45,19 @@ function toYmd(d: Date): string {
 	return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-/** Lunes de la semana que contiene `ymd`. */
+/** Monday of the week that contains `ymd`. */
 export function weekStart(ymd: string): string {
 	const d = parseDate(ymd);
-	const dayNum = (d.getDay() + 6) % 7; // lunes = 0
+	const dayNum = (d.getDay() + 6) % 7; // Monday = 0
 	d.setDate(d.getDate() - dayNum);
 	return toYmd(d);
 }
 
-/** Clave de semana ISO, ej "2026-W29". */
+/** ISO week key, e.g. "2026-W29". */
 export function isoWeekKey(ymd: string): string {
 	const d = parseDate(ymd);
 	const dayNum = (d.getDay() + 6) % 7;
-	d.setDate(d.getDate() - dayNum + 3); // jueves de esta semana
+	d.setDate(d.getDate() - dayNum + 3); // Thursday of this week
 	const firstThursday = new Date(d.getFullYear(), 0, 4);
 	const firstDayNum = (firstThursday.getDay() + 6) % 7;
 	firstThursday.setDate(firstThursday.getDate() - firstDayNum + 3);
@@ -65,23 +65,23 @@ export function isoWeekKey(ymd: string): string {
 	return `${d.getFullYear()}-W${pad(week)}`;
 }
 
-const MONTHS_SHORT = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-/** Etiqueta corta de la fecha, ej "14 jul". */
+/** Short date label, e.g. "Jul 14". */
 export function shortLabel(ymd: string): string {
 	const d = parseDate(ymd);
-	return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`;
+	return `${MONTHS_SHORT[d.getMonth()]} ${d.getDate()}`;
 }
 
-const DOW_SHORT = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+const DOW_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-/** Fecha con día de la semana, ej "Lun 14 jul". */
+/** Date with weekday, e.g. "Mon, Jul 14". */
 export function formatDate(ymd: string): string {
 	const d = parseDate(ymd);
-	return `${DOW_SHORT[d.getDay()]} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`;
+	return `${DOW_SHORT[d.getDay()]}, ${MONTHS_SHORT[d.getMonth()]} ${d.getDate()}`;
 }
 
-/** Fecha de hoy en formato YYYY-MM-DD (hora local). */
+/** Today's date in YYYY-MM-DD format (local time). */
 export function todayYmd(): string {
 	const d = new Date();
 	return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -93,8 +93,8 @@ function round(n: number, decimals = 1): number {
 }
 
 /**
- * Estadísticas por semana para un ejercicio dado, a partir de las sesiones.
- * Devuelve semanas ordenadas de más antigua a más reciente.
+ * Weekly stats for a given exercise, computed from the sessions.
+ * Returns weeks ordered from oldest to most recent.
  */
 export function weeklyStatsForExercise(sessions: Session[], exerciseId: string): WeeklyStat[] {
 	const byWeek = new Map<string, { date: string; sets: WorkoutSet[]; sessionDates: Set<string> }>();
@@ -104,7 +104,7 @@ export function weeklyStatsForExercise(sessions: Session[], exerciseId: string):
 		if (!entry || entry.sets.length === 0) continue;
 		const key = isoWeekKey(session.date);
 		const bucket = byWeek.get(key) ?? { date: session.date, sets: [], sessionDates: new Set<string>() };
-		// Guarda la fecha más temprana de la semana como referencia.
+		// Keep the earliest date of the week as the reference.
 		if (session.date < bucket.date) bucket.date = session.date;
 		bucket.sets.push(...entry.sets.filter((s) => s.weight > 0 && s.reps > 0));
 		bucket.sessionDates.add(session.date);
@@ -136,8 +136,8 @@ export function weeklyStatsForExercise(sessions: Session[], exerciseId: string):
 }
 
 /**
- * Compara la semana `curr` contra la `prev` y decide el veredicto de mejora.
- * Si no hay semana previa → "nuevo".
+ * Compares week `curr` against `prev` and decides the improvement verdict.
+ * If there is no previous week → "new".
  */
 export function weekOverWeekDelta(prev: WeeklyStat | null, curr: WeeklyStat): Delta {
 	if (!prev) {
@@ -146,7 +146,7 @@ export function weekOverWeekDelta(prev: WeeklyStat | null, curr: WeeklyStat): De
 			reps: curr.topReps,
 			volume: curr.totalVolume,
 			e1rm: curr.bestE1rm,
-			verdict: 'nuevo'
+			verdict: 'new'
 		};
 	}
 
@@ -156,17 +156,17 @@ export function weekOverWeekDelta(prev: WeeklyStat | null, curr: WeeklyStat): De
 	const dE1rm = round(curr.bestE1rm - prev.bestE1rm);
 
 	let verdict: Verdict;
-	if (dWeight > 0 && dReps > 0) verdict = 'ambos';
-	else if (dWeight > 0) verdict = 'peso';
+	if (dWeight > 0 && dReps > 0) verdict = 'both';
+	else if (dWeight > 0) verdict = 'weight';
 	else if (dWeight === 0 && dReps > 0) verdict = 'reps';
-	else if (dWeight >= 0 && dVolume > 0) verdict = 'volumen';
-	else if (dE1rm < 0 || dVolume < 0 || dWeight < 0) verdict = 'baja';
-	else verdict = 'igual';
+	else if (dWeight >= 0 && dVolume > 0) verdict = 'volume';
+	else if (dE1rm < 0 || dVolume < 0 || dWeight < 0) verdict = 'down';
+	else verdict = 'same';
 
 	return { weight: dWeight, reps: dReps, volume: dVolume, e1rm: dE1rm, verdict };
 }
 
-/** Progreso por ejercicio: semanas + comparación última vs anterior. */
+/** Progress per exercise: weeks + latest vs previous comparison. */
 export function buildExerciseProgress(
 	sessions: Session[],
 	exercises: Exercise[]
@@ -180,14 +180,14 @@ export function buildExerciseProgress(
 	});
 }
 
-export const IMPROVEMENT_VERDICTS: Verdict[] = ['peso', 'reps', 'ambos', 'volumen'];
+export const IMPROVEMENT_VERDICTS: Verdict[] = ['weight', 'reps', 'both', 'volume'];
 
 export const VERDICT_LABEL: Record<Verdict, string> = {
-	peso: 'Más peso',
-	reps: 'Más reps',
-	ambos: 'Peso + reps',
-	volumen: 'Más volumen',
-	igual: 'Igual',
-	baja: 'Bajó',
-	nuevo: 'Primera semana'
+	weight: 'More weight',
+	reps: 'More reps',
+	both: 'Weight + reps',
+	volume: 'More volume',
+	same: 'Same',
+	down: 'Down',
+	new: 'First week'
 };

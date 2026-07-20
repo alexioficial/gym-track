@@ -34,8 +34,8 @@ export const load: PageServerLoad = async ({ url }) => {
 export const actions: Actions = {
 	create: async ({ request }) => {
 		const parsed = parseSessionForm(await request.formData());
-		if (!parsed.date) return fail(400, { error: 'Falta la fecha' });
-		if (parsed.entries.length === 0) return fail(400, { error: 'Añade al menos un ejercicio con reps' });
+		if (!parsed.date) return fail(400, { error: 'Date is required' });
+		if (parsed.entries.length === 0) return fail(400, { error: 'Add at least one exercise with reps' });
 		await createSession(parsed);
 		throw redirect(303, '/');
 	}

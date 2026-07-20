@@ -23,7 +23,7 @@
 					<span class="brand-name">GYM<span class="accent">TRACK</span></span>
 				</a>
 				<form method="POST" action="/logout">
-					<button class="icon-btn" title="Salir" aria-label="Salir">
+					<button class="icon-btn" title="Log out" aria-label="Log out">
 						<Icon name="logout" size={18} />
 					</button>
 				</form>

@@ -8,7 +8,7 @@ export const load: PageServerLoad = async ({ params }) => {
 		getExercise(params.exerciseId),
 		getSessions()
 	]);
-	if (!exercise) throw error(404, 'Ejercicio no encontrado');
+	if (!exercise) throw error(404, 'Exercise not found');
 
 	const weeks = weeklyStatsForExercise(sessions, exercise.id);
 	const latest = weeks.length > 0 ? weeks[weeks.length - 1] : null;

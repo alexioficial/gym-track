@@ -19,12 +19,12 @@ function safeEqual(a: string, b: string): boolean {
 	return timingSafeEqual(ba, bb);
 }
 
-/** Valor firmado para guardar en la cookie de sesión. */
+/** Signed value to store in the session cookie. */
 export function createSessionToken(): string {
 	return `${SESSION_VALUE}.${hmac(SESSION_VALUE)}`;
 }
 
-/** Verifica que la cookie de sesión sea válida (firmada con nuestro secreto). */
+/** Verifies the session cookie is valid (signed with our secret). */
 export function verifySession(token: string | undefined): boolean {
 	if (!token) return false;
 	const idx = token.lastIndexOf('.');
@@ -35,7 +35,7 @@ export function verifySession(token: string | undefined): boolean {
 	return safeEqual(mac, hmac(value));
 }
 
-/** Compara el PIN ingresado contra AUTH_PIN de forma segura. */
+/** Securely compares the entered PIN against AUTH_PIN. */
 export function checkPin(pin: string): boolean {
 	const expected = env.AUTH_PIN ?? '';
 	if (!expected) return false;

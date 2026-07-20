@@ -28,19 +28,19 @@
 	}
 </script>
 
-<svelte:head><title>Rutinas · Gym Tracker</title></svelte:head>
+<svelte:head><title>Routines · Gym Tracker</title></svelte:head>
 
-<PageHeader title="Rutinas" subtitle="Arma tus rutinas y asígnalas a la semana">
+<PageHeader title="Routines" subtitle="Build your routines and assign them to the week">
 	{#snippet action()}
 		<button class="btn btn-primary" onclick={startNew}>
-			<Icon name="plus" size={16} stroke={2.5} /> Nueva
+			<Icon name="plus" size={16} stroke={2.5} /> New
 		</button>
 	{/snippet}
 </PageHeader>
 
-<!-- Calendario semanal -->
+<!-- Weekly calendar -->
 <section class="block">
-	<h2 class="block-title"><Icon name="calendar" size={17} /> Semana</h2>
+	<h2 class="block-title"><Icon name="calendar" size={17} /> Week</h2>
 	<div class="card week">
 		{#each WEEKDAYS as day (day)}
 			{@const assigned = data.schedule[day] ? routineById.get(data.schedule[day]!) : null}
@@ -54,7 +54,7 @@
 						class="input day-select"
 						onchange={(e) => e.currentTarget.form?.requestSubmit()}
 					>
-						<option value="" selected={!data.schedule[day]}>Descanso</option>
+						<option value="" selected={!data.schedule[day]}>Rest</option>
 						{#each data.routines as r (r.id)}
 							<option value={r.id} selected={data.schedule[day] === r.id}>{r.name}</option>
 						{/each}
@@ -65,15 +65,15 @@
 	</div>
 </section>
 
-<!-- Formulario de rutina (fields reutilizables) -->
+<!-- Routine form (reusable fields) -->
 {#snippet routineFields(routine: Routine | null)}
 	<div class="field">
-		<label class="label" for="rname-{routine?.id ?? 'new'}">Nombre de la rutina</label>
+		<label class="label" for="rname-{routine?.id ?? 'new'}">Routine name</label>
 		<input
 			id="rname-{routine?.id ?? 'new'}"
 			name="name"
 			class="input"
-			placeholder="Ej. Empuje, Torso, Pierna A…"
+			placeholder="e.g. Push, Upper, Leg A…"
 			value={routine?.name ?? ''}
 			required
 		/>
@@ -97,9 +97,9 @@
 	</div>
 
 	<div class="field">
-		<span class="label">Ejercicios de esta rutina</span>
+		<span class="label">Exercises in this routine</span>
 		{#if data.exercises.length === 0}
-			<p class="muted hint">Primero crea ejercicios en la pestaña <a href="/exercises" class="accent">Ejercicios</a>.</p>
+			<p class="muted hint">First create exercises in the <a href="/exercises" class="accent">Exercises</a> tab.</p>
 		{:else}
 			<div class="checks">
 				{#each data.exercises as ex (ex.id)}
@@ -132,20 +132,20 @@
 	>
 		{@render routineFields(null)}
 		<div class="form-actions">
-			<button type="button" class="btn btn-subtle" onclick={close}>Cancelar</button>
-			<button type="submit" class="btn btn-primary"><Icon name="check" size={16} /> Crear rutina</button>
+			<button type="button" class="btn btn-subtle" onclick={close}>Cancel</button>
+			<button type="submit" class="btn btn-primary"><Icon name="check" size={16} /> Create routine</button>
 		</div>
 	</form>
 {/if}
 
-<!-- Lista de rutinas -->
+<!-- Routine list -->
 <section class="block">
-	<h2 class="block-title"><Icon name="clipboard" size={17} /> Tus rutinas</h2>
+	<h2 class="block-title"><Icon name="clipboard" size={17} /> Your routines</h2>
 
 	{#if data.routines.length === 0 && !showNew}
-		<EmptyState icon="calendar" title="Sin rutinas" message="Crea una rutina y asígnale ejercicios.">
+		<EmptyState icon="calendar" title="No routines yet" message="Create a routine and assign exercises to it.">
 			<button class="btn btn-primary" onclick={startNew}>
-				<Icon name="plus" size={16} stroke={2.5} /> Nueva rutina
+				<Icon name="plus" size={16} stroke={2.5} /> New routine
 			</button>
 		</EmptyState>
 	{:else}
@@ -170,14 +170,14 @@
 								formnovalidate
 								class="btn btn-danger"
 								onclick={(e) => {
-									if (!confirm(`¿Eliminar la rutina "${routine.name}"?`)) e.preventDefault();
+									if (!confirm(`Delete the routine "${routine.name}"?`)) e.preventDefault();
 								}}
 							>
-								<Icon name="trash" size={15} /> Eliminar
+								<Icon name="trash" size={15} /> Delete
 							</button>
 							<div class="spacer"></div>
-							<button type="button" class="btn btn-subtle" onclick={close}>Cancelar</button>
-							<button type="submit" class="btn btn-primary"><Icon name="check" size={16} /> Guardar</button>
+							<button type="button" class="btn btn-subtle" onclick={close}>Cancel</button>
+							<button type="submit" class="btn btn-primary"><Icon name="check" size={16} /> Save</button>
 						</div>
 					</form>
 				{:else}
@@ -185,7 +185,7 @@
 						<div class="routine-head">
 							<span class="dot" style="background:{routine.color}"></span>
 							<span class="routine-name">{routine.name}</span>
-							<button class="icon-action" aria-label="Editar" onclick={() => startEdit(routine.id)}>
+							<button class="icon-action" aria-label="Edit" onclick={() => startEdit(routine.id)}>
 								<Icon name="pencil" size={16} />
 							</button>
 						</div>
@@ -198,7 +198,7 @@
 								{/each}
 							</div>
 						{:else}
-							<p class="muted hint">Sin ejercicios asignados</p>
+							<p class="muted hint">No exercises assigned</p>
 						{/if}
 					</div>
 				{/if}

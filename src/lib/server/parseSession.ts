@@ -1,6 +1,6 @@
 import type { SessionEntry } from '$lib/types';
 
-/** Parsea y sanea el FormData del SessionForm (entries viene como JSON). */
+/** Parses and sanitizes the SessionForm FormData (entries comes as JSON). */
 export function parseSessionForm(data: FormData): {
 	date: string;
 	routineId: string | null;

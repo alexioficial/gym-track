@@ -2,7 +2,7 @@
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
 
-/* ---- Tokens (tema oscuro único, acento amarillo) ---- */
+/* ---- Tokens (single dark theme, yellow accent) ---- */
 @theme {
 	--color-bg: #0a0a0a;
 	--color-surface: #141414;
@@ -61,7 +61,7 @@
 		scrollbar-color: var(--color-border) transparent;
 	}
 
-	/* Móvil: sin flash gris/azul al tocar, y sin delay de 300ms */
+	/* Mobile: no gray/blue flash on tap, and no 300ms delay */
 	a,
 	button,
 	select,
@@ -97,7 +97,7 @@
 	}
 }
 
-/* ---- Componentes ---- */
+/* ---- Components ---- */
 @layer components {
 	.card {
 		background-color: var(--color-surface);
@@ -196,7 +196,7 @@
 		border: 1px solid var(--color-border);
 		border-radius: 0.7rem;
 		padding: 0.65rem 0.8rem;
-		/* 16px evita el zoom automático de iOS al enfocar */
+		/* 16px prevents iOS auto-zoom on focus */
 		font-size: 1rem;
 		color: var(--color-text);
 		transition:

@@ -22,7 +22,7 @@ function parse(data: FormData) {
 export const actions: Actions = {
 	create: async ({ request }) => {
 		const { name, muscleGroup, notes } = parse(await request.formData());
-		if (!name) return fail(400, { error: 'El nombre es obligatorio' });
+		if (!name) return fail(400, { error: 'Name is required' });
 		await createExercise({ name, muscleGroup, notes: notes || undefined });
 		return { success: true };
 	},
@@ -31,8 +31,8 @@ export const actions: Actions = {
 		const data = await request.formData();
 		const id = String(data.get('id') ?? '');
 		const { name, muscleGroup, notes } = parse(data);
-		if (!id) return fail(400, { error: 'Falta el id' });
-		if (!name) return fail(400, { error: 'El nombre es obligatorio' });
+		if (!id) return fail(400, { error: 'Missing id' });
+		if (!name) return fail(400, { error: 'Name is required' });
 		await updateExercise(id, { name, muscleGroup, notes: notes || undefined });
 		return { success: true };
 	},

@@ -8,9 +8,9 @@
 	let { data }: { data: PageData } = $props();
 </script>
 
-<svelte:head><title>Registrar sesión · Gym Tracker</title></svelte:head>
+<svelte:head><title>Log session · Gym Tracker</title></svelte:head>
 
-<PageHeader title="Nueva sesión" subtitle="Registra lo que hiciste hoy" />
+<PageHeader title="New session" subtitle="Log what you did today" />
 
 <SessionForm
 	mode="create"
@@ -21,16 +21,16 @@
 
 {#if data.history.length > 0}
 	<section class="block">
-		<h2 class="block-title"><Icon name="clipboard" size={16} /> Historial</h2>
+		<h2 class="block-title"><Icon name="clipboard" size={16} /> History</h2>
 		<div class="stack">
 			{#each data.history as s (s.id)}
 				<a href="/log/{s.id}" class="sess card card-hover">
 					<span class="dot" style="background:{s.routineColor ?? 'var(--color-muted)'}"></span>
 					<div class="sess-info">
-						<span class="sess-routine">{s.routineName ?? 'Sesión libre'}</span>
+						<span class="sess-routine">{s.routineName ?? 'Free session'}</span>
 						<span class="muted sess-date">{formatDate(s.date)}</span>
 					</div>
-					<span class="muted sess-meta stat-num">{s.exerciseCount} ej · {s.setCount} sets</span>
+					<span class="muted sess-meta stat-num">{s.exerciseCount} ex · {s.setCount} sets</span>
 					<Icon name="chevron" size={16} />
 				</a>
 			{/each}

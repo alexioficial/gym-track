@@ -11,7 +11,7 @@ export const load: PageServerLoad = async () => {
 		getSessions()
 	]);
 
-	const todayIdx = (new Date().getDay() + 6) % 7; // lunes = 0
+	const todayIdx = (new Date().getDay() + 6) % 7; // Monday = 0
 	const todayKey = WEEKDAYS[todayIdx];
 	const todayRoutine = routines.find((r) => r.id === schedule[todayKey]) ?? null;
 

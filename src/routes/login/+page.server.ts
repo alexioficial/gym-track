@@ -8,15 +8,15 @@ export const actions: Actions = {
 		const data = await request.formData();
 		const pin = String(data.get('pin') ?? '').trim();
 
-		if (!pin) return fail(400, { error: 'Escribe tu PIN' });
-		if (!checkPin(pin)) return fail(401, { error: 'PIN incorrecto' });
+		if (!pin) return fail(400, { error: 'Enter your PIN' });
+		if (!checkPin(pin)) return fail(401, { error: 'Wrong PIN' });
 
 		cookies.set(SESSION_COOKIE, createSessionToken(), {
 			path: '/',
 			httpOnly: true,
 			sameSite: 'lax',
 			secure: !dev,
-			maxAge: 60 * 60 * 24 * 60 // 60 días
+			maxAge: 60 * 60 * 24 * 60 // 60 days
 		});
 
 		throw redirect(303, '/');

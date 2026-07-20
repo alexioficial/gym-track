@@ -30,7 +30,7 @@ export const actions: Actions = {
 		const name = String(data.get('name') ?? '').trim();
 		const color = safeColor(String(data.get('color') ?? ''));
 		const exerciseIds = data.getAll('exerciseIds').map(String);
-		if (!name) return fail(400, { error: 'El nombre es obligatorio' });
+		if (!name) return fail(400, { error: 'Name is required' });
 		await createRoutine({ name, color, exerciseIds });
 		return { success: true };
 	},
@@ -41,8 +41,8 @@ export const actions: Actions = {
 		const name = String(data.get('name') ?? '').trim();
 		const color = safeColor(String(data.get('color') ?? ''));
 		const exerciseIds = data.getAll('exerciseIds').map(String);
-		if (!id) return fail(400, { error: 'Falta el id' });
-		if (!name) return fail(400, { error: 'El nombre es obligatorio' });
+		if (!id) return fail(400, { error: 'Missing id' });
+		if (!name) return fail(400, { error: 'Name is required' });
 		await updateRoutine(id, { name, color, exerciseIds });
 		return { success: true };
 	},
@@ -58,7 +58,7 @@ export const actions: Actions = {
 		const data = await request.formData();
 		const day = String(data.get('day') ?? '') as Weekday;
 		const routineId = String(data.get('routineId') ?? '');
-		if (!WEEKDAYS.includes(day)) return fail(400, { error: 'Día inválido' });
+		if (!WEEKDAYS.includes(day)) return fail(400, { error: 'Invalid day' });
 		await setScheduleDay(day, routineId || null);
 		return { success: true };
 	}

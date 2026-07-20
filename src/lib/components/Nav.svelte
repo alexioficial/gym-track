@@ -3,11 +3,11 @@
 	import Icon from './Icon.svelte';
 
 	const items = [
-		{ href: '/', label: 'Inicio', icon: 'home' },
-		{ href: '/routines', label: 'Rutinas', icon: 'calendar' },
-		{ href: '/log', label: 'Registrar', icon: 'plus' },
-		{ href: '/progress', label: 'Progreso', icon: 'trending' },
-		{ href: '/exercises', label: 'Ejercicios', icon: 'dumbbell' }
+		{ href: '/', label: 'Home', icon: 'home' },
+		{ href: '/routines', label: 'Routines', icon: 'calendar' },
+		{ href: '/log', label: 'Log', icon: 'plus' },
+		{ href: '/progress', label: 'Progress', icon: 'trending' },
+		{ href: '/exercises', label: 'Exercises', icon: 'dumbbell' }
 	];
 
 	function isActive(href: string): boolean {

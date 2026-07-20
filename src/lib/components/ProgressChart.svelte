@@ -6,7 +6,7 @@
 	}
 	let { weeks }: Props = $props();
 
-	// Geometría (viewBox fijo, se escala al 100% del contenedor).
+	// Geometry (fixed viewBox, scales to 100% of the container).
 	const W = 340;
 	const H = 180;
 	const PL = 10;
@@ -45,7 +45,7 @@
 		});
 
 		const line = points.map((p) => `${p.cx.toFixed(1)},${p.ey.toFixed(1)}`).join(' ');
-		// Etiquetas del eje X: primera, última y alguna intermedia.
+		// X-axis labels: first, last and a few in between.
 		const showEvery = Math.ceil(n / 4);
 		const labels = points.filter((_, i) => i === 0 || i === n - 1 || i % showEvery === 0);
 
@@ -57,10 +57,10 @@
 	<div class="chart card">
 		<div class="legend">
 			<span class="lg lg-line">e1RM</span>
-			<span class="lg lg-bar">Volumen</span>
+			<span class="lg lg-bar">Volume</span>
 		</div>
-		<svg viewBox="0 0 {W} {H}" class="svg" role="img" aria-label="Progreso por semana">
-			<!-- barras de volumen -->
+		<svg viewBox="0 0 {W} {H}" class="svg" role="img" aria-label="Progress by week">
+			<!-- volume bars -->
 			{#each geo.points as p (p.cx)}
 				<rect
 					x={p.barX}
@@ -72,7 +72,7 @@
 				/>
 			{/each}
 
-			<!-- línea e1RM -->
+			<!-- e1RM line -->
 			{#if geo.points.length > 1}
 				<polyline points={geo.line} class="e-line" />
 			{/if}
@@ -83,7 +83,7 @@
 			<!-- e1RM max/min labels -->
 			<text x={PL} y={12} class="axis-val">{geo.eMax} {UNIT}</text>
 
-			<!-- etiquetas eje X -->
+			<!-- x-axis labels -->
 			{#each geo.labels as p (p.cx)}
 				<text x={p.cx} y={H - 10} class="axis-x" text-anchor="middle">{p.label}</text>
 			{/each}

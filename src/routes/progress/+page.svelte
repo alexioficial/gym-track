@@ -11,17 +11,17 @@
 	let { data }: { data: PageData } = $props();
 </script>
 
-<svelte:head><title>Progreso · Gym Tracker</title></svelte:head>
+<svelte:head><title>Progress · Gym Tracker</title></svelte:head>
 
-<PageHeader title="Progreso" subtitle="Tu sobrecarga progresiva, semana a semana" />
+<PageHeader title="Progress" subtitle="Your progressive overload, week by week" />
 
 {#if data.tracked.length === 0}
 	<EmptyState
 		icon="trending"
-		title="Aún no hay datos"
-		message="Registra sesiones y aquí verás cómo progresas en cada ejercicio: más peso, más reps o más volumen."
+		title="No data yet"
+		message="Log sessions and you'll see how you progress on each exercise here: more weight, more reps or more volume."
 	>
-		<a href="/log" class="btn btn-primary"><Icon name="plus" size={16} stroke={2.5} /> Registrar sesión</a>
+		<a href="/log" class="btn btn-primary"><Icon name="plus" size={16} stroke={2.5} /> Log session</a>
 	</EmptyState>
 {:else}
 	<div class="stack">
@@ -42,8 +42,8 @@
 						</div>
 					{/if}
 					<div class="ex-delta">
-						{#if p.delta && p.delta.verdict === 'nuevo'}
-							<span class="badge">Primera semana</span>
+						{#if p.delta && p.delta.verdict === 'new'}
+							<span class="badge">First week</span>
 						{:else if p.delta && IMPROVEMENT_VERDICTS.includes(p.delta.verdict)}
 							<span class="badge badge-accent">{VERDICT_LABEL[p.delta.verdict]}</span>
 							{#if p.delta.weight !== 0}<StatDelta value={p.delta.weight} unit=" {UNIT}" />{/if}
@@ -51,10 +51,10 @@
 							{#if p.delta.weight === 0 && p.delta.reps === 0 && p.delta.volume !== 0}
 								<StatDelta value={p.delta.volume} unit=" vol" />
 							{/if}
-						{:else if p.delta && p.delta.verdict === 'baja'}
-							<span class="badge badge-bad">Bajó</span>
+						{:else if p.delta && p.delta.verdict === 'down'}
+							<span class="badge badge-bad">Down</span>
 						{:else}
-							<span class="badge">Igual</span>
+							<span class="badge">Same</span>
 						{/if}
 					</div>
 				</div>
@@ -67,12 +67,12 @@
 	</div>
 
 	{#if data.untracked.length > 0}
-		<h2 class="sub">Sin datos aún</h2>
+		<h2 class="sub">No data yet</h2>
 		<div class="stack">
 			{#each data.untracked as ex (ex.id)}
 				<div class="card untracked">
 					<span class="ex-name">{ex.name}</span>
-					<span class="muted small">Regístralo para trackearlo</span>
+					<span class="muted small">Log it to start tracking</span>
 				</div>
 			{/each}
 		</div>

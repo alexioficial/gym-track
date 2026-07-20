@@ -17,51 +17,51 @@
 
 	function message(d: Delta): string {
 		switch (d.verdict) {
-			case 'ambos':
-				return 'Subiste peso y reps respecto a la semana pasada. 🔥';
-			case 'peso':
-				return 'Levantaste más peso que la semana pasada.';
+			case 'both':
+				return 'You lifted more weight and more reps than last week. 🔥';
+			case 'weight':
+				return 'You lifted more weight than last week.';
 			case 'reps':
-				return 'Hiciste más reps al mismo peso.';
-			case 'volumen':
-				return 'Hiciste más volumen total esta semana.';
-			case 'igual':
-				return 'Te mantuviste igual que la semana pasada.';
-			case 'baja':
-				return 'Bajaste respecto a la semana pasada. A darle esta semana.';
-			case 'nuevo':
-				return 'Primera semana registrada. ¡A construir la base!';
+				return 'You did more reps at the same weight.';
+			case 'volume':
+				return 'You did more total volume this week.';
+			case 'same':
+				return 'You held steady compared to last week.';
+			case 'down':
+				return 'You dropped compared to last week. Let’s get after it this week.';
+			case 'new':
+				return 'First week logged. Time to build the base!';
 		}
 	}
 
 	function badgeClass(d: Delta): string {
-		if (d.verdict === 'nuevo') return 'badge';
+		if (d.verdict === 'new') return 'badge';
 		if (IMPROVEMENT_VERDICTS.includes(d.verdict)) return 'badge badge-accent';
-		if (d.verdict === 'baja') return 'badge badge-bad';
+		if (d.verdict === 'down') return 'badge badge-bad';
 		return 'badge';
 	}
 </script>
 
-<svelte:head><title>{data.exercise.name} · Progreso</title></svelte:head>
+<svelte:head><title>{data.exercise.name} · Progress</title></svelte:head>
 
-<a href="/progress" class="back"><Icon name="back" size={16} /> Progreso</a>
+<a href="/progress" class="back"><Icon name="back" size={16} /> Progress</a>
 
 <header class="head">
 	<h1 class="head-title">{data.exercise.name}</h1>
 	<div class="head-meta">
 		{#if data.exercise.muscleGroup}<span class="badge">{data.exercise.muscleGroup}</span>{/if}
-		<span class="muted small">{data.weeks.length} {data.weeks.length === 1 ? 'semana' : 'semanas'}</span>
+		<span class="muted small">{data.weeks.length} {data.weeks.length === 1 ? 'week' : 'weeks'}</span>
 	</div>
 </header>
 
 {#if !data.latest || !data.delta}
-	<EmptyState icon="trending" title="Sin datos" message="Registra sesiones con este ejercicio para ver tu progreso." />
+	<EmptyState icon="trending" title="No data yet" message="Log sessions with this exercise to see your progress." />
 {:else}
-	<!-- Veredicto de la semana -->
+	<!-- Verdict of the week -->
 	<div
 		class="verdict card"
 		class:good={IMPROVEMENT_VERDICTS.includes(data.delta.verdict)}
-		class:bad={data.delta.verdict === 'baja'}
+		class:bad={data.delta.verdict === 'down'}
 	>
 		<div class="verdict-icon"><Icon name="flame" size={20} /></div>
 		<div>
@@ -83,22 +83,22 @@
 			{#if data.previous}<StatDelta value={data.delta.weight} unit=" {UNIT}" />{/if}
 		</div>
 		<div class="stat card">
-			<span class="stat-label muted">Volumen</span>
+			<span class="stat-label muted">Volume</span>
 			<span class="stat-value stat-num">{data.latest.totalVolume}<small>{UNIT}</small></span>
 			{#if data.previous}<StatDelta value={data.delta.volume} unit="" />{/if}
 		</div>
 	</div>
 
-	<!-- Gráfico -->
+	<!-- Chart -->
 	<ProgressChart weeks={data.weeks} />
 
-	<!-- Tabla semanal -->
-	<h2 class="sub">Detalle por semana</h2>
+	<!-- Weekly table -->
+	<h2 class="sub">Week by week</h2>
 	<div class="table-wrap card">
 		<table class="tbl">
 			<thead>
 				<tr>
-					<th>Semana</th>
+					<th>Week</th>
 					<th>Top set</th>
 					<th>e1RM</th>
 					<th>Vol.</th>

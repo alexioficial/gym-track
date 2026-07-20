@@ -2,7 +2,7 @@ import { MongoClient, type Collection, type Db, ObjectId } from 'mongodb';
 import { env } from '$env/dynamic/private';
 import type { Weekday } from '$lib/types';
 
-// ---- Documentos tal como se guardan en MongoDB ----
+// ---- Documents as stored in MongoDB ----
 
 export interface ExerciseDoc {
 	_id: ObjectId;
@@ -43,11 +43,11 @@ export interface SessionDoc {
 }
 
 export interface ScheduleDoc {
-	_id: string; // siempre "weekly"
-	days: Record<Weekday, string | null>; // routineId (hex) o null
+	_id: string; // always "weekly"
+	days: Record<Weekday, string | null>; // routineId (hex) or null
 }
 
-// ---- Conexión (singleton reutilizable en dev/HMR) ----
+// ---- Connection (reusable singleton in dev/HMR) ----
 
 const globalForMongo = globalThis as unknown as {
 	_mongoClientPromise?: Promise<MongoClient>;
@@ -55,7 +55,7 @@ const globalForMongo = globalThis as unknown as {
 
 function clientPromise(): Promise<MongoClient> {
 	const uri = env.MONGODB_URI;
-	if (!uri) throw new Error('Falta la variable de entorno MONGODB_URI');
+	if (!uri) throw new Error('Missing MONGODB_URI environment variable');
 	if (!globalForMongo._mongoClientPromise) {
 		globalForMongo._mongoClientPromise = new MongoClient(uri).connect();
 	}
@@ -95,7 +95,7 @@ export async function collections(): Promise<{
 	};
 }
 
-/** Convierte un id string a ObjectId; devuelve null si no es válido. */
+/** Converts a string id to ObjectId; returns null if invalid. */
 export function toId(id: string | null | undefined): ObjectId | null {
 	if (!id || !ObjectId.isValid(id)) return null;
 	return new ObjectId(id);

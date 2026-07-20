@@ -12,12 +12,12 @@
 	);
 </script>
 
-<svelte:head><title>Inicio · Gym Tracker</title></svelte:head>
+<svelte:head><title>Home · Gym Tracker</title></svelte:head>
 
-<!-- Hoy -->
+<!-- Today -->
 <section class="hero card">
 	<div class="hero-top">
-		<span class="muted hero-day">Hoy · {data.today.label}</span>
+		<span class="muted hero-day">Today · {data.today.label}</span>
 		{#if data.today.routine}
 			<span class="dot" style="background:{data.today.routine.color}"></span>
 		{/if}
@@ -26,39 +26,39 @@
 	{#if data.today.routine}
 		<h1 class="hero-title">{data.today.routine.name}</h1>
 		<p class="muted hero-sub">
-			{data.today.routine.exerciseIds.length} ejercicios en esta rutina
+			{data.today.routine.exerciseIds.length} exercises in this routine
 		</p>
 	{:else}
-		<h1 class="hero-title">Día de descanso</h1>
-		<p class="muted hero-sub">No tienes rutina asignada para hoy</p>
+		<h1 class="hero-title">Rest day</h1>
+		<p class="muted hero-sub">No routine assigned for today</p>
 	{/if}
 
 	<a href={logHref} class="btn btn-primary hero-btn">
-		<Icon name="plus" size={18} stroke={2.5} /> Registrar sesión
+		<Icon name="plus" size={18} stroke={2.5} /> Log session
 	</a>
 </section>
 
-<!-- Contadores -->
+<!-- Counters -->
 <section class="counters">
 	<a href="/exercises" class="counter card card-hover">
 		<span class="counter-num stat-num">{data.counts.exercises}</span>
-		<span class="counter-label muted">Ejercicios</span>
+		<span class="counter-label muted">Exercises</span>
 	</a>
 	<a href="/routines" class="counter card card-hover">
 		<span class="counter-num stat-num">{data.counts.routines}</span>
-		<span class="counter-label muted">Rutinas</span>
+		<span class="counter-label muted">Routines</span>
 	</a>
 	<a href="/log" class="counter card card-hover">
 		<span class="counter-num stat-num">{data.counts.sessions}</span>
-		<span class="counter-label muted">Sesiones</span>
+		<span class="counter-label muted">Sessions</span>
 	</a>
 </section>
 
-<!-- Progreso -->
+<!-- Progress -->
 <section class="block">
 	<div class="block-head">
-		<h2 class="block-title"><Icon name="flame" size={17} /> Tu progreso</h2>
-		<a href="/progress" class="block-link">Ver todo <Icon name="chevron" size={14} /></a>
+		<h2 class="block-title"><Icon name="flame" size={17} /> Your progress</h2>
+		<a href="/progress" class="block-link">See all <Icon name="chevron" size={14} /></a>
 	</div>
 
 	{#if data.improvements.length > 0}
@@ -89,28 +89,28 @@
 		<div class="card note">
 			<Icon name="trending" size={18} />
 			<p class="muted">
-				Registra tus sesiones al menos <strong class="subtle">2 semanas</strong> para ver en qué mejoras
-				por ejercicio.
+				Log your sessions for at least <strong class="subtle">2 weeks</strong> to see where you're
+				improving on each exercise.
 			</p>
 		</div>
 	{/if}
 </section>
 
-<!-- Sesiones recientes -->
+<!-- Recent sessions -->
 {#if data.recent.length > 0}
 	<section class="block">
 		<div class="block-head">
-			<h2 class="block-title"><Icon name="clipboard" size={17} /> Sesiones recientes</h2>
+			<h2 class="block-title"><Icon name="clipboard" size={17} /> Recent sessions</h2>
 		</div>
 		<div class="stack">
 			{#each data.recent as s (s.id)}
 				<a href="/log/{s.id}" class="sess card card-hover">
 					<span class="dot" style="background:{s.routineColor ?? 'var(--color-muted)'}"></span>
 					<div class="sess-info">
-						<span class="sess-routine">{s.routineName ?? 'Sesión libre'}</span>
+						<span class="sess-routine">{s.routineName ?? 'Free session'}</span>
 						<span class="muted sess-date">{formatDate(s.date)}</span>
 					</div>
-					<span class="muted sess-meta stat-num">{s.exerciseCount} ej · {s.setCount} sets</span>
+					<span class="muted sess-meta stat-num">{s.exerciseCount} ex · {s.setCount} sets</span>
 					<Icon name="chevron" size={16} />
 				</a>
 			{/each}

@@ -12,16 +12,16 @@
 	let editingId = $state<string | null>(null);
 
 	const MUSCLE_GROUPS = [
-		'Pecho',
-		'Espalda',
-		'Piernas',
-		'Hombros',
-		'Bíceps',
-		'Tríceps',
+		'Chest',
+		'Back',
+		'Legs',
+		'Shoulders',
+		'Biceps',
+		'Triceps',
 		'Core',
-		'Glúteos',
-		'Pantorrilla',
-		'Antebrazo',
+		'Glutes',
+		'Calves',
+		'Forearms',
 		'Cardio'
 	];
 
@@ -39,12 +39,12 @@
 	}
 </script>
 
-<svelte:head><title>Ejercicios · Gym Tracker</title></svelte:head>
+<svelte:head><title>Exercises · Gym Tracker</title></svelte:head>
 
-<PageHeader title="Ejercicios" subtitle="Tu catálogo de movimientos">
+<PageHeader title="Exercises" subtitle="Your movement catalog">
 	{#snippet action()}
 		<button class="btn btn-primary" onclick={startNew}>
-			<Icon name="plus" size={16} stroke={2.5} /> Nuevo
+			<Icon name="plus" size={16} stroke={2.5} /> New
 		</button>
 	{/snippet}
 </PageHeader>
@@ -57,34 +57,34 @@
 
 {#snippet fields(ex: Exercise | null)}
 	<div class="field">
-		<label class="label" for="name-{ex?.id ?? 'new'}">Nombre</label>
+		<label class="label" for="name-{ex?.id ?? 'new'}">Name</label>
 		<input
 			id="name-{ex?.id ?? 'new'}"
 			name="name"
 			class="input"
-			placeholder="Ej. Press banca"
+			placeholder="e.g. Bench press"
 			value={ex?.name ?? ''}
 			required
 		/>
 	</div>
 	<div class="field">
-		<label class="label" for="mg-{ex?.id ?? 'new'}">Grupo muscular</label>
+		<label class="label" for="mg-{ex?.id ?? 'new'}">Muscle group</label>
 		<input
 			id="mg-{ex?.id ?? 'new'}"
 			name="muscleGroup"
 			class="input"
 			list="muscle-groups"
-			placeholder="Ej. Pecho"
+			placeholder="e.g. Chest"
 			value={ex?.muscleGroup ?? ''}
 		/>
 	</div>
 	<div class="field">
-		<label class="label" for="notes-{ex?.id ?? 'new'}">Notas (opcional)</label>
+		<label class="label" for="notes-{ex?.id ?? 'new'}">Notes (optional)</label>
 		<input
 			id="notes-{ex?.id ?? 'new'}"
 			name="notes"
 			class="input"
-			placeholder="Agarre, máquina, tempo…"
+			placeholder="Grip, machine, tempo…"
 			value={ex?.notes ?? ''}
 		/>
 	</div>
@@ -102,16 +102,16 @@
 	>
 		{@render fields(null)}
 		<div class="form-actions">
-			<button type="button" class="btn btn-subtle" onclick={closeForms}>Cancelar</button>
-			<button type="submit" class="btn btn-primary"><Icon name="check" size={16} /> Guardar</button>
+			<button type="button" class="btn btn-subtle" onclick={closeForms}>Cancel</button>
+			<button type="submit" class="btn btn-primary"><Icon name="check" size={16} /> Save</button>
 		</div>
 	</form>
 {/if}
 
 {#if data.exercises.length === 0 && !showNew}
-	<EmptyState icon="dumbbell" title="Sin ejercicios" message="Crea tu primer ejercicio para empezar a armar rutinas.">
+	<EmptyState icon="dumbbell" title="No exercises yet" message="Create your first exercise to start building routines.">
 		<button class="btn btn-primary" onclick={startNew}>
-			<Icon name="plus" size={16} stroke={2.5} /> Nuevo ejercicio
+			<Icon name="plus" size={16} stroke={2.5} /> New exercise
 		</button>
 	</EmptyState>
 {:else}
@@ -136,14 +136,14 @@
 							formnovalidate
 							class="btn btn-danger"
 							onclick={(e) => {
-								if (!confirm(`¿Eliminar "${ex.name}"?`)) e.preventDefault();
+								if (!confirm(`Delete "${ex.name}"?`)) e.preventDefault();
 							}}
 						>
-							<Icon name="trash" size={15} /> Eliminar
+							<Icon name="trash" size={15} /> Delete
 						</button>
 						<div class="spacer"></div>
-						<button type="button" class="btn btn-subtle" onclick={closeForms}>Cancelar</button>
-						<button type="submit" class="btn btn-primary"><Icon name="check" size={16} /> Guardar</button>
+						<button type="button" class="btn btn-subtle" onclick={closeForms}>Cancel</button>
+						<button type="submit" class="btn btn-primary"><Icon name="check" size={16} /> Save</button>
 					</div>
 				</form>
 			{:else}
@@ -155,7 +155,7 @@
 							{#if ex.notes}<span class="muted row-notes">{ex.notes}</span>{/if}
 						</div>
 					</div>
-					<button class="icon-action" aria-label="Editar" onclick={() => startEdit(ex)}>
+					<button class="icon-action" aria-label="Edit" onclick={() => startEdit(ex)}>
 						<Icon name="pencil" size={16} />
 					</button>
 				</div>

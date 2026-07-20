@@ -15,15 +15,15 @@ export const load: PageServerLoad = async ({ params }) => {
 		getExercises(),
 		getRoutines()
 	]);
-	if (!session) throw error(404, 'Sesión no encontrada');
+	if (!session) throw error(404, 'Session not found');
 	return { session, exercises, routines };
 };
 
 export const actions: Actions = {
 	update: async ({ request, params }) => {
 		const parsed = parseSessionForm(await request.formData());
-		if (!parsed.date) return fail(400, { error: 'Falta la fecha' });
-		if (parsed.entries.length === 0) return fail(400, { error: 'Añade al menos un ejercicio con reps' });
+		if (!parsed.date) return fail(400, { error: 'Date is required' });
+		if (parsed.entries.length === 0) return fail(400, { error: 'Add at least one exercise with reps' });
 		await updateSession(params.id, parsed);
 		throw redirect(303, '/');
 	},

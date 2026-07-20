@@ -16,7 +16,7 @@ import {
 	type Weekday
 } from '$lib/types';
 
-// ---- Mappers (Doc → tipo cliente) ----
+// ---- Mappers (Doc → client type) ----
 
 function mapExercise(d: ExerciseDoc): Exercise {
 	return { id: d._id.toString(), name: d.name, muscleGroup: d.muscleGroup, notes: d.notes };
@@ -45,7 +45,7 @@ function mapSession(d: SessionDoc): Session {
 	};
 }
 
-// ---- Ejercicios ----
+// ---- Exercises ----
 
 export async function getExercises(): Promise<Exercise[]> {
 	const { exercises } = await collections();
@@ -93,11 +93,11 @@ export async function deleteExercise(id: string): Promise<void> {
 	if (!_id) return;
 	const { exercises, routines } = await collections();
 	await exercises.deleteOne({ _id });
-	// Quita el ejercicio de cualquier rutina que lo tenga asignado.
+	// Remove the exercise from any routine that has it assigned.
 	await routines.updateMany({ exerciseIds: _id }, { $pull: { exerciseIds: _id } });
 }
 
-// ---- Rutinas ----
+// ---- Routines ----
 
 export async function getRoutines(): Promise<Routine[]> {
 	const { routines } = await collections();
@@ -154,7 +154,7 @@ export async function deleteRoutine(id: string): Promise<void> {
 	if (!_id) return;
 	const { routines, schedule } = await collections();
 	await routines.deleteOne({ _id });
-	// Limpia el calendario semanal donde apuntaba a esta rutina.
+	// Clear the weekly calendar wherever it pointed to this routine.
 	const doc = await schedule.findOne({ _id: 'weekly' });
 	if (doc) {
 		const days: Record<Weekday, string | null> = { ...emptySchedule(), ...doc.days };
@@ -169,7 +169,7 @@ export async function deleteRoutine(id: string): Promise<void> {
 	}
 }
 
-// ---- Calendario semanal ----
+// ---- Weekly calendar ----
 
 function emptySchedule(): Schedule {
 	return { mon: null, tue: null, wed: null, thu: null, fri: null, sat: null, sun: null };
@@ -190,7 +190,7 @@ export async function setScheduleDay(day: Weekday, routineId: string | null): Pr
 	await schedule.updateOne({ _id: 'weekly' }, { $set: { days } }, { upsert: true });
 }
 
-// ---- Sesiones ----
+// ---- Sessions ----
 
 export async function getSessions(): Promise<Session[]> {
 	const { sessions } = await collections();

@@ -1,40 +1,40 @@
-// Tipos que viajan al cliente (serializables — ids como string).
+// Types that travel to the client (serializable — ids as strings).
 
-/** Unidad de peso usada en toda la app. */
+/** Weight unit used across the whole app. */
 export const UNIT = 'lb';
 
 export const WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 export type Weekday = (typeof WEEKDAYS)[number];
 
 export const WEEKDAY_LABELS: Record<Weekday, string> = {
-	mon: 'Lunes',
-	tue: 'Martes',
-	wed: 'Miércoles',
-	thu: 'Jueves',
-	fri: 'Viernes',
-	sat: 'Sábado',
-	sun: 'Domingo'
+	mon: 'Monday',
+	tue: 'Tuesday',
+	wed: 'Wednesday',
+	thu: 'Thursday',
+	fri: 'Friday',
+	sat: 'Saturday',
+	sun: 'Sunday'
 };
 
 export const WEEKDAY_SHORT: Record<Weekday, string> = {
-	mon: 'Lun',
-	tue: 'Mar',
-	wed: 'Mié',
-	thu: 'Jue',
-	fri: 'Vie',
-	sat: 'Sáb',
-	sun: 'Dom'
+	mon: 'Mon',
+	tue: 'Tue',
+	wed: 'Wed',
+	thu: 'Thu',
+	fri: 'Fri',
+	sat: 'Sat',
+	sun: 'Sun'
 };
 
-// Paleta de acentos permitidos para rutinas (todos armonizan con el tema oscuro/amarillo).
+// Allowed accent palette for routines (all harmonize with the dark/yellow theme).
 export const ROUTINE_COLORS = [
-	'#EAB308', // amarillo (default)
-	'#F97316', // naranja
-	'#EF4444', // rojo
-	'#22C55E', // verde
-	'#3B82F6', // azul
-	'#A855F7', // púrpura
-	'#EC4899', // rosa
+	'#EAB308', // yellow (default)
+	'#F97316', // orange
+	'#EF4444', // red
+	'#22C55E', // green
+	'#3B82F6', // blue
+	'#A855F7', // purple
+	'#EC4899', // pink
 	'#14B8A6' // teal
 ] as const;
 
@@ -73,22 +73,22 @@ export interface Session {
 
 export type Schedule = Record<Weekday, string | null>;
 
-// ---- Sobrecarga progresiva ----
+// ---- Progressive overload ----
 
 export interface WeeklyStat {
-	weekKey: string; // ej "2026-W29"
-	weekStart: string; // YYYY-MM-DD (lunes)
-	label: string; // ej "14 jul"
-	topWeight: number; // peso del mejor set
-	topReps: number; // reps a ese peso
-	bestE1rm: number; // 1RM estimado (Epley) máximo de la semana
-	totalVolume: number; // Σ peso × reps
+	weekKey: string; // e.g. "2026-W29"
+	weekStart: string; // YYYY-MM-DD (Monday)
+	label: string; // e.g. "Jul 14"
+	topWeight: number; // weight of the best set
+	topReps: number; // reps at that weight
+	bestE1rm: number; // estimated 1RM (Epley), max of the week
+	totalVolume: number; // Σ weight × reps
 	totalSets: number;
 	totalReps: number;
 	sessions: number;
 }
 
-export type Verdict = 'peso' | 'reps' | 'ambos' | 'volumen' | 'igual' | 'baja' | 'nuevo';
+export type Verdict = 'weight' | 'reps' | 'both' | 'volume' | 'same' | 'down' | 'new';
 
 export interface Delta {
 	weight: number;

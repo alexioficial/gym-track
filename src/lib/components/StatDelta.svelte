@@ -4,7 +4,7 @@
 	interface Props {
 		value: number;
 		unit?: string;
-		/** Cuando es 0, ¿mostrar como neutro? */
+		/** When 0, show it as neutral? */
 		neutralOnZero?: boolean;
 	}
 	let { value, unit = '', neutralOnZero = true }: Props = $props();
