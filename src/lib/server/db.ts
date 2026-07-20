@@ -13,12 +13,19 @@ export interface ExerciseDoc {
 	updatedAt: Date;
 }
 
+export interface RoutineExerciseDoc {
+	exerciseId: ObjectId;
+	sets: number;
+}
+
 export interface RoutineDoc {
 	_id: ObjectId;
 	name: string;
 	color: string;
 	order: number;
-	exerciseIds: ObjectId[];
+	exercises: RoutineExerciseDoc[];
+	/** Legacy shape: older docs stored plain ids without a set count. */
+	exerciseIds?: ObjectId[];
 	createdAt: Date;
 	updatedAt: Date;
 }

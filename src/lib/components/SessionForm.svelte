@@ -26,12 +26,12 @@
 				sets: e.sets.map((s) => ({ id: nextId(), weight: s.weight, reps: s.reps }))
 			}));
 		}
-		// When creating with a preselected routine, preload its exercises.
+		// When creating with a preselected routine, preload its exercises + planned sets.
 		const routine = routines.find((r) => r.id === initialRoutineId);
 		if (routine) {
-			return routine.exerciseIds
-				.filter((id) => exercises.some((e) => e.id === id))
-				.map((id) => ({ exerciseId: id, sets: [{ id: nextId(), weight: null, reps: null }] }));
+			return routine.exercises
+				.filter((re) => exercises.some((e) => e.id === re.exerciseId))
+				.map(routineEntry);
 		}
 		return [];
 	}
@@ -50,8 +50,8 @@
 	// Exercises assigned to the selected routine that aren't in the session yet.
 	const missingFromRoutine = $derived(
 		selectedRoutine
-			? selectedRoutine.exerciseIds.filter(
-					(id) => exercises.some((e) => e.id === id) && !usedIds.has(id)
+			? selectedRoutine.exercises.filter(
+					(re) => exercises.some((e) => e.id === re.exerciseId) && !usedIds.has(re.exerciseId)
 				)
 			: []
 	);
@@ -76,18 +76,23 @@
 		pick = '';
 	}
 
-	function routineEntry(id: string): EditEntry {
-		return { exerciseId: id, sets: [{ id: nextId(), weight: null, reps: null }] };
+	// Build an entry with the routine's planned number of (empty) set rows.
+	function routineEntry(re: { exerciseId: string; sets: number }): EditEntry {
+		const n = Math.max(1, re.sets);
+		return {
+			exerciseId: re.exerciseId,
+			sets: Array.from({ length: n }, () => ({ id: nextId(), weight: null, reps: null }))
+		};
 	}
 
 	// Add the routine's exercises that aren't already in the session.
 	function loadRoutine() {
 		if (!selectedRoutine) return;
 		const used = new Set(entries.map((e) => e.exerciseId));
-		for (const id of selectedRoutine.exerciseIds) {
-			if (exercises.some((e) => e.id === id) && !used.has(id)) {
-				entries.push(routineEntry(id));
-				used.add(id);
+		for (const re of selectedRoutine.exercises) {
+			if (exercises.some((e) => e.id === re.exerciseId) && !used.has(re.exerciseId)) {
+				entries.push(routineEntry(re));
+				used.add(re.exerciseId);
 			}
 		}
 	}
@@ -96,9 +101,11 @@
 	// exactly this routine's exercises; otherwise just add the missing ones.
 	function onRoutineChange() {
 		if (!selectedRoutine) return;
-		const ids = selectedRoutine.exerciseIds.filter((id) => exercises.some((e) => e.id === id));
+		const list = selectedRoutine.exercises.filter((re) =>
+			exercises.some((e) => e.id === re.exerciseId)
+		);
 		if (!hasData) {
-			entries = ids.map(routineEntry);
+			entries = list.map(routineEntry);
 		} else {
 			loadRoutine();
 		}

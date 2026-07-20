@@ -4,12 +4,17 @@ import {
 	ObjectId,
 	type ExerciseDoc,
 	type RoutineDoc,
+	type RoutineExerciseDoc,
 	type SessionDoc
 } from './db';
 import {
+	DEFAULT_ROUTINE_SETS,
+	MAX_ROUTINE_SETS,
+	MIN_ROUTINE_SETS,
 	WEEKDAYS,
 	type Exercise,
 	type Routine,
+	type RoutineExercise,
 	type Schedule,
 	type Session,
 	type SessionEntry,
@@ -23,13 +28,28 @@ function mapExercise(d: ExerciseDoc): Exercise {
 }
 
 function mapRoutine(d: RoutineDoc): Routine {
+	// Prefer the structured `exercises`; fall back to legacy `exerciseIds`.
+	const exercises: RoutineExercise[] = d.exercises
+		? d.exercises.map((e) => ({ exerciseId: e.exerciseId.toString(), sets: e.sets }))
+		: (d.exerciseIds ?? []).map((x) => ({ exerciseId: x.toString(), sets: DEFAULT_ROUTINE_SETS }));
 	return {
 		id: d._id.toString(),
 		name: d.name,
 		color: d.color,
 		order: d.order,
-		exerciseIds: (d.exerciseIds ?? []).map((x) => x.toString())
+		exercises
 	};
+}
+
+function clampSets(n: number): number {
+	if (!Number.isFinite(n)) return DEFAULT_ROUTINE_SETS;
+	return Math.min(MAX_ROUTINE_SETS, Math.max(MIN_ROUTINE_SETS, Math.round(n)));
+}
+
+function toRoutineExerciseDocs(list: RoutineExercise[]): RoutineExerciseDoc[] {
+	return list
+		.map((e) => ({ exerciseId: toId(e.exerciseId), sets: clampSets(e.sets) }))
+		.filter((e): e is RoutineExerciseDoc => e.exerciseId !== null);
 }
 
 function mapSession(d: SessionDoc): Session {
@@ -93,7 +113,11 @@ export async function deleteExercise(id: string): Promise<void> {
 	if (!_id) return;
 	const { exercises, routines } = await collections();
 	await exercises.deleteOne({ _id });
-	// Remove the exercise from any routine that has it assigned.
+	// Remove the exercise from any routine that has it assigned (new + legacy shapes).
+	await routines.updateMany(
+		{ 'exercises.exerciseId': _id },
+		{ $pull: { exercises: { exerciseId: _id } } }
+	);
 	await routines.updateMany({ exerciseIds: _id }, { $pull: { exerciseIds: _id } });
 }
 
@@ -116,20 +140,17 @@ export async function getRoutine(id: string): Promise<Routine | null> {
 export async function createRoutine(data: {
 	name: string;
 	color: string;
-	exerciseIds?: string[];
+	exercises?: RoutineExercise[];
 }): Promise<void> {
 	const { routines } = await collections();
 	const count = await routines.countDocuments();
 	const now = new Date();
-	const exerciseIds = (data.exerciseIds ?? [])
-		.map(toId)
-		.filter((x): x is ObjectId => x !== null);
 	await routines.insertOne({
 		_id: new ObjectId(),
 		name: data.name,
 		color: data.color,
 		order: count,
-		exerciseIds,
+		exercises: toRoutineExerciseDocs(data.exercises ?? []),
 		createdAt: now,
 		updatedAt: now
 	});
@@ -137,15 +158,23 @@ export async function createRoutine(data: {
 
 export async function updateRoutine(
 	id: string,
-	data: { name: string; color: string; exerciseIds: string[] }
+	data: { name: string; color: string; exercises: RoutineExercise[] }
 ): Promise<void> {
 	const _id = toId(id);
 	if (!_id) return;
 	const { routines } = await collections();
-	const exerciseIds = data.exerciseIds.map(toId).filter((x): x is ObjectId => x !== null);
 	await routines.updateOne(
 		{ _id },
-		{ $set: { name: data.name, color: data.color, exerciseIds, updatedAt: new Date() } }
+		{
+			$set: {
+				name: data.name,
+				color: data.color,
+				exercises: toRoutineExerciseDocs(data.exercises),
+				updatedAt: new Date()
+			},
+			// Drop the legacy field once the routine is saved in the new shape.
+			$unset: { exerciseIds: '' }
+		}
 	);
 }
 

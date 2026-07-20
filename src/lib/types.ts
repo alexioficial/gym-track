@@ -45,12 +45,23 @@ export interface Exercise {
 	notes?: string;
 }
 
+/** Default number of planned sets when an exercise is added to a routine. */
+export const DEFAULT_ROUTINE_SETS = 3;
+/** Bounds for the planned-sets stepper. */
+export const MIN_ROUTINE_SETS = 1;
+export const MAX_ROUTINE_SETS = 10;
+
+export interface RoutineExercise {
+	exerciseId: string;
+	sets: number; // planned number of sets for this exercise
+}
+
 export interface Routine {
 	id: string;
 	name: string;
 	color: string;
 	order: number;
-	exerciseIds: string[];
+	exercises: RoutineExercise[];
 }
 
 export interface WorkoutSet {

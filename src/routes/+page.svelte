@@ -26,7 +26,7 @@
 	{#if data.today.routine}
 		<h1 class="hero-title">{data.today.routine.name}</h1>
 		<p class="muted hero-sub">
-			{data.today.routine.exerciseIds.length} exercises in this routine
+			{data.today.routine.exercises.length} exercises in this routine
 		</p>
 	{:else}
 		<h1 class="hero-title">Rest day</h1>

@@ -9,7 +9,13 @@ import {
 	setScheduleDay,
 	updateRoutine
 } from '$lib/server/repo';
-import { ROUTINE_COLORS, WEEKDAYS, type Weekday } from '$lib/types';
+import {
+	DEFAULT_ROUTINE_SETS,
+	ROUTINE_COLORS,
+	WEEKDAYS,
+	type RoutineExercise,
+	type Weekday
+} from '$lib/types';
 
 export const load: PageServerLoad = async () => {
 	const [routines, exercises, schedule] = await Promise.all([
@@ -24,14 +30,26 @@ function safeColor(value: string): string {
 	return (ROUTINE_COLORS as readonly string[]).includes(value) ? value : ROUTINE_COLORS[0];
 }
 
+function parseExercises(raw: FormDataEntryValue | null): RoutineExercise[] {
+	try {
+		const arr = JSON.parse(String(raw ?? '[]'));
+		if (!Array.isArray(arr)) return [];
+		return arr
+			.filter((x) => x && typeof x.exerciseId === 'string')
+			.map((x) => ({ exerciseId: x.exerciseId as string, sets: Number(x.sets) || DEFAULT_ROUTINE_SETS }));
+	} catch {
+		return [];
+	}
+}
+
 export const actions: Actions = {
 	create: async ({ request }) => {
 		const data = await request.formData();
 		const name = String(data.get('name') ?? '').trim();
 		const color = safeColor(String(data.get('color') ?? ''));
-		const exerciseIds = data.getAll('exerciseIds').map(String);
+		const exercises = parseExercises(data.get('exercises'));
 		if (!name) return fail(400, { error: 'Name is required' });
-		await createRoutine({ name, color, exerciseIds });
+		await createRoutine({ name, color, exercises });
 		return { success: true };
 	},
 
@@ -40,10 +58,10 @@ export const actions: Actions = {
 		const id = String(data.get('id') ?? '');
 		const name = String(data.get('name') ?? '').trim();
 		const color = safeColor(String(data.get('color') ?? ''));
-		const exerciseIds = data.getAll('exerciseIds').map(String);
+		const exercises = parseExercises(data.get('exercises'));
 		if (!id) return fail(400, { error: 'Missing id' });
 		if (!name) return fail(400, { error: 'Name is required' });
-		await updateRoutine(id, { name, color, exerciseIds });
+		await updateRoutine(id, { name, color, exercises });
 		return { success: true };
 	},
 

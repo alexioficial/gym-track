@@ -3,7 +3,15 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
-	import { ROUTINE_COLORS, WEEKDAYS, WEEKDAY_LABELS, type Routine } from '$lib/types';
+	import {
+		DEFAULT_ROUTINE_SETS,
+		MAX_ROUTINE_SETS,
+		MIN_ROUTINE_SETS,
+		ROUTINE_COLORS,
+		WEEKDAYS,
+		WEEKDAY_LABELS,
+		type Routine
+	} from '$lib/types';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -11,20 +19,48 @@
 	let showNew = $state(false);
 	let editingId = $state<string | null>(null);
 
+	// Assignment state for the currently open form: exerciseId -> planned sets.
+	// Only one form (create or edit) is open at a time, so a single map is enough.
+	let assignSets = $state<Record<string, number>>({});
+
 	const exerciseName = $derived(new Map(data.exercises.map((e) => [e.id, e.name])));
 	const routineById = $derived(new Map(data.routines.map((r) => [r.id, r])));
 
+	// Serialized for the hidden form field, in the exercise-list order.
+	const assignPayload = $derived(
+		data.exercises
+			.filter((e) => e.id in assignSets)
+			.map((e) => ({ exerciseId: e.id, sets: assignSets[e.id] }))
+	);
+
 	function startNew() {
 		editingId = null;
+		assignSets = {};
 		showNew = true;
 	}
 	function startEdit(id: string) {
 		showNew = false;
+		const r = routineById.get(id);
+		assignSets = r ? Object.fromEntries(r.exercises.map((e) => [e.exerciseId, e.sets])) : {};
 		editingId = id;
 	}
 	function close() {
 		showNew = false;
 		editingId = null;
+	}
+
+	function toggleExercise(id: string) {
+		if (id in assignSets) {
+			const { [id]: _drop, ...rest } = assignSets;
+			assignSets = rest;
+		} else {
+			assignSets = { ...assignSets, [id]: DEFAULT_ROUTINE_SETS };
+		}
+	}
+	function changeSets(id: string, delta: number) {
+		const current = assignSets[id] ?? DEFAULT_ROUTINE_SETS;
+		const next = Math.min(MAX_ROUTINE_SETS, Math.max(MIN_ROUTINE_SETS, current + delta));
+		assignSets = { ...assignSets, [id]: next };
 	}
 </script>
 
@@ -97,23 +133,44 @@
 	</div>
 
 	<div class="field">
-		<span class="label">Exercises in this routine</span>
+		<span class="label">Exercises & sets</span>
 		{#if data.exercises.length === 0}
 			<p class="muted hint">First create exercises in the <a href="/exercises" class="accent">Exercises</a> tab.</p>
 		{:else}
+			<input type="hidden" name="exercises" value={JSON.stringify(assignPayload)} />
 			<div class="checks">
 				{#each data.exercises as ex (ex.id)}
-					<label class="check">
-						<input
-							type="checkbox"
-							name="exerciseIds"
-							value={ex.id}
-							checked={routine?.exerciseIds.includes(ex.id) ?? false}
-						/>
-						<span class="check-box"><Icon name="check" size={13} stroke={3} /></span>
-						<span class="check-label">{ex.name}</span>
-						{#if ex.muscleGroup}<span class="muted check-mg">{ex.muscleGroup}</span>{/if}
-					</label>
+					{@const on = ex.id in assignSets}
+					<div class="check" class:on>
+						<button type="button" class="check-toggle" onclick={() => toggleExercise(ex.id)}>
+							<span class="check-box"><Icon name="check" size={13} stroke={3} /></span>
+							<span class="check-label">{ex.name}</span>
+							{#if ex.muscleGroup}<span class="muted check-mg">{ex.muscleGroup}</span>{/if}
+						</button>
+						{#if on}
+							<div class="stepper">
+								<button
+									type="button"
+									class="step"
+									aria-label="Fewer sets"
+									disabled={assignSets[ex.id] <= MIN_ROUTINE_SETS}
+									onclick={() => changeSets(ex.id, -1)}
+								>
+									<Icon name="minus" size={14} />
+								</button>
+								<span class="step-val stat-num">{assignSets[ex.id]}</span>
+								<button
+									type="button"
+									class="step"
+									aria-label="More sets"
+									disabled={assignSets[ex.id] >= MAX_ROUTINE_SETS}
+									onclick={() => changeSets(ex.id, 1)}
+								>
+									<Icon name="plus" size={14} />
+								</button>
+							</div>
+						{/if}
+					</div>
 				{/each}
 			</div>
 		{/if}
@@ -189,11 +246,14 @@
 								<Icon name="pencil" size={16} />
 							</button>
 						</div>
-						{#if routine.exerciseIds.length > 0}
+						{#if routine.exercises.length > 0}
 							<div class="chips">
-								{#each routine.exerciseIds as id (id)}
-									{#if exerciseName.has(id)}
-										<span class="chip">{exerciseName.get(id)}</span>
+								{#each routine.exercises as re (re.exerciseId)}
+									{#if exerciseName.has(re.exerciseId)}
+										<span class="chip">
+											{exerciseName.get(re.exerciseId)}
+											<span class="chip-sets">{re.sets}×</span>
+										</span>
 									{/if}
 								{/each}
 							</div>
@@ -305,30 +365,35 @@
 	.checks {
 		display: flex;
 		flex-direction: column;
-		gap: 0.35rem;
-		max-height: 15rem;
+		gap: 0.4rem;
+		max-height: 20rem;
 		overflow-y: auto;
 	}
 	.check {
 		display: flex;
 		align-items: center;
-		gap: 0.6rem;
-		padding: 0.5rem 0.6rem;
+		gap: 0.4rem;
+		padding: 0.25rem 0.4rem 0.25rem 0.25rem;
 		border-radius: 0.6rem;
 		background: var(--color-surface-2);
 		border: 1px solid transparent;
-		cursor: pointer;
 		transition: border-color 0.12s ease;
 	}
-	@media (hover: hover) {
-		.check:hover {
-			border-color: var(--color-border);
-		}
+	.check.on {
+		border-color: var(--color-border);
 	}
-	.check input {
-		position: absolute;
-		opacity: 0;
-		pointer-events: none;
+	.check-toggle {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		flex: 1;
+		min-width: 0;
+		padding: 0.35rem;
+		background: none;
+		border: none;
+		color: var(--color-text);
+		text-align: left;
+		cursor: pointer;
 	}
 	.check-box {
 		display: grid;
@@ -344,7 +409,7 @@
 			background 0.12s ease,
 			color 0.12s ease;
 	}
-	.check input:checked + .check-box {
+	.check.on .check-box {
 		background: var(--color-accent);
 		border-color: var(--color-accent);
 		color: #0a0a0a;
@@ -353,9 +418,55 @@
 		font-size: 0.9rem;
 		font-weight: 500;
 		flex: 1;
+		min-width: 0;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 	.check-mg {
 		font-size: 0.75rem;
+		flex-shrink: 0;
+	}
+
+	.stepper {
+		display: flex;
+		align-items: center;
+		gap: 0.3rem;
+		flex-shrink: 0;
+	}
+	.step {
+		display: grid;
+		place-items: center;
+		width: 2rem;
+		height: 2rem;
+		border-radius: 0.5rem;
+		background: var(--color-bg);
+		border: 1px solid var(--color-border);
+		color: var(--color-subtle);
+		cursor: pointer;
+		transition:
+			color 0.12s ease,
+			border-color 0.12s ease,
+			transform 0.1s ease;
+	}
+	@media (hover: hover) {
+		.step:hover:not(:disabled) {
+			color: var(--color-accent-bright);
+			border-color: var(--color-accent);
+		}
+	}
+	.step:active:not(:disabled) {
+		transform: scale(0.9);
+	}
+	.step:disabled {
+		opacity: 0.4;
+		cursor: default;
+	}
+	.step-val {
+		min-width: 1.1rem;
+		text-align: center;
+		font-weight: 700;
+		font-size: 0.95rem;
 	}
 
 	.form-actions {
@@ -400,6 +511,11 @@
 		background: var(--color-surface-2);
 		border: 1px solid var(--color-border);
 		color: var(--color-subtle);
+	}
+	.chip-sets {
+		font-weight: 700;
+		color: var(--color-accent-bright);
+		font-variant-numeric: tabular-nums;
 	}
 
 	.icon-action {
