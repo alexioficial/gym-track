@@ -1,0 +1,13 @@
+node_modules
+.svelte-kit
+build
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+.vscode
+.DS_Store
+Thumbs.db
+README.md
+*.log
