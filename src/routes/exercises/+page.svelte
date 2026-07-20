@@ -218,8 +218,8 @@
 	.icon-action {
 		display: grid;
 		place-items: center;
-		width: 2.1rem;
-		height: 2.1rem;
+		width: 2.5rem;
+		height: 2.5rem;
 		border-radius: 0.6rem;
 		background: var(--color-surface-2);
 		border: 1px solid var(--color-border);
@@ -228,10 +228,17 @@
 		flex-shrink: 0;
 		transition:
 			color 0.15s ease,
-			border-color 0.15s ease;
+			border-color 0.15s ease,
+			transform 0.1s ease;
 	}
-	.icon-action:hover {
+	@media (hover: hover) {
+		.icon-action:hover {
+			color: var(--color-accent-bright);
+			border-color: var(--color-accent);
+		}
+	}
+	.icon-action:active {
+		transform: scale(0.92);
 		color: var(--color-accent-bright);
-		border-color: var(--color-accent);
 	}
 </style>

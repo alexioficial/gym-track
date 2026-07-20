@@ -35,6 +35,8 @@
 	html {
 		background-color: var(--color-bg);
 		color: var(--color-text);
+		-webkit-text-size-adjust: 100%;
+		text-size-adjust: 100%;
 	}
 
 	body {
@@ -42,6 +44,8 @@
 		font-family: var(--font-sans);
 		-webkit-font-smoothing: antialiased;
 		text-rendering: optimizeLegibility;
+		overflow-x: hidden;
+		overscroll-behavior-y: none;
 		background:
 			radial-gradient(1200px 600px at 50% -10%, rgba(234, 179, 8, 0.06), transparent 70%),
 			var(--color-bg);
@@ -55,6 +59,23 @@
 	* {
 		scrollbar-width: thin;
 		scrollbar-color: var(--color-border) transparent;
+	}
+
+	/* Móvil: sin flash gris/azul al tocar, y sin delay de 300ms */
+	a,
+	button,
+	select,
+	input,
+	textarea,
+	label,
+	[role='button'] {
+		-webkit-tap-highlight-color: transparent;
+	}
+	a,
+	button,
+	select,
+	[role='button'] {
+		touch-action: manipulation;
 	}
 
 	h1,
@@ -88,11 +109,16 @@
 		transition:
 			border-color 0.15s ease,
 			background-color 0.15s ease,
-			transform 0.15s ease;
+			transform 0.12s ease;
 	}
-	.card-hover:hover {
-		border-color: color-mix(in srgb, var(--color-accent) 40%, var(--color-border));
-		background-color: var(--color-surface-2);
+	@media (hover: hover) {
+		.card-hover:hover {
+			border-color: color-mix(in srgb, var(--color-accent) 40%, var(--color-border));
+			background-color: var(--color-surface-2);
+		}
+	}
+	.card-hover:active {
+		transform: scale(0.99);
 	}
 
 	.btn {
@@ -102,6 +128,7 @@
 		gap: 0.5rem;
 		border-radius: 0.75rem;
 		padding: 0.65rem 1.1rem;
+		min-height: 2.75rem;
 		font-size: 0.9rem;
 		font-weight: 600;
 		line-height: 1;
@@ -111,6 +138,7 @@
 			background-color 0.15s ease,
 			border-color 0.15s ease,
 			color 0.15s ease,
+			transform 0.1s ease,
 			opacity 0.15s ease;
 		white-space: nowrap;
 		user-select: none;
@@ -119,13 +147,13 @@
 		opacity: 0.5;
 		cursor: not-allowed;
 	}
+	.btn:active:not(:disabled) {
+		transform: scale(0.97);
+	}
 
 	.btn-primary {
 		background-color: var(--color-accent);
 		color: #0a0a0a;
-	}
-	.btn-primary:hover {
-		background-color: var(--color-accent-bright);
 	}
 
 	.btn-ghost {
@@ -133,18 +161,10 @@
 		border-color: var(--color-border);
 		color: var(--color-text);
 	}
-	.btn-ghost:hover {
-		border-color: var(--color-accent);
-		color: var(--color-accent-bright);
-	}
 
 	.btn-subtle {
 		background-color: var(--color-surface-2);
 		color: var(--color-subtle);
-	}
-	.btn-subtle:hover {
-		background-color: var(--color-elevated);
-		color: var(--color-text);
 	}
 
 	.btn-danger {
@@ -152,8 +172,22 @@
 		border-color: color-mix(in srgb, var(--color-bad) 35%, transparent);
 		color: var(--color-bad);
 	}
-	.btn-danger:hover {
-		background-color: color-mix(in srgb, var(--color-bad) 12%, transparent);
+
+	@media (hover: hover) {
+		.btn-primary:hover {
+			background-color: var(--color-accent-bright);
+		}
+		.btn-ghost:hover {
+			border-color: var(--color-accent);
+			color: var(--color-accent-bright);
+		}
+		.btn-subtle:hover {
+			background-color: var(--color-elevated);
+			color: var(--color-text);
+		}
+		.btn-danger:hover {
+			background-color: color-mix(in srgb, var(--color-bad) 12%, transparent);
+		}
 	}
 
 	.input {
@@ -161,8 +195,9 @@
 		background-color: var(--color-surface-2);
 		border: 1px solid var(--color-border);
 		border-radius: 0.7rem;
-		padding: 0.6rem 0.8rem;
-		font-size: 0.95rem;
+		padding: 0.65rem 0.8rem;
+		/* 16px evita el zoom automático de iOS al enfocar */
+		font-size: 1rem;
 		color: var(--color-text);
 		transition:
 			border-color 0.15s ease,

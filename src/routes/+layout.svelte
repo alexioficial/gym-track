@@ -17,15 +17,17 @@
 {:else}
 	<div class="app">
 		<header class="topbar">
-			<a href="/" class="brand">
-				<span class="brand-mark"><Icon name="dumbbell" size={18} stroke={2.5} /></span>
-				<span class="brand-name">GYM<span class="accent">TRACK</span></span>
-			</a>
-			<form method="POST" action="/logout">
-				<button class="icon-btn" title="Salir" aria-label="Salir">
-					<Icon name="logout" size={18} />
-				</button>
-			</form>
+			<div class="topbar-inner">
+				<a href="/" class="brand">
+					<span class="brand-mark"><Icon name="dumbbell" size={18} stroke={2.5} /></span>
+					<span class="brand-name">GYM<span class="accent">TRACK</span></span>
+				</a>
+				<form method="POST" action="/logout">
+					<button class="icon-btn" title="Salir" aria-label="Salir">
+						<Icon name="logout" size={18} />
+					</button>
+				</form>
+			</div>
 		</header>
 
 		<main class="content">
@@ -41,13 +43,17 @@
 		position: sticky;
 		top: 0;
 		z-index: 30;
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 0.85rem 1.1rem;
+		padding: calc(0.85rem + env(safe-area-inset-top)) 1.1rem 0.85rem;
 		background: color-mix(in srgb, var(--color-bg) 78%, transparent);
 		backdrop-filter: blur(14px);
 		border-bottom: 1px solid var(--color-border-soft);
+	}
+	.topbar-inner {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		max-width: 44rem;
+		margin: 0 auto;
 	}
 	.brand {
 		display: flex;
@@ -73,8 +79,8 @@
 	.icon-btn {
 		display: grid;
 		place-items: center;
-		width: 2.2rem;
-		height: 2.2rem;
+		width: 2.6rem;
+		height: 2.6rem;
 		border-radius: 0.6rem;
 		background: transparent;
 		border: 1px solid var(--color-border);
@@ -82,15 +88,28 @@
 		cursor: pointer;
 		transition:
 			color 0.15s ease,
-			border-color 0.15s ease;
+			border-color 0.15s ease,
+			transform 0.1s ease;
 	}
-	.icon-btn:hover {
-		color: var(--color-accent-bright);
-		border-color: var(--color-accent);
+	@media (hover: hover) {
+		.icon-btn:hover {
+			color: var(--color-accent-bright);
+			border-color: var(--color-accent);
+		}
+	}
+	.icon-btn:active {
+		transform: scale(0.94);
 	}
 	.content {
-		max-width: 42rem;
+		max-width: 44rem;
 		margin: 0 auto;
-		padding: 1.5rem 1.1rem calc(6rem + env(safe-area-inset-bottom));
+		padding: 1.5rem 1.1rem calc(6.5rem + env(safe-area-inset-bottom));
+	}
+	@media (min-width: 768px) {
+		.content {
+			padding-top: 2rem;
+			padding-left: 1.5rem;
+			padding-right: 1.5rem;
+		}
 	}
 </style>

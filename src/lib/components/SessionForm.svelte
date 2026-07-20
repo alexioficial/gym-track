@@ -283,7 +283,7 @@
 	.set-head,
 	.set-row {
 		display: grid;
-		grid-template-columns: 1.6rem 1fr 1fr 2.2rem;
+		grid-template-columns: 1.6rem 1fr 1fr 2.75rem;
 		align-items: center;
 		gap: 0.5rem;
 	}
@@ -301,23 +301,33 @@
 	}
 	.set-input {
 		text-align: center;
-		padding: 0.55rem 0.4rem;
+		padding: 0.7rem 0.4rem;
 		font-size: 1rem;
 		font-variant-numeric: tabular-nums;
 	}
 	.set-del {
 		display: grid;
 		place-items: center;
-		height: 2.1rem;
+		height: 2.75rem;
 		border-radius: 0.55rem;
 		background: transparent;
 		border: 1px solid var(--color-border);
 		color: var(--color-muted);
 		cursor: pointer;
+		transition:
+			color 0.15s ease,
+			border-color 0.15s ease,
+			transform 0.1s ease;
 	}
-	.set-del:hover {
+	@media (hover: hover) {
+		.set-del:hover {
+			color: var(--color-bad);
+			border-color: color-mix(in srgb, var(--color-bad) 40%, transparent);
+		}
+	}
+	.set-del:active {
+		transform: scale(0.9);
 		color: var(--color-bad);
-		border-color: color-mix(in srgb, var(--color-bad) 40%, transparent);
 	}
 	.add-set {
 		margin-top: 0.75rem;
@@ -359,17 +369,27 @@
 	.icon-action {
 		display: grid;
 		place-items: center;
-		width: 2rem;
-		height: 2rem;
+		width: 2.5rem;
+		height: 2.5rem;
 		border-radius: 0.55rem;
 		background: var(--color-surface-2);
 		border: 1px solid var(--color-border);
 		color: var(--color-muted);
 		cursor: pointer;
 		flex-shrink: 0;
+		transition:
+			color 0.15s ease,
+			border-color 0.15s ease,
+			transform 0.1s ease;
 	}
-	.icon-action:hover {
+	@media (hover: hover) {
+		.icon-action:hover {
+			color: var(--color-bad);
+			border-color: color-mix(in srgb, var(--color-bad) 40%, transparent);
+		}
+	}
+	.icon-action:active {
+		transform: scale(0.9);
 		color: var(--color-bad);
-		border-color: color-mix(in srgb, var(--color-bad) 40%, transparent);
 	}
 </style>
