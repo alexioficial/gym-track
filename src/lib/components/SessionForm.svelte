@@ -47,6 +47,16 @@
 	const usedIds = $derived(new Set(entries.map((e) => e.exerciseId)));
 	const available = $derived(exercises.filter((e) => !usedIds.has(e.id)));
 	const selectedRoutine = $derived(routines.find((r) => r.id === routineId) ?? null);
+	// Exercises assigned to the selected routine that aren't in the session yet.
+	const missingFromRoutine = $derived(
+		selectedRoutine
+			? selectedRoutine.exerciseIds.filter(
+					(id) => exercises.some((e) => e.id === id) && !usedIds.has(id)
+				)
+			: []
+	);
+	// Any set with a value typed in — used to decide whether it's safe to replace entries.
+	const hasData = $derived(entries.some((e) => e.sets.some((s) => s.weight != null || s.reps != null)));
 
 	const payload = $derived(
 		entries
@@ -66,12 +76,31 @@
 		pick = '';
 	}
 
+	function routineEntry(id: string): EditEntry {
+		return { exerciseId: id, sets: [{ id: nextId(), weight: null, reps: null }] };
+	}
+
+	// Add the routine's exercises that aren't already in the session.
 	function loadRoutine() {
 		if (!selectedRoutine) return;
+		const used = new Set(entries.map((e) => e.exerciseId));
 		for (const id of selectedRoutine.exerciseIds) {
-			if (!usedIds.has(id)) {
-				entries.push({ exerciseId: id, sets: [{ id: nextId(), weight: null, reps: null }] });
+			if (exercises.some((e) => e.id === id) && !used.has(id)) {
+				entries.push(routineEntry(id));
+				used.add(id);
 			}
+		}
+	}
+
+	// When picking a routine: if nothing has been typed yet, replace the list with
+	// exactly this routine's exercises; otherwise just add the missing ones.
+	function onRoutineChange() {
+		if (!selectedRoutine) return;
+		const ids = selectedRoutine.exerciseIds.filter((id) => exercises.some((e) => e.id === id));
+		if (!hasData) {
+			entries = ids.map(routineEntry);
+		} else {
+			loadRoutine();
 		}
 	}
 
@@ -102,16 +131,24 @@
 		</div>
 		<div class="field">
 			<label class="label" for="routine">Routine</label>
-			<select id="routine" name="routineId" class="input" bind:value={routineId}>
+			<select
+				id="routine"
+				name="routineId"
+				class="input"
+				bind:value={routineId}
+				onchange={onRoutineChange}
+			>
 				<option value="">Free session</option>
 				{#each routines as r (r.id)}
 					<option value={r.id}>{r.name}</option>
 				{/each}
 			</select>
 		</div>
-		{#if selectedRoutine}
+		{#if selectedRoutine && missingFromRoutine.length > 0}
 			<button type="button" class="btn btn-ghost load-btn" onclick={loadRoutine}>
-				<Icon name="plus" size={15} stroke={2.5} /> Load exercises from {selectedRoutine.name}
+				<Icon name="plus" size={15} stroke={2.5} />
+				Add {missingFromRoutine.length}
+				{missingFromRoutine.length === 1 ? 'exercise' : 'exercises'} from {selectedRoutine.name}
 			</button>
 		{/if}
 	</div>
