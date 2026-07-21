@@ -12,10 +12,59 @@ import type {
 	WorkoutSet
 } from '$lib/types';
 
-/** Estimated 1RM with the Epley formula. Reliable in the 2–10 rep range. */
+// ---- 1RM estimation ----
+//
+// Estimating a true 1RM from a submaximal set carries a ~5–10% error, and every
+// formula is biased in its own direction (Epley reads high below 10 reps, Brzycki
+// low — they agree exactly at 10). Research consensus: estimates are only reliable
+// up to ~10–12 reps, and AVERAGING several validated formulas beats trusting any
+// single one. So instead of raw Epley we average five classic equations and clamp
+// the rep count into the reliable range.
+//   - https://arvo.guru/resources/one-rep-max-formulas
+//   - "Accuracy of Seven Equations for Predicting 1RM" (best at 3–8 reps, poor >12)
+
+/** Reps above this are unreliable for 1RM estimation, so they get clamped here. */
+export const MAX_RELIABLE_REPS = 12;
+
+/** Epley: reads slightly high below 10 reps. */
 export function epley1RM(weight: number, reps: number): number {
-	if (weight <= 0 || reps <= 0) return 0;
 	return weight * (1 + reps / 30);
+}
+/** Brzycki: reads slightly low below 10 reps; equals Epley exactly at 10. */
+function brzycki1RM(weight: number, reps: number): number {
+	return weight * (36 / (37 - reps));
+}
+/** Lombardi: simple power curve. */
+function lombardi1RM(weight: number, reps: number): number {
+	return weight * Math.pow(reps, 0.1);
+}
+/** Lander. */
+function lander1RM(weight: number, reps: number): number {
+	return (100 * weight) / (101.3 - 2.67123 * reps);
+}
+/** O'Conner: conservative linear estimate (0.025 = 1/40). */
+function oconner1RM(weight: number, reps: number): number {
+	return weight * (1 + reps / 40);
+}
+
+/**
+ * Estimated 1RM for a single set: the average of five validated formulas, which
+ * cancels the individual bias of any one of them. A single rep is already a max
+ * (returned as-is); reps beyond the reliable range are clamped so a light,
+ * high-rep burnout set can't inflate the estimate.
+ */
+export function estimate1RM(weight: number, reps: number): number {
+	if (weight <= 0 || reps <= 0) return 0;
+	if (reps === 1) return weight;
+	const r = Math.min(reps, MAX_RELIABLE_REPS);
+	const estimates = [
+		epley1RM(weight, r),
+		brzycki1RM(weight, r),
+		lombardi1RM(weight, r),
+		lander1RM(weight, r),
+		oconner1RM(weight, r)
+	];
+	return estimates.reduce((a, b) => a + b, 0) / estimates.length;
 }
 
 /** Total volume of a list of sets: Σ (weight × reps). */
@@ -126,7 +175,8 @@ export function weeklyStatsForExercise(sessions: Session[], exerciseId: string):
 		if (bucket.sets.length === 0) continue;
 		const start = weekStart(bucket.date);
 		const top = topSet(bucket.sets);
-		const bestE1rm = bucket.sets.reduce((max, s) => Math.max(max, epley1RM(s.weight, s.reps)), 0);
+		// Best robust estimate across every set logged that week (not just one set).
+		const bestE1rm = bucket.sets.reduce((max, s) => Math.max(max, estimate1RM(s.weight, s.reps)), 0);
 		weeks.push({
 			weekKey,
 			weekStart: start,
@@ -136,7 +186,7 @@ export function weeklyStatsForExercise(sessions: Session[], exerciseId: string):
 			bestE1rm: round(bestE1rm),
 			totalVolume: round(volume(bucket.sets)),
 			totalSets: bucket.sets.length,
-			totalReps: bucket.sets.reduce((acc, s) => acc + s.reps, 0),
+			totalReps: round(bucket.sets.reduce((acc, s) => acc + s.reps, 0)),
 			sessions: bucket.sessionDates.size
 		});
 	}
@@ -161,7 +211,7 @@ export function weekOverWeekDelta(prev: WeeklyStat | null, curr: WeeklyStat): De
 	}
 
 	const dWeight = round(curr.topWeight - prev.topWeight);
-	const dReps = curr.topReps - prev.topReps;
+	const dReps = round(curr.topReps - prev.topReps);
 	const dVolume = round(curr.totalVolume - prev.totalVolume);
 	const dE1rm = round(curr.bestE1rm - prev.bestE1rm);
 

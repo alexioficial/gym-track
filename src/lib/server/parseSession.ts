@@ -22,7 +22,8 @@ export function parseSessionForm(data: FormData): {
 							const so = s as { weight?: unknown; reps?: unknown };
 							return {
 								weight: Math.max(0, Number(so.weight) || 0),
-								reps: Math.max(0, Math.round(Number(so.reps) || 0))
+								// Reps allow one decimal so a partial "half rep" can be logged (e.g. 5.5).
+								reps: Math.max(0, Math.round((Number(so.reps) || 0) * 10) / 10)
 							};
 						})
 					: [];

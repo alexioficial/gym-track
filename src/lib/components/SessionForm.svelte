@@ -294,8 +294,8 @@
 							/>
 							<input
 								type="number"
-								inputmode="numeric"
-								step="1"
+								inputmode="decimal"
+								step="0.5"
 								min="0"
 								class="input set-input"
 								placeholder="0"

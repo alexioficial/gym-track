@@ -16,7 +16,7 @@ more volume).
 For each exercise, we group your sets by **week** and compute:
 
 - **Volume** = Σ (weight × reps) of all sets.
-- **e1RM (estimated 1RM)** with the **Epley** formula: `1RM = weight × (1 + reps / 30)` — a good approximation in the 2–10 rep range.
+- **e1RM (estimated 1RM)** = the **average of five validated formulas** (Epley, Brzycki, Lombardi, Lander, O'Conner), taken from your best set of the week. Averaging cancels each formula's individual bias, and reps are only trusted up to ~12 (beyond that the estimate is clamped, since accuracy drops sharply). Most accurate at 3–8 reps.
 - **Top set** = your best set (heaviest weight, and the reps at that weight).
 
 We compare the latest week against the previous one and give you a verdict: **more weight**, **more reps**, **both**,

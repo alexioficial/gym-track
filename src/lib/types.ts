@@ -92,7 +92,7 @@ export interface WeeklyStat {
 	label: string; // e.g. "Jul 14"
 	topWeight: number; // weight of the best set
 	topReps: number; // reps at that weight
-	bestE1rm: number; // estimated 1RM (Epley), max of the week
+	bestE1rm: number; // estimated 1RM: best set of the week, averaged across validated formulas
 	totalVolume: number; // Σ weight × reps
 	totalSets: number;
 	totalReps: number;
