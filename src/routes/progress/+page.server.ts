@@ -1,21 +1,18 @@
 import type { PageServerLoad } from './$types';
-import { getExercises, getSessions } from '$lib/server/repo';
-import { buildExerciseProgress } from '$lib/utils/progression';
+import { getExercises, getRoutines, getSessions } from '$lib/server/repo';
+import { buildExerciseProgress, buildWeeklyRecap, groupProgressByRoutine } from '$lib/utils/progression';
 
 export const load: PageServerLoad = async () => {
-	const [exercises, sessions] = await Promise.all([getExercises(), getSessions()]);
+	const [exercises, routines, sessions] = await Promise.all([
+		getExercises(),
+		getRoutines(),
+		getSessions()
+	]);
 	const progress = buildExerciseProgress(sessions, exercises);
 
-	const tracked = progress
-		.filter((p) => p.weeks.length > 0)
-		.sort((a, b) => {
-			const aw = a.latest?.weekKey ?? '';
-			const bw = b.latest?.weekKey ?? '';
-			if (aw !== bw) return aw < bw ? 1 : -1;
-			return a.exercise.name.localeCompare(b.exercise.name);
-		});
-
+	const groups = groupProgressByRoutine(progress, routines);
+	const recap = buildWeeklyRecap(progress);
 	const untracked = progress.filter((p) => p.weeks.length === 0).map((p) => p.exercise);
 
-	return { tracked, untracked };
+	return { groups, recap, untracked };
 };

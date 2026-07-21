@@ -2,8 +2,12 @@ import type {
 	Delta,
 	Exercise,
 	ExerciseProgress,
+	ProgressGroup,
+	Routine,
 	Session,
 	Verdict,
+	WeeklyRecap,
+	WeeklyRecapItem,
 	WeeklyStat,
 	WorkoutSet
 } from '$lib/types';
@@ -43,6 +47,12 @@ function pad(n: number): string {
 
 function toYmd(d: Date): string {
 	return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function addDays(ymd: string, n: number): string {
+	const d = parseDate(ymd);
+	d.setDate(d.getDate() + n);
+	return toYmd(d);
 }
 
 /** Monday of the week that contains `ymd`. */
@@ -191,3 +201,112 @@ export const VERDICT_LABEL: Record<Verdict, string> = {
 	down: 'Down',
 	new: 'First week'
 };
+
+/**
+ * Groups tracked exercises under the routine they belong to, respecting routine
+ * order and each routine's own exercise order. Every exercise appears once (under
+ * the first routine that contains it); anything not in a routine falls into a
+ * trailing `null` group. Untracked exercises (no logged data) are left out.
+ */
+export function groupProgressByRoutine(
+	progress: ExerciseProgress[],
+	routines: Routine[]
+): ProgressGroup[] {
+	const tracked = progress.filter((p) => p.weeks.length > 0);
+	const byId = new Map(tracked.map((p) => [p.exercise.id, p]));
+	const assigned = new Set<string>();
+	const groups: ProgressGroup[] = [];
+
+	const sorted = [...routines].sort((a, b) => a.order - b.order);
+	for (const r of sorted) {
+		const items: ExerciseProgress[] = [];
+		for (const re of r.exercises) {
+			if (assigned.has(re.exerciseId)) continue;
+			const p = byId.get(re.exerciseId);
+			if (p) {
+				items.push(p);
+				assigned.add(re.exerciseId);
+			}
+		}
+		if (items.length > 0) {
+			groups.push({ routine: { id: r.id, name: r.name, color: r.color }, items });
+		}
+	}
+
+	const others = tracked
+		.filter((p) => !assigned.has(p.exercise.id))
+		.sort((a, b) => {
+			const aw = a.latest?.weekKey ?? '';
+			const bw = b.latest?.weekKey ?? '';
+			if (aw !== bw) return aw < bw ? 1 : -1;
+			return a.exercise.name.localeCompare(b.exercise.name);
+		});
+	if (others.length > 0) groups.push({ routine: null, items: others });
+
+	return groups;
+}
+
+/**
+ * Compares the most recent populated week against the previous populated week,
+ * per exercise. Only exercises with data in BOTH weeks are included. Returns
+ * `null` when there aren't two populated weeks that share at least one exercise
+ * (i.e. not enough data to compare) — the screen then shows nothing.
+ */
+export function buildWeeklyRecap(progress: ExerciseProgress[]): WeeklyRecap | null {
+	const weekStarts = new Map<string, string>();
+	for (const p of progress) {
+		for (const w of p.weeks) weekStarts.set(w.weekKey, w.weekStart);
+	}
+	if (weekStarts.size < 2) return null;
+
+	const keys = [...weekStarts.keys()].sort((a, b) => (a < b ? 1 : a > b ? -1 : 0)); // newest first
+	const currKey = keys[0];
+	const prevKey = keys[1];
+
+	const items: WeeklyRecapItem[] = [];
+	for (const p of progress) {
+		const curr = p.weeks.find((w) => w.weekKey === currKey);
+		const prev = p.weeks.find((w) => w.weekKey === prevKey);
+		if (!curr || !prev) continue; // needs data in both weeks to be comparable
+		const d = weekOverWeekDelta(prev, curr);
+		items.push({
+			exerciseId: p.exercise.id,
+			name: p.exercise.name,
+			muscleGroup: p.exercise.muscleGroup,
+			verdict: d.verdict,
+			weight: d.weight,
+			reps: d.reps,
+			e1rm: d.e1rm,
+			volume: d.volume,
+			prevTopWeight: prev.topWeight,
+			prevTopReps: prev.topReps,
+			currTopWeight: curr.topWeight,
+			currTopReps: curr.topReps,
+			prevE1rm: prev.bestE1rm,
+			currE1rm: curr.bestE1rm
+		});
+	}
+	if (items.length === 0) return null;
+
+	const rank = (v: Verdict) => (IMPROVEMENT_VERDICTS.includes(v) ? 0 : v === 'same' ? 1 : 2);
+	items.sort((a, b) => rank(a.verdict) - rank(b.verdict) || b.e1rm - a.e1rm);
+
+	const improved = items.filter((i) => IMPROVEMENT_VERDICTS.includes(i.verdict)).length;
+	const down = items.filter((i) => i.verdict === 'down').length;
+	const same = items.length - improved - down;
+
+	const currStart = weekStarts.get(currKey) as string;
+	const prevStart = weekStarts.get(prevKey) as string;
+	const isThisWeek = currKey === isoWeekKey(todayYmd());
+
+	return {
+		weekKey: currKey,
+		label: isThisWeek ? 'This week' : `Week of ${shortLabel(currStart)}`,
+		rangeLabel: `${shortLabel(currStart)} – ${shortLabel(addDays(currStart, 6))}`,
+		prevLabel: `vs week of ${shortLabel(prevStart)}`,
+		improved,
+		same,
+		down,
+		items
+	};
+}

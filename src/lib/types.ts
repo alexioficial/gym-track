@@ -116,3 +116,39 @@ export interface ExerciseProgress {
 	previous: WeeklyStat | null;
 	delta: Delta | null;
 }
+
+/** Tracked exercises grouped under the routine they belong to (null = no routine). */
+export interface ProgressGroup {
+	routine: { id: string; name: string; color: string } | null;
+	items: ExerciseProgress[];
+}
+
+/** One exercise's change between the recap week and the previous week. */
+export interface WeeklyRecapItem {
+	exerciseId: string;
+	name: string;
+	muscleGroup: string;
+	verdict: Verdict;
+	weight: number;
+	reps: number;
+	e1rm: number;
+	volume: number;
+	prevTopWeight: number;
+	prevTopReps: number;
+	currTopWeight: number;
+	currTopReps: number;
+	prevE1rm: number;
+	currE1rm: number;
+}
+
+/** Whole-week comparison: latest populated week vs the previous populated week. */
+export interface WeeklyRecap {
+	weekKey: string;
+	label: string; // "This week" or "Week of Jul 14"
+	rangeLabel: string; // "Jul 14 – Jul 20"
+	prevLabel: string; // "vs week of Jul 7"
+	improved: number;
+	same: number;
+	down: number;
+	items: WeeklyRecapItem[];
+}
