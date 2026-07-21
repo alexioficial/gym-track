@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { onMount } from 'svelte';
+	import { browser } from '$app/environment';
 	import Icon from './Icon.svelte';
 	import { UNIT, type Exercise, type Routine, type Session } from '$lib/types';
 	import { todayYmd } from '$lib/utils/progression';
@@ -70,6 +72,78 @@
 	);
 	const canSave = $derived(payload.length > 0 && !!date);
 
+	// ---- Draft autosave (create mode only) ----
+	// The gym is used on a phone: if the screen is left mid-log (navigate away,
+	// app backgrounded, tab reloaded) the in-memory state would be lost. We mirror
+	// the working session to localStorage as it changes and restore it on return.
+	const DRAFT_KEY = 'gym:log-draft';
+	const DRAFT_MAX_AGE = 1000 * 60 * 60 * 24 * 2; // ignore drafts older than 2 days
+	let loaded = $state(false);
+	let draftRecovered = $state(false);
+
+	function clearDraft() {
+		draftRecovered = false;
+		if (browser) localStorage.removeItem(DRAFT_KEY);
+	}
+
+	function discardDraft() {
+		clearDraft();
+		date = todayYmd();
+		routineId = initialRoutineId ?? '';
+		notes = '';
+		entries = initEntries();
+		pick = '';
+	}
+
+	onMount(() => {
+		if (mode !== 'create') {
+			loaded = true;
+			return;
+		}
+		try {
+			const raw = localStorage.getItem(DRAFT_KEY);
+			if (raw) {
+				const d = JSON.parse(raw);
+				const fresh = d && typeof d.savedAt === 'number' && Date.now() - d.savedAt < DRAFT_MAX_AGE;
+				const restored: EditEntry[] = Array.isArray(d?.entries)
+					? d.entries
+							.filter((e: EditEntry) => e && exercises.some((x) => x.id === e.exerciseId))
+							.map((e: EditEntry) => ({
+								exerciseId: String(e.exerciseId),
+								sets: (Array.isArray(e.sets) ? e.sets : []).map((s: EditSet) => ({
+									id: nextId(),
+									weight: s?.weight ?? null,
+									reps: s?.reps ?? null
+								}))
+							}))
+					: [];
+				const typed = restored.some((e) => e.sets.some((s) => s.weight != null || s.reps != null));
+				if (fresh && typed) {
+					if (typeof d.date === 'string') date = d.date;
+					if (typeof d.routineId === 'string') routineId = d.routineId;
+					if (typeof d.notes === 'string') notes = d.notes;
+					entries = restored;
+					draftRecovered = true;
+				} else {
+					localStorage.removeItem(DRAFT_KEY);
+				}
+			}
+		} catch {
+			// ignore a corrupt draft
+		}
+		loaded = true;
+	});
+
+	$effect(() => {
+		if (mode !== 'create' || !browser) return;
+		// Read reactive state so this effect re-runs when the working session changes.
+		const snapshot = JSON.stringify({ savedAt: Date.now(), date, routineId, notes, entries });
+		const meaningful = hasData;
+		if (!loaded) return; // don't write (or clobber) until the initial draft load ran
+		if (meaningful) localStorage.setItem(DRAFT_KEY, snapshot);
+		else localStorage.removeItem(DRAFT_KEY);
+	});
+
 	function addExercise(id: string) {
 		if (!id || usedIds.has(id)) return;
 		entries.push({ exerciseId: id, sets: [{ id: nextId(), weight: null, reps: null }] });
@@ -125,11 +199,29 @@
 	}
 </script>
 
-<form method="POST" action={mode === 'create' ? '?/create' : '?/update'} use:enhance>
+<form
+	method="POST"
+	action={mode === 'create' ? '?/create' : '?/update'}
+	use:enhance={() => {
+		return async ({ result, update }) => {
+			// A successful create/update leaves the page (redirect) — drop the draft.
+			if (result.type === 'redirect' || result.type === 'success') clearDraft();
+			await update();
+		};
+	}}
+>
 	{#if mode === 'edit' && session}
 		<input type="hidden" name="id" value={session.id} />
 	{/if}
 	<input type="hidden" name="entries" value={JSON.stringify(payload)} />
+
+	{#if draftRecovered}
+		<div class="draft-banner">
+			<Icon name="clipboard" size={16} />
+			<span class="draft-text">Recovered your unsaved session.</span>
+			<button type="button" class="draft-discard" onclick={discardDraft}>Discard</button>
+		</div>
+	{/if}
 
 	<div class="top card">
 		<div class="field">
@@ -274,6 +366,45 @@
 </form>
 
 <style>
+	.draft-banner {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.7rem 0.85rem;
+		margin-bottom: 1rem;
+		border-radius: 0.75rem;
+		background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface));
+		border: 1px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
+		color: var(--color-accent-bright);
+	}
+	.draft-text {
+		flex: 1;
+		font-size: 0.85rem;
+		font-weight: 600;
+	}
+	.draft-discard {
+		flex-shrink: 0;
+		padding: 0.35rem 0.7rem;
+		border-radius: 0.5rem;
+		background: transparent;
+		border: 1px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
+		color: var(--color-accent-bright);
+		font-size: 0.8rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition:
+			background 0.15s ease,
+			transform 0.1s ease;
+	}
+	@media (hover: hover) {
+		.draft-discard:hover {
+			background: color-mix(in srgb, var(--color-accent) 20%, transparent);
+		}
+	}
+	.draft-discard:active {
+		transform: scale(0.94);
+	}
+
 	.top {
 		padding: 1rem;
 		display: flex;
