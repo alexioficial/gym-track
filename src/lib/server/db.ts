@@ -4,8 +4,25 @@ import type { Weekday } from '$lib/types';
 
 // ---- Documents as stored in MongoDB ----
 
+export interface UserDoc {
+	_id: ObjectId;
+	username: string; // lowercased, unique; [a-z0-9._]
+	passwordHash: string;
+	isAdmin: boolean;
+	createdAt: Date;
+	updatedAt: Date;
+}
+
+export interface AuthSessionDoc {
+	_id: string; // random session id (also what the signed cookie carries)
+	userId: ObjectId;
+	expiresAt: Date;
+	createdAt: Date;
+}
+
 export interface ExerciseDoc {
 	_id: ObjectId;
+	userId: ObjectId;
 	name: string;
 	muscleGroup: string;
 	notes?: string;
@@ -20,6 +37,7 @@ export interface RoutineExerciseDoc {
 
 export interface RoutineDoc {
 	_id: ObjectId;
+	userId: ObjectId;
 	name: string;
 	color: string;
 	order: number;
@@ -42,6 +60,7 @@ export interface EntryDoc {
 
 export interface SessionDoc {
 	_id: ObjectId;
+	userId: ObjectId;
 	date: string; // YYYY-MM-DD
 	routineId: ObjectId | null;
 	notes?: string;
@@ -50,7 +69,8 @@ export interface SessionDoc {
 }
 
 export interface ScheduleDoc {
-	_id: string; // always "weekly"
+	_id: ObjectId | string; // per-user; legacy claimed doc may keep _id "weekly"
+	userId: ObjectId;
 	days: Record<Weekday, string | null>; // routineId (hex) or null
 }
 
@@ -73,10 +93,16 @@ let indexesReady: Promise<void> | null = null;
 
 async function ensureIndexes(db: Db): Promise<void> {
 	await Promise.all([
-		db.collection('sessions').createIndex({ date: -1 }),
-		db.collection('sessions').createIndex({ 'entries.exerciseId': 1 }),
-		db.collection('routines').createIndex({ order: 1 }),
-		db.collection('exercises').createIndex({ name: 1 })
+		// Auth
+		db.collection('users').createIndex({ username: 1 }, { unique: true }),
+		db.collection('auth_sessions').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
+		db.collection('auth_sessions').createIndex({ userId: 1 }),
+		// Per-user data
+		db.collection('sessions').createIndex({ userId: 1, date: -1 }),
+		db.collection('sessions').createIndex({ userId: 1, 'entries.exerciseId': 1 }),
+		db.collection('routines').createIndex({ userId: 1, order: 1 }),
+		db.collection('exercises').createIndex({ userId: 1, name: 1 }),
+		db.collection('schedule').createIndex({ userId: 1 }, { unique: true })
 	]);
 }
 
@@ -88,6 +114,8 @@ export async function getDb(): Promise<Db> {
 }
 
 export async function collections(): Promise<{
+	users: Collection<UserDoc>;
+	authSessions: Collection<AuthSessionDoc>;
 	exercises: Collection<ExerciseDoc>;
 	routines: Collection<RoutineDoc>;
 	sessions: Collection<SessionDoc>;
@@ -95,6 +123,8 @@ export async function collections(): Promise<{
 }> {
 	const db = await getDb();
 	return {
+		users: db.collection<UserDoc>('users'),
+		authSessions: db.collection<AuthSessionDoc>('auth_sessions'),
 		exercises: db.collection<ExerciseDoc>('exercises'),
 		routines: db.collection<RoutineDoc>('routines'),
 		sessions: db.collection<SessionDoc>('sessions'),
@@ -106,6 +136,13 @@ export async function collections(): Promise<{
 export function toId(id: string | null | undefined): ObjectId | null {
 	if (!id || !ObjectId.isValid(id)) return null;
 	return new ObjectId(id);
+}
+
+/** Like {@link toId} but throws — use when the id is required (e.g. the logged-in user). */
+export function requireId(id: string): ObjectId {
+	const _id = toId(id);
+	if (!_id) throw new Error(`Invalid ObjectId: ${id}`);
+	return _id;
 }
 
 export { ObjectId };

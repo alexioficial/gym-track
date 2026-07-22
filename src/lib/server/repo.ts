@@ -1,6 +1,7 @@
 import {
 	collections,
 	toId,
+	requireId,
 	ObjectId,
 	type ExerciseDoc,
 	type RoutineDoc,
@@ -67,29 +68,30 @@ function mapSession(d: SessionDoc): Session {
 
 // ---- Exercises ----
 
-export async function getExercises(): Promise<Exercise[]> {
+export async function getExercises(userId: string): Promise<Exercise[]> {
+	const uid = requireId(userId);
 	const { exercises } = await collections();
-	const docs = await exercises.find().sort({ name: 1 }).toArray();
+	const docs = await exercises.find({ userId: uid }).sort({ name: 1 }).toArray();
 	return docs.map(mapExercise);
 }
 
-export async function getExercise(id: string): Promise<Exercise | null> {
+export async function getExercise(userId: string, id: string): Promise<Exercise | null> {
 	const _id = toId(id);
 	if (!_id) return null;
 	const { exercises } = await collections();
-	const doc = await exercises.findOne({ _id });
+	const doc = await exercises.findOne({ _id, userId: requireId(userId) });
 	return doc ? mapExercise(doc) : null;
 }
 
-export async function createExercise(data: {
-	name: string;
-	muscleGroup: string;
-	notes?: string;
-}): Promise<void> {
+export async function createExercise(
+	userId: string,
+	data: { name: string; muscleGroup: string; notes?: string }
+): Promise<void> {
 	const { exercises } = await collections();
 	const now = new Date();
 	await exercises.insertOne({
 		_id: new ObjectId(),
+		userId: requireId(userId),
 		name: data.name,
 		muscleGroup: data.muscleGroup,
 		notes: data.notes,
@@ -99,54 +101,63 @@ export async function createExercise(data: {
 }
 
 export async function updateExercise(
+	userId: string,
 	id: string,
 	data: { name: string; muscleGroup: string; notes?: string }
 ): Promise<void> {
 	const _id = toId(id);
 	if (!_id) return;
 	const { exercises } = await collections();
-	await exercises.updateOne({ _id }, { $set: { ...data, updatedAt: new Date() } });
+	await exercises.updateOne(
+		{ _id, userId: requireId(userId) },
+		{ $set: { ...data, updatedAt: new Date() } }
+	);
 }
 
-export async function deleteExercise(id: string): Promise<void> {
+export async function deleteExercise(userId: string, id: string): Promise<void> {
 	const _id = toId(id);
 	if (!_id) return;
+	const uid = requireId(userId);
 	const { exercises, routines } = await collections();
-	await exercises.deleteOne({ _id });
-	// Remove the exercise from any routine that has it assigned (new + legacy shapes).
+	await exercises.deleteOne({ _id, userId: uid });
+	// Remove the exercise from this user's routines (new + legacy shapes).
 	await routines.updateMany(
-		{ 'exercises.exerciseId': _id },
+		{ userId: uid, 'exercises.exerciseId': _id },
 		{ $pull: { exercises: { exerciseId: _id } } }
 	);
-	await routines.updateMany({ exerciseIds: _id }, { $pull: { exerciseIds: _id } });
+	await routines.updateMany({ userId: uid, exerciseIds: _id }, { $pull: { exerciseIds: _id } });
 }
 
 // ---- Routines ----
 
-export async function getRoutines(): Promise<Routine[]> {
+export async function getRoutines(userId: string): Promise<Routine[]> {
 	const { routines } = await collections();
-	const docs = await routines.find().sort({ order: 1, name: 1 }).toArray();
+	const docs = await routines
+		.find({ userId: requireId(userId) })
+		.sort({ order: 1, name: 1 })
+		.toArray();
 	return docs.map(mapRoutine);
 }
 
-export async function getRoutine(id: string): Promise<Routine | null> {
+export async function getRoutine(userId: string, id: string): Promise<Routine | null> {
 	const _id = toId(id);
 	if (!_id) return null;
 	const { routines } = await collections();
-	const doc = await routines.findOne({ _id });
+	const doc = await routines.findOne({ _id, userId: requireId(userId) });
 	return doc ? mapRoutine(doc) : null;
 }
 
-export async function createRoutine(data: {
-	name: string;
-	color: string;
-	exercises?: RoutineExercise[];
-}): Promise<void> {
+export async function createRoutine(
+	userId: string,
+	data: { name: string; color: string; exercises?: RoutineExercise[] }
+): Promise<void> {
+	const uid = requireId(userId);
 	const { routines } = await collections();
-	const count = await routines.countDocuments();
+	const count = await routines.countDocuments({ userId: uid });
 	const now = new Date();
 	await routines.insertOne({
 		_id: new ObjectId(),
+		userId: uid,
 		name: data.name,
 		color: data.color,
 		order: count,
@@ -157,6 +168,7 @@ export async function createRoutine(data: {
 }
 
 export async function updateRoutine(
+	userId: string,
 	id: string,
 	data: { name: string; color: string; exercises: RoutineExercise[] }
 ): Promise<void> {
@@ -164,7 +176,7 @@ export async function updateRoutine(
 	if (!_id) return;
 	const { routines } = await collections();
 	await routines.updateOne(
-		{ _id },
+		{ _id, userId: requireId(userId) },
 		{
 			$set: {
 				name: data.name,
@@ -178,13 +190,14 @@ export async function updateRoutine(
 	);
 }
 
-export async function deleteRoutine(id: string): Promise<void> {
+export async function deleteRoutine(userId: string, id: string): Promise<void> {
 	const _id = toId(id);
 	if (!_id) return;
+	const uid = requireId(userId);
 	const { routines, schedule } = await collections();
-	await routines.deleteOne({ _id });
-	// Clear the weekly calendar wherever it pointed to this routine.
-	const doc = await schedule.findOne({ _id: 'weekly' });
+	await routines.deleteOne({ _id, userId: uid });
+	// Clear this user's weekly calendar wherever it pointed to this routine.
+	const doc = await schedule.findOne({ userId: uid });
 	if (doc) {
 		const days: Record<Weekday, string | null> = { ...emptySchedule(), ...doc.days };
 		let changed = false;
@@ -194,7 +207,7 @@ export async function deleteRoutine(id: string): Promise<void> {
 				changed = true;
 			}
 		}
-		if (changed) await schedule.updateOne({ _id: 'weekly' }, { $set: { days } });
+		if (changed) await schedule.updateOne({ userId: uid }, { $set: { days } });
 	}
 }
 
@@ -204,34 +217,43 @@ function emptySchedule(): Schedule {
 	return { mon: null, tue: null, wed: null, thu: null, fri: null, sat: null, sun: null };
 }
 
-export async function getSchedule(): Promise<Schedule> {
+export async function getSchedule(userId: string): Promise<Schedule> {
 	const { schedule } = await collections();
-	const doc = await schedule.findOne({ _id: 'weekly' });
+	const doc = await schedule.findOne({ userId: requireId(userId) });
 	if (!doc) return emptySchedule();
 	return { ...emptySchedule(), ...doc.days };
 }
 
-export async function setScheduleDay(day: Weekday, routineId: string | null): Promise<void> {
+export async function setScheduleDay(
+	userId: string,
+	day: Weekday,
+	routineId: string | null
+): Promise<void> {
+	const uid = requireId(userId);
 	const { schedule } = await collections();
-	const current = await schedule.findOne({ _id: 'weekly' });
+	const current = await schedule.findOne({ userId: uid });
 	const days: Record<Weekday, string | null> = { ...emptySchedule(), ...(current?.days ?? {}) };
 	days[day] = routineId || null;
-	await schedule.updateOne({ _id: 'weekly' }, { $set: { days } }, { upsert: true });
+	await schedule.updateOne(
+		{ userId: uid },
+		{ $set: { days }, $setOnInsert: { userId: uid } },
+		{ upsert: true }
+	);
 }
 
 // ---- Sessions ----
 
-export async function getSessions(): Promise<Session[]> {
+export async function getSessions(userId: string): Promise<Session[]> {
 	const { sessions } = await collections();
-	const docs = await sessions.find().sort({ date: -1 }).toArray();
+	const docs = await sessions.find({ userId: requireId(userId) }).sort({ date: -1 }).toArray();
 	return docs.map(mapSession);
 }
 
-export async function getSession(id: string): Promise<Session | null> {
+export async function getSession(userId: string, id: string): Promise<Session | null> {
 	const _id = toId(id);
 	if (!_id) return null;
 	const { sessions } = await collections();
-	const doc = await sessions.findOne({ _id });
+	const doc = await sessions.findOne({ _id, userId: requireId(userId) });
 	return doc ? mapSession(doc) : null;
 }
 
@@ -246,16 +268,15 @@ function toEntryDocs(entries: SessionEntry[]) {
 		});
 }
 
-export async function createSession(data: {
-	date: string;
-	routineId: string | null;
-	notes?: string;
-	entries: SessionEntry[];
-}): Promise<string> {
+export async function createSession(
+	userId: string,
+	data: { date: string; routineId: string | null; notes?: string; entries: SessionEntry[] }
+): Promise<string> {
 	const { sessions } = await collections();
 	const _id = new ObjectId();
 	await sessions.insertOne({
 		_id,
+		userId: requireId(userId),
 		date: data.date,
 		routineId: toId(data.routineId),
 		notes: data.notes,
@@ -266,6 +287,7 @@ export async function createSession(data: {
 }
 
 export async function updateSession(
+	userId: string,
 	id: string,
 	data: { date: string; routineId: string | null; notes?: string; entries: SessionEntry[] }
 ): Promise<void> {
@@ -273,7 +295,7 @@ export async function updateSession(
 	if (!_id) return;
 	const { sessions } = await collections();
 	await sessions.updateOne(
-		{ _id },
+		{ _id, userId: requireId(userId) },
 		{
 			$set: {
 				date: data.date,
@@ -285,9 +307,30 @@ export async function updateSession(
 	);
 }
 
-export async function deleteSession(id: string): Promise<void> {
+export async function deleteSession(userId: string, id: string): Promise<void> {
 	const _id = toId(id);
 	if (!_id) return;
 	const { sessions } = await collections();
-	await sessions.deleteOne({ _id });
+	await sessions.deleteOne({ _id, userId: requireId(userId) });
+}
+
+// ---- One-time migration ----
+
+/**
+ * Assigns every ownerless document (from the single-user era) to `userId`.
+ * Idempotent: once claimed, the `{ userId: { $exists: false } }` filter matches
+ * nothing. Called once by the admin seed so the pre-accounts data gets an owner.
+ */
+export async function claimOrphanData(userId: string): Promise<void> {
+	const uid = requireId(userId);
+	const { exercises, routines, sessions, schedule } = await collections();
+	const filter = { userId: { $exists: false } };
+	const set = { $set: { userId: uid } };
+	await Promise.all([
+		exercises.updateMany(filter, set),
+		routines.updateMany(filter, set),
+		sessions.updateMany(filter, set),
+		// Legacy schedule was the single doc _id:"weekly"; give it the owner.
+		schedule.updateMany(filter, set)
+	]);
 }

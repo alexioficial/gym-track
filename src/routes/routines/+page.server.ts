@@ -17,11 +17,12 @@ import {
 	type Weekday
 } from '$lib/types';
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ locals }) => {
+	const uid = locals.user!.id;
 	const [routines, exercises, schedule] = await Promise.all([
-		getRoutines(),
-		getExercises(),
-		getSchedule()
+		getRoutines(uid),
+		getExercises(uid),
+		getSchedule(uid)
 	]);
 	return { routines, exercises, schedule };
 };
@@ -43,17 +44,17 @@ function parseExercises(raw: FormDataEntryValue | null): RoutineExercise[] {
 }
 
 export const actions: Actions = {
-	create: async ({ request }) => {
+	create: async ({ request, locals }) => {
 		const data = await request.formData();
 		const name = String(data.get('name') ?? '').trim();
 		const color = safeColor(String(data.get('color') ?? ''));
 		const exercises = parseExercises(data.get('exercises'));
 		if (!name) return fail(400, { error: 'Name is required' });
-		await createRoutine({ name, color, exercises });
+		await createRoutine(locals.user!.id, { name, color, exercises });
 		return { success: true };
 	},
 
-	update: async ({ request }) => {
+	update: async ({ request, locals }) => {
 		const data = await request.formData();
 		const id = String(data.get('id') ?? '');
 		const name = String(data.get('name') ?? '').trim();
@@ -61,23 +62,23 @@ export const actions: Actions = {
 		const exercises = parseExercises(data.get('exercises'));
 		if (!id) return fail(400, { error: 'Missing id' });
 		if (!name) return fail(400, { error: 'Name is required' });
-		await updateRoutine(id, { name, color, exercises });
+		await updateRoutine(locals.user!.id, id, { name, color, exercises });
 		return { success: true };
 	},
 
-	delete: async ({ request }) => {
+	delete: async ({ request, locals }) => {
 		const data = await request.formData();
 		const id = String(data.get('id') ?? '');
-		if (id) await deleteRoutine(id);
+		if (id) await deleteRoutine(locals.user!.id, id);
 		return { success: true };
 	},
 
-	setDay: async ({ request }) => {
+	setDay: async ({ request, locals }) => {
 		const data = await request.formData();
 		const day = String(data.get('day') ?? '') as Weekday;
 		const routineId = String(data.get('routineId') ?? '');
 		if (!WEEKDAYS.includes(day)) return fail(400, { error: 'Invalid day' });
-		await setScheduleDay(day, routineId || null);
+		await setScheduleDay(locals.user!.id, day, routineId || null);
 		return { success: true };
 	}
 };

@@ -2,11 +2,12 @@ import type { PageServerLoad } from './$types';
 import { getExercises, getRoutines, getSessions } from '$lib/server/repo';
 import { buildExerciseProgress, buildWeeklyRecap, groupProgressByRoutine } from '$lib/utils/progression';
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ locals }) => {
+	const uid = locals.user!.id;
 	const [exercises, routines, sessions] = await Promise.all([
-		getExercises(),
-		getRoutines(),
-		getSessions()
+		getExercises(uid),
+		getRoutines(uid),
+		getSessions(uid)
 	]);
 	const progress = buildExerciseProgress(sessions, exercises);
 

@@ -3,6 +3,13 @@
 /** Weight unit used across the whole app. */
 export const UNIT = 'lb';
 
+/** The authenticated user, as exposed to the client (ids as strings). */
+export interface SessionUser {
+	id: string;
+	username: string;
+	isAdmin: boolean;
+}
+
 export const WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 export type Weekday = (typeof WEEKDAYS)[number];
 

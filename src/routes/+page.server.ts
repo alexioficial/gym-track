@@ -3,12 +3,13 @@ import { getExercises, getRoutines, getSchedule, getSessions } from '$lib/server
 import { buildExerciseProgress, IMPROVEMENT_VERDICTS } from '$lib/utils/progression';
 import { WEEKDAYS, WEEKDAY_LABELS } from '$lib/types';
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ locals }) => {
+	const uid = locals.user!.id;
 	const [schedule, routines, exercises, sessions] = await Promise.all([
-		getSchedule(),
-		getRoutines(),
-		getExercises(),
-		getSessions()
+		getSchedule(uid),
+		getRoutines(uid),
+		getExercises(uid),
+		getSessions(uid)
 	]);
 
 	const todayIdx = (new Date().getDay() + 6) % 7; // Monday = 0

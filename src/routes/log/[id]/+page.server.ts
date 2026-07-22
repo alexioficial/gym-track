@@ -11,12 +11,13 @@ import {
 import { parseSessionForm } from '$lib/server/parseSession';
 import { lastPerformanceByExercise } from '$lib/utils/progression';
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
+	const uid = locals.user!.id;
 	const [session, exercises, routines, sessions] = await Promise.all([
-		getSession(params.id),
-		getExercises(),
-		getRoutines(),
-		getSessions()
+		getSession(uid, params.id),
+		getExercises(uid),
+		getRoutines(uid),
+		getSessions(uid)
 	]);
 	if (!session) throw error(404, 'Session not found');
 	// Reference the previous time each exercise was done — not this session itself,
@@ -29,16 +30,16 @@ export const load: PageServerLoad = async ({ params }) => {
 };
 
 export const actions: Actions = {
-	update: async ({ request, params }) => {
+	update: async ({ request, params, locals }) => {
 		const parsed = parseSessionForm(await request.formData());
 		if (!parsed.date) return fail(400, { error: 'Date is required' });
 		if (parsed.entries.length === 0) return fail(400, { error: 'Add at least one exercise with reps' });
-		await updateSession(params.id, parsed);
+		await updateSession(locals.user!.id, params.id, parsed);
 		throw redirect(303, '/');
 	},
 
-	delete: async ({ params }) => {
-		await deleteSession(params.id);
+	delete: async ({ params, locals }) => {
+		await deleteSession(locals.user!.id, params.id);
 		throw redirect(303, '/');
 	}
 };

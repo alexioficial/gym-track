@@ -33,5 +33,5 @@ COPY package.json ./
 
 EXPOSE 3000
 
-# adapter-node serves on $HOST:$PORT. Coolify injects the env vars (MONGODB_URI, AUTH_PIN, ORIGIN, ...).
+# adapter-node serves on $HOST:$PORT. Coolify injects the env vars (MONGODB_URI, SESSION_SECRET, ORIGIN, ...).
 CMD ["bun", "./build/index.js"]

@@ -1,24 +1,25 @@
-import { dev } from '$app/environment';
 import { fail, redirect } from '@sveltejs/kit';
-import { checkPin, createSessionToken, SESSION_COOKIE } from '$lib/server/auth';
 import type { Actions } from './$types';
+import { verifyPassword } from '$lib/server/auth';
+import { getUserByUsername } from '$lib/server/users';
+import { startSession } from '$lib/server/session';
 
 export const actions: Actions = {
 	default: async ({ request, cookies }) => {
 		const data = await request.formData();
-		const pin = String(data.get('pin') ?? '').trim();
+		const username = String(data.get('username') ?? '').trim();
+		const password = String(data.get('password') ?? '');
 
-		if (!pin) return fail(400, { error: 'Enter your PIN' });
-		if (!checkPin(pin)) return fail(401, { error: 'Wrong PIN' });
+		if (!username || !password) {
+			return fail(400, { username, error: 'Enter your username and password' });
+		}
 
-		cookies.set(SESSION_COOKIE, createSessionToken(), {
-			path: '/',
-			httpOnly: true,
-			sameSite: 'lax',
-			secure: !dev,
-			maxAge: 60 * 60 * 24 * 60 // 60 days
-		});
+		const user = await getUserByUsername(username);
+		if (!user || !verifyPassword(password, user.passwordHash)) {
+			return fail(401, { username, error: 'Wrong username or password' });
+		}
 
+		await startSession(cookies, user._id.toString());
 		throw redirect(303, '/');
 	}
 };

@@ -4,11 +4,12 @@ import { createSession, getExercises, getRoutines, getSessions } from '$lib/serv
 import { parseSessionForm } from '$lib/server/parseSession';
 import { lastPerformanceByExercise } from '$lib/utils/progression';
 
-export const load: PageServerLoad = async ({ url }) => {
+export const load: PageServerLoad = async ({ url, locals }) => {
+	const uid = locals.user!.id;
 	const [exercises, routines, sessions] = await Promise.all([
-		getExercises(),
-		getRoutines(),
-		getSessions()
+		getExercises(uid),
+		getRoutines(uid),
+		getSessions(uid)
 	]);
 
 	const routineById = new Map(routines.map((r) => [r.id, r]));
@@ -34,11 +35,11 @@ export const load: PageServerLoad = async ({ url }) => {
 };
 
 export const actions: Actions = {
-	create: async ({ request }) => {
+	create: async ({ request, locals }) => {
 		const parsed = parseSessionForm(await request.formData());
 		if (!parsed.date) return fail(400, { error: 'Date is required' });
 		if (parsed.entries.length === 0) return fail(400, { error: 'Add at least one exercise with reps' });
-		await createSession(parsed);
+		await createSession(locals.user!.id, parsed);
 		throw redirect(303, '/');
 	}
 };

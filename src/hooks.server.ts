@@ -1,19 +1,23 @@
 import { redirect, type Handle } from '@sveltejs/kit';
-import { SESSION_COOKIE, verifySession } from '$lib/server/auth';
+import { SESSION_COOKIE, unsign } from '$lib/server/auth';
+import { resolveSession } from '$lib/server/session';
+import { ensureAdminSeeded } from '$lib/server/users';
 
-const PUBLIC_ROUTES = ['/login'];
+// Only the login page is reachable without a session.
+const PUBLIC_ROUTES = new Set(['/login']);
 
 export const handle: Handle = async ({ event, resolve }) => {
-	const authed = verifySession(event.cookies.get(SESSION_COOKIE));
-	event.locals.authed = authed;
+	await ensureAdminSeeded();
+
+	const sessionId = unsign(event.cookies.get(SESSION_COOKIE));
+	event.locals.user = await resolveSession(sessionId);
 
 	const path = event.url.pathname;
-	const isPublic = PUBLIC_ROUTES.includes(path);
 
-	if (!authed && !isPublic) {
+	if (!event.locals.user && !PUBLIC_ROUTES.has(path)) {
 		throw redirect(303, '/login');
 	}
-	if (authed && path === '/login') {
+	if (event.locals.user && path === '/login') {
 		throw redirect(303, '/');
 	}
 

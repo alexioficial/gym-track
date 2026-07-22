@@ -3,10 +3,11 @@ import type { PageServerLoad } from './$types';
 import { getExercise, getSessions } from '$lib/server/repo';
 import { weekOverWeekDelta, weeklyStatsForExercise } from '$lib/utils/progression';
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
+	const uid = locals.user!.id;
 	const [exercise, sessions] = await Promise.all([
-		getExercise(params.exerciseId),
-		getSessions()
+		getExercise(uid, params.exerciseId),
+		getSessions(uid)
 	]);
 	if (!exercise) throw error(404, 'Exercise not found');
 
