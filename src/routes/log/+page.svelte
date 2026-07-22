@@ -8,7 +8,7 @@
 	let { data }: { data: PageData } = $props();
 </script>
 
-<svelte:head><title>Log session · Gym Tracker</title></svelte:head>
+<svelte:head><title>Log session - Gym Tracker</title></svelte:head>
 
 <PageHeader title="New session" subtitle="Log what you did today" />
 

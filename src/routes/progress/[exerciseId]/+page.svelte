@@ -42,7 +42,7 @@
 	}
 </script>
 
-<svelte:head><title>{data.exercise.name} · Progress</title></svelte:head>
+<svelte:head><title>{data.exercise.name} - Progress</title></svelte:head>
 
 <a href="/progress" class="back"><Icon name="back" size={16} /> Progress</a>
 

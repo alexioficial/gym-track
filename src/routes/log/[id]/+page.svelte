@@ -7,7 +7,7 @@
 	let { data }: { data: PageData } = $props();
 </script>
 
-<svelte:head><title>Edit session · Gym Tracker</title></svelte:head>
+<svelte:head><title>Edit session - Gym Tracker</title></svelte:head>
 
 <a href="/log" class="back">
 	<Icon name="back" size={16} /> Back

@@ -12,7 +12,7 @@
 	);
 </script>
 
-<svelte:head><title>Home · Gym Tracker</title></svelte:head>
+<svelte:head><title>Home - Gym Tracker</title></svelte:head>
 
 <!-- Today -->
 <section class="hero card">

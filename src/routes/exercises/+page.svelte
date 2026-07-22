@@ -39,7 +39,7 @@
 	}
 </script>
 
-<svelte:head><title>Exercises · Gym Tracker</title></svelte:head>
+<svelte:head><title>Exercises - Gym Tracker</title></svelte:head>
 
 <PageHeader title="Exercises" subtitle="Your movement catalog">
 	{#snippet action()}

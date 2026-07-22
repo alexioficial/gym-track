@@ -71,7 +71,7 @@
 	}
 </script>
 
-<svelte:head><title>Routines · Gym Tracker</title></svelte:head>
+<svelte:head><title>Routines - Gym Tracker</title></svelte:head>
 
 <PageHeader title="Routines" subtitle="Build your routines and assign them to the week">
 	{#snippet action()}

@@ -7,7 +7,7 @@
 	let loading = $state(false);
 </script>
 
-<svelte:head><title>Sign in · Gym Tracker</title></svelte:head>
+<svelte:head><title>Sign in - Gym Tracker</title></svelte:head>
 
 <div class="login-wrap">
 	<div class="login-card card">

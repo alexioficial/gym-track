@@ -17,7 +17,7 @@
 	}
 </script>
 
-<svelte:head><title>Progress · Gym Tracker</title></svelte:head>
+<svelte:head><title>Progress - Gym Tracker</title></svelte:head>
 
 <PageHeader title="Progress" subtitle="Your progressive overload, week by week" />
 
