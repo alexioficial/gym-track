@@ -17,6 +17,7 @@
 	exercises={data.exercises}
 	routines={data.routines}
 	initialRoutineId={data.initialRoutineId}
+	lastByExercise={data.lastByExercise}
 />
 
 {#if data.history.length > 0}

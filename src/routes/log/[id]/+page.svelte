@@ -23,6 +23,7 @@
 	session={data.session}
 	exercises={data.exercises}
 	routines={data.routines}
+	lastByExercise={data.lastByExercise}
 />
 
 <style>

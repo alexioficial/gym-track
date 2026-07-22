@@ -2,6 +2,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { createSession, getExercises, getRoutines, getSessions } from '$lib/server/repo';
 import { parseSessionForm } from '$lib/server/parseSession';
+import { lastPerformanceByExercise } from '$lib/utils/progression';
 
 export const load: PageServerLoad = async ({ url }) => {
 	const [exercises, routines, sessions] = await Promise.all([
@@ -27,7 +28,8 @@ export const load: PageServerLoad = async ({ url }) => {
 		exercises,
 		routines,
 		initialRoutineId: url.searchParams.get('routine') ?? '',
-		history
+		history,
+		lastByExercise: lastPerformanceByExercise(sessions)
 	};
 };
 

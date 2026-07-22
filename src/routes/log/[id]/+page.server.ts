@@ -5,18 +5,27 @@ import {
 	getExercises,
 	getRoutines,
 	getSession,
+	getSessions,
 	updateSession
 } from '$lib/server/repo';
 import { parseSessionForm } from '$lib/server/parseSession';
+import { lastPerformanceByExercise } from '$lib/utils/progression';
 
 export const load: PageServerLoad = async ({ params }) => {
-	const [session, exercises, routines] = await Promise.all([
+	const [session, exercises, routines, sessions] = await Promise.all([
 		getSession(params.id),
 		getExercises(),
-		getRoutines()
+		getRoutines(),
+		getSessions()
 	]);
 	if (!session) throw error(404, 'Session not found');
-	return { session, exercises, routines };
+	// Reference the previous time each exercise was done — not this session itself,
+	// and nothing logged after it.
+	const lastByExercise = lastPerformanceByExercise(sessions, {
+		excludeSessionId: session.id,
+		onOrBefore: session.date
+	});
+	return { session, exercises, routines, lastByExercise };
 };
 
 export const actions: Actions = {

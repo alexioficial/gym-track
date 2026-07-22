@@ -3,8 +3,8 @@
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import Icon from './Icon.svelte';
-	import { UNIT, type Exercise, type Routine, type Session } from '$lib/types';
-	import { todayYmd } from '$lib/utils/progression';
+	import { UNIT, type Exercise, type LastPerformance, type Routine, type Session } from '$lib/types';
+	import { shortLabel, todayYmd } from '$lib/utils/progression';
 
 	interface Props {
 		exercises: Exercise[];
@@ -12,8 +12,20 @@
 		mode: 'create' | 'edit';
 		session?: Session | null;
 		initialRoutineId?: string;
+		/** Reference: what the user did the last time they logged each exercise. */
+		lastByExercise?: Record<string, LastPerformance>;
 	}
-	let { exercises, routines, mode, session = null, initialRoutineId = '' }: Props = $props();
+	let {
+		exercises,
+		routines,
+		mode,
+		session = null,
+		initialRoutineId = '',
+		lastByExercise = {}
+	}: Props = $props();
+
+	/** Trim a value for display: "135", "5.5" — no trailing ".0". */
+	const fmt = (n: number) => String(Math.round(n * 100) / 100);
 
 	type EditSet = { id: number; weight: number | null; reps: number | null };
 	type EditEntry = { exerciseId: string; sets: EditSet[] };
@@ -273,6 +285,19 @@
 					</button>
 				</div>
 
+				{#if lastByExercise[entry.exerciseId]}
+					{@const last = lastByExercise[entry.exerciseId]}
+					<div class="last-ref" title="Beat this to make progress">
+						<Icon name="history" size={13} />
+						<span class="last-label">Last · {shortLabel(last.date)}</span>
+						<span class="last-sets">
+							{#each last.sets as s, i (i)}
+								<span class="last-set">{fmt(s.weight)}<span class="ls-x">×</span>{fmt(s.reps)}</span>
+							{/each}
+						</span>
+					</div>
+				{/if}
+
 				<div class="sets">
 					<div class="set-head muted">
 						<span>#</span>
@@ -281,6 +306,7 @@
 						<span></span>
 					</div>
 					{#each entry.sets as set, i (set.id)}
+						{@const prev = lastByExercise[entry.exerciseId]?.sets[i]}
 						<div class="set-row">
 							<span class="set-n stat-num">{i + 1}</span>
 							<input
@@ -289,7 +315,7 @@
 								step="0.5"
 								min="0"
 								class="input set-input"
-								placeholder="0"
+								placeholder={prev ? fmt(prev.weight) : '0'}
 								bind:value={set.weight}
 							/>
 							<input
@@ -298,7 +324,7 @@
 								step="0.5"
 								min="0"
 								class="input set-input"
-								placeholder="0"
+								placeholder={prev ? fmt(prev.reps) : '0'}
 								bind:value={set.reps}
 							/>
 							<button
@@ -448,6 +474,45 @@
 	}
 	.entry-mg {
 		font-size: 0.75rem;
+	}
+
+	.last-ref {
+		display: flex;
+		align-items: center;
+		gap: 0.45rem;
+		flex-wrap: wrap;
+		margin: -0.15rem 0 0.75rem;
+		padding: 0.4rem 0.6rem;
+		border-radius: 0.6rem;
+		background: color-mix(in srgb, var(--color-accent) 7%, var(--color-surface-2));
+		border: 1px solid color-mix(in srgb, var(--color-accent) 14%, transparent);
+	}
+	.last-ref :global(svg) {
+		color: var(--color-accent);
+		flex-shrink: 0;
+	}
+	.last-label {
+		font-size: 0.68rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--color-muted);
+	}
+	.last-sets {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem 0.55rem;
+	}
+	.last-set {
+		font-size: 0.82rem;
+		font-weight: 700;
+		font-variant-numeric: tabular-nums;
+		color: var(--color-subtle);
+	}
+	.ls-x {
+		font-weight: 500;
+		color: var(--color-muted);
+		margin: 0 0.05rem;
 	}
 
 	.sets {

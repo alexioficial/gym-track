@@ -74,6 +74,18 @@ export interface SessionEntry {
 	sets: WorkoutSet[];
 }
 
+/**
+ * The most recent time an exercise was logged, shown as a reference while
+ * logging it again ("last time you did 135×5, now beat it").
+ */
+export interface LastPerformance {
+	date: string; // YYYY-MM-DD of that session
+	sets: WorkoutSet[]; // the sets performed, in order
+	topWeight: number; // heaviest set's weight
+	topReps: number; // reps at that heaviest set
+	bestE1rm: number; // best estimated 1RM across those sets
+}
+
 export interface Session {
 	id: string;
 	date: string; // YYYY-MM-DD

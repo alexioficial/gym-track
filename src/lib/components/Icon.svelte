@@ -32,7 +32,9 @@
 		lock: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
 		logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>',
 		activity: '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
-		zap: '<path d="M13 2 3 14h9l-1 8 10-12h-9z"/>'
+		zap: '<path d="M13 2 3 14h9l-1 8 10-12h-9z"/>',
+		history:
+			'<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>'
 	};
 </script>
 

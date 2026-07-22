@@ -2,6 +2,7 @@ import type {
 	Delta,
 	Exercise,
 	ExerciseProgress,
+	LastPerformance,
 	ProgressGroup,
 	Routine,
 	Session,
@@ -224,6 +225,38 @@ export function weekOverWeekDelta(prev: WeeklyStat | null, curr: WeeklyStat): De
 	else verdict = 'same';
 
 	return { weight: dWeight, reps: dReps, volume: dVolume, e1rm: dE1rm, verdict };
+}
+
+/**
+ * The most recent logged performance for each exercise, to show as a reference
+ * when logging it again. Sessions are scanned newest-first, so the first one
+ * that contains an exercise wins. `excludeSessionId`/`onOrBefore` let the edit
+ * screen skip the session being edited and ignore anything logged after it.
+ */
+export function lastPerformanceByExercise(
+	sessions: Session[],
+	opts: { excludeSessionId?: string; onOrBefore?: string } = {}
+): Record<string, LastPerformance> {
+	const sorted = [...sessions].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+	const out: Record<string, LastPerformance> = {};
+	for (const s of sorted) {
+		if (opts.excludeSessionId && s.id === opts.excludeSessionId) continue;
+		if (opts.onOrBefore && s.date > opts.onOrBefore) continue;
+		for (const entry of s.entries) {
+			if (out[entry.exerciseId]) continue; // already have a more recent one
+			const sets = entry.sets.filter((st) => st.reps > 0);
+			if (sets.length === 0) continue;
+			const top = topSet(sets);
+			out[entry.exerciseId] = {
+				date: s.date,
+				sets: sets.map((st) => ({ weight: st.weight, reps: st.reps })),
+				topWeight: top?.weight ?? 0,
+				topReps: top?.reps ?? 0,
+				bestE1rm: round(sets.reduce((m, st) => Math.max(m, estimate1RM(st.weight, st.reps)), 0))
+			};
+		}
+	}
+	return out;
 }
 
 /** Progress per exercise: weeks + latest vs previous comparison. */
