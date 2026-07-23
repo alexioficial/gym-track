@@ -1,6 +1,6 @@
 import { env } from '$env/dynamic/private';
 import { collections, ObjectId, type UserDoc } from './db';
-import { hashPassword } from './auth';
+import { hashPassword, verifyPassword } from './auth';
 import { claimOrphanData } from './repo';
 import type { SessionUser } from '$lib/types';
 
@@ -100,7 +100,10 @@ export function ensureAdminSeeded(): Promise<void> {
 
 async function seedAdmin(): Promise<void> {
 	const username = normalizeUsername(env.ADMIN_USERNAME || 'alexioficial');
-	const password = env.ADMIN_PASSWORD || '1029384756';
+	// When ADMIN_PASSWORD is set it is authoritative (see the sync below); the
+	// hardcoded fallback is only ever used to bootstrap a brand-new admin.
+	const envPassword = env.ADMIN_PASSWORD || '';
+	const password = envPassword || '1029384756';
 	const { users } = await collections();
 
 	let admin = await users.findOne({ username });
@@ -122,6 +125,14 @@ async function seedAdmin(): Promise<void> {
 			admin = await users.findOne({ username });
 			if (!admin) return;
 		}
+	} else if (envPassword && !verifyPassword(envPassword, admin.passwordHash)) {
+		// ADMIN_PASSWORD is authoritative: keep the existing admin's password in
+		// sync with the env on every boot. Only rewrites when it actually differs,
+		// so setting a strong ADMIN_PASSWORD + redeploy is enough to rotate it.
+		await users.updateOne(
+			{ _id: admin._id },
+			{ $set: { passwordHash: hashPassword(envPassword), updatedAt: new Date() } }
+		);
 	}
 	// Inherit the pre-accounts single-user data (idempotent after first claim).
 	await claimOrphanData(admin._id.toString());

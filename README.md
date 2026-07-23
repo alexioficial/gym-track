@@ -28,9 +28,10 @@ Sign in with a **username + password**. There is no public sign-up: the **admin*
 inside the app. Each account gets its own private set of exercises, routines, weekly calendar and sessions —
 nothing is shared between users.
 
-- **Admin account** is seeded on first start from `ADMIN_USERNAME` / `ADMIN_PASSWORD` (defaults:
-  `alexioficial` / `1029384756`). The seed only creates the admin if it doesn't exist — it never overwrites an
-  existing password, so change it safely afterwards.
+- **Admin account** is seeded from `ADMIN_USERNAME` / `ADMIN_PASSWORD` (username defaults to `alexioficial`).
+  `ADMIN_PASSWORD` is **authoritative**: the admin's password is synced to it on every start, so to rotate the
+  password you set a new strong `ADMIN_PASSWORD` and redeploy. If `ADMIN_PASSWORD` is omitted, a brand-new admin
+  is bootstrapped with a weak default — always set it in production.
 - **Managing users**: signed in as the admin, open the **Users** panel (people icon, top-right → `/admin`) to
   create users, reset their password, or delete them. Usernames may only contain **lowercase letters, numbers,
   dots and underscores** (3–30 chars).
@@ -70,7 +71,7 @@ Type checking: `bun run check`
 | `SESSION_SECRET` | Secret used to sign the session cookie (`openssl rand -hex 32`). |
 | `ORIGIN` | Public URL. **Required in production** for form actions (CSRF). |
 | `ADMIN_USERNAME` | Optional. Seeded admin username (default `alexioficial`). |
-| `ADMIN_PASSWORD` | Optional. Seeded admin password (default `1029384756`). Only used when creating the admin. |
+| `ADMIN_PASSWORD` | Admin password. **Authoritative** — synced to the admin on every start; set a strong value and redeploy to rotate. Falls back to a weak default only when bootstrapping a new admin. |
 | `PORT` | Server port (defaults to 3000). |
 
 ## Deploy on Coolify
