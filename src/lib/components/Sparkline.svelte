@@ -5,12 +5,7 @@
 		height?: number;
 		color?: string;
 	}
-	let {
-		values,
-		width = 84,
-		height = 30,
-		color = 'var(--color-accent-bright)'
-	}: Props = $props();
+	let { values, width = 84, height = 30, color = 'var(--color-accent-bright)' }: Props = $props();
 
 	const coords = $derived.by(() => {
 		if (values.length === 0) return [] as { x: number; y: number }[];

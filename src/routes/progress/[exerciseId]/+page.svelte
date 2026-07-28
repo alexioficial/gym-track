@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
+	import { resolve } from '$app/paths';
 	import ProgressChart from '$lib/components/ProgressChart.svelte';
 	import StatDelta from '$lib/components/StatDelta.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
@@ -44,18 +45,23 @@
 
 <svelte:head><title>{data.exercise.name} - Progress</title></svelte:head>
 
-<a href="/progress" class="back"><Icon name="back" size={16} /> Progress</a>
+<a href={resolve('/progress')} class="back"><Icon name="back" size={16} /> Progress</a>
 
 <header class="head">
 	<h1 class="head-title">{data.exercise.name}</h1>
 	<div class="head-meta">
 		{#if data.exercise.muscleGroup}<span class="badge">{data.exercise.muscleGroup}</span>{/if}
-		<span class="muted small">{data.weeks.length} {data.weeks.length === 1 ? 'week' : 'weeks'}</span>
+		<span class="muted small">{data.weeks.length} {data.weeks.length === 1 ? 'week' : 'weeks'}</span
+		>
 	</div>
 </header>
 
 {#if !data.latest || !data.delta}
-	<EmptyState icon="trending" title="No data yet" message="Log sessions with this exercise to see your progress." />
+	<EmptyState
+		icon="trending"
+		title="No data yet"
+		message="Log sessions with this exercise to see your progress."
+	/>
 {:else}
 	<!-- Verdict of the week -->
 	<div
@@ -79,7 +85,9 @@
 		</div>
 		<div class="stat card">
 			<span class="stat-label muted">Top set</span>
-			<span class="stat-value stat-num">{data.latest.topWeight}<small>×{data.latest.topReps}</small></span>
+			<span class="stat-value stat-num"
+				>{data.latest.topWeight}<small>×{data.latest.topReps}</small></span
+			>
 			{#if data.previous}<StatDelta value={data.delta.weight} unit=" {UNIT}" />{/if}
 		</div>
 		<div class="stat card">

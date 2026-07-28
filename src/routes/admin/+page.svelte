@@ -7,6 +7,7 @@
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	let creating = $state(false);
+	const usernamePattern = '[a-z0-9._]{3,30}';
 	// Which user row has its reset-password field open.
 	let resetOpen = $state<string | null>(null);
 
@@ -61,7 +62,7 @@
 					autocapitalize="none"
 					autocorrect="off"
 					spellcheck="false"
-					pattern="[a-z0-9._]{'{'}3,30{'}'}"
+					pattern={usernamePattern}
 					title="Lowercase letters, numbers, dots and underscores (3–30 chars)"
 					value={form?.error ? (form?.username ?? '') : ''}
 					required
@@ -72,7 +73,7 @@
 				<input
 					id="new-password"
 					name="password"
-					type="text"
+					type="password"
 					class="input"
 					placeholder="at least 6 characters"
 					autocomplete="off"
@@ -144,7 +145,7 @@
 						<input type="hidden" name="id" value={u.id} />
 						<input
 							name="password"
-							type="text"
+							type="password"
 							class="input"
 							placeholder="New password (min 6)"
 							autocomplete="off"

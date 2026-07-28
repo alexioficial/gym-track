@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { resolve } from '$app/paths';
 	import Icon from './Icon.svelte';
 
 	const items = [
-		{ href: '/', label: 'Home', icon: 'home' },
-		{ href: '/routines', label: 'Routines', icon: 'calendar' },
-		{ href: '/log', label: 'Log', icon: 'plus' },
-		{ href: '/progress', label: 'Progress', icon: 'trending' },
-		{ href: '/exercises', label: 'Exercises', icon: 'dumbbell' }
+		{ href: resolve('/'), label: 'Home', icon: 'home' },
+		{ href: resolve('/routines'), label: 'Routines', icon: 'calendar' },
+		{ href: resolve('/log'), label: 'Log', icon: 'plus' },
+		{ href: resolve('/progress'), label: 'Progress', icon: 'trending' },
+		{ href: resolve('/exercises'), label: 'Exercises', icon: 'dumbbell' }
 	];
 
 	function isActive(href: string): boolean {

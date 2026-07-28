@@ -95,10 +95,11 @@
 		method="POST"
 		action="?/create"
 		class="card form-card"
-		use:enhance={() => async ({ update }) => {
-			await update();
-			closeForms();
-		}}
+		use:enhance={() =>
+			async ({ update }) => {
+				await update();
+				closeForms();
+			}}
 	>
 		{@render fields(null)}
 		<div class="form-actions">
@@ -109,7 +110,11 @@
 {/if}
 
 {#if data.exercises.length === 0 && !showNew}
-	<EmptyState icon="dumbbell" title="No exercises yet" message="Create your first exercise to start building routines.">
+	<EmptyState
+		icon="dumbbell"
+		title="No exercises yet"
+		message="Create your first exercise to start building routines."
+	>
 		<button class="btn btn-primary" onclick={startNew}>
 			<Icon name="plus" size={16} stroke={2.5} /> New exercise
 		</button>
@@ -122,10 +127,11 @@
 					method="POST"
 					action="?/update"
 					class="card form-card"
-					use:enhance={() => async ({ update }) => {
-						await update();
-						closeForms();
-					}}
+					use:enhance={() =>
+						async ({ update }) => {
+							await update();
+							closeForms();
+						}}
 				>
 					<input type="hidden" name="id" value={ex.id} />
 					{@render fields(ex)}
@@ -143,7 +149,9 @@
 						</button>
 						<div class="spacer"></div>
 						<button type="button" class="btn btn-subtle" onclick={closeForms}>Cancel</button>
-						<button type="submit" class="btn btn-primary"><Icon name="check" size={16} /> Save</button>
+						<button type="submit" class="btn btn-primary"
+							><Icon name="check" size={16} /> Save</button
+						>
 					</div>
 				</form>
 			{:else}

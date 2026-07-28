@@ -1,30 +1,28 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { createSession, getExercises, getRoutines, getSessions } from '$lib/server/repo';
-import { parseSessionForm } from '$lib/server/parseSession';
+import { api, ApiError } from '$lib/server/api';
 import { lastPerformanceByExercise } from '$lib/utils/progression';
+import { sessionInput } from '$lib/utils/sessionForm';
+import type { Exercise, Routine, Session } from '$lib/types';
 
-export const load: PageServerLoad = async ({ url, locals }) => {
-	const uid = locals.user!.id;
+export const load: PageServerLoad = async ({ url, cookies }) => {
 	const [exercises, routines, sessions] = await Promise.all([
-		getExercises(uid),
-		getRoutines(uid),
-		getSessions(uid)
+		api<Exercise[]>(cookies, '/api/exercises'),
+		api<Routine[]>(cookies, '/api/routines'),
+		api<Session[]>(cookies, '/api/sessions')
 	]);
-
-	const routineById = new Map(routines.map((r) => [r.id, r]));
-	const history = sessions.slice(0, 12).map((s) => {
-		const routine = s.routineId ? routineById.get(s.routineId) : null;
+	const routineById = new Map(routines.map((routine) => [routine.id, routine]));
+	const history = sessions.slice(0, 12).map((session) => {
+		const routine = session.routineId ? routineById.get(session.routineId) : null;
 		return {
-			id: s.id,
-			date: s.date,
+			id: session.id,
+			date: session.date,
 			routineName: routine?.name ?? null,
 			routineColor: routine?.color ?? null,
-			exerciseCount: s.entries.length,
-			setCount: s.entries.reduce((acc, e) => acc + e.sets.length, 0)
+			exerciseCount: session.entries.length,
+			setCount: session.entries.reduce((count, entry) => count + entry.sets.length, 0)
 		};
 	});
-
 	return {
 		exercises,
 		routines,
@@ -35,11 +33,16 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 };
 
 export const actions: Actions = {
-	create: async ({ request, locals }) => {
-		const parsed = parseSessionForm(await request.formData());
-		if (!parsed.date) return fail(400, { error: 'Date is required' });
-		if (parsed.entries.length === 0) return fail(400, { error: 'Add at least one exercise with reps' });
-		await createSession(locals.user!.id, parsed);
+	create: async ({ request, cookies }) => {
+		try {
+			await api(cookies, '/api/sessions', {
+				method: 'POST',
+				body: JSON.stringify(sessionInput(await request.formData()))
+			});
+		} catch (error) {
+			if (error instanceof ApiError) return fail(error.status, { error: error.message });
+			throw error;
+		}
 		throw redirect(303, '/');
 	}
 };

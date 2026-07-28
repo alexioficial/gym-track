@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { resolve } from '$app/paths';
 	import Icon from '$lib/components/Icon.svelte';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
@@ -88,7 +89,8 @@
 		{#each WEEKDAYS as day (day)}
 			{@const assigned = data.schedule[day] ? routineById.get(data.schedule[day]!) : null}
 			<div class="day-row">
-				<span class="day-color" style="background:{assigned?.color ?? 'var(--color-border)'}"></span>
+				<span class="day-color" style="background:{assigned?.color ?? 'var(--color-border)'}"
+				></span>
 				<span class="day-name">{WEEKDAY_LABELS[day]}</span>
 				<form method="POST" action="?/setDay" use:enhance class="day-form">
 					<input type="hidden" name="day" value={day} />
@@ -142,7 +144,9 @@
 	<div class="field">
 		<span class="label">Exercises & sets</span>
 		{#if data.exercises.length === 0}
-			<p class="muted hint">First create exercises in the <a href="/exercises" class="accent">Exercises</a> tab.</p>
+			<p class="muted hint">
+				First create exercises in the <a href={resolve('/exercises')} class="accent">Exercises</a> tab.
+			</p>
 		{:else}
 			<input type="hidden" name="exercises" value={JSON.stringify(assigned)} />
 
@@ -231,15 +235,18 @@
 		method="POST"
 		action="?/create"
 		class="card form-card"
-		use:enhance={() => async ({ update }) => {
-			await update();
-			close();
-		}}
+		use:enhance={() =>
+			async ({ update }) => {
+				await update();
+				close();
+			}}
 	>
 		{@render routineFields(null)}
 		<div class="form-actions">
 			<button type="button" class="btn btn-subtle" onclick={close}>Cancel</button>
-			<button type="submit" class="btn btn-primary"><Icon name="check" size={16} /> Create routine</button>
+			<button type="submit" class="btn btn-primary"
+				><Icon name="check" size={16} /> Create routine</button
+			>
 		</div>
 	</form>
 {/if}
@@ -249,7 +256,11 @@
 	<h2 class="block-title"><Icon name="clipboard" size={17} /> Your routines</h2>
 
 	{#if data.routines.length === 0 && !showNew}
-		<EmptyState icon="calendar" title="No routines yet" message="Create a routine and assign exercises to it.">
+		<EmptyState
+			icon="calendar"
+			title="No routines yet"
+			message="Create a routine and assign exercises to it."
+		>
 			<button class="btn btn-primary" onclick={startNew}>
 				<Icon name="plus" size={16} stroke={2.5} /> New routine
 			</button>
@@ -262,10 +273,11 @@
 						method="POST"
 						action="?/update"
 						class="card form-card"
-						use:enhance={() => async ({ update }) => {
-							await update();
-							close();
-						}}
+						use:enhance={() =>
+							async ({ update }) => {
+								await update();
+								close();
+							}}
 					>
 						<input type="hidden" name="id" value={routine.id} />
 						{@render routineFields(routine)}
@@ -283,7 +295,9 @@
 							</button>
 							<div class="spacer"></div>
 							<button type="button" class="btn btn-subtle" onclick={close}>Cancel</button>
-							<button type="submit" class="btn btn-primary"><Icon name="check" size={16} /> Save</button>
+							<button type="submit" class="btn btn-primary"
+								><Icon name="check" size={16} /> Save</button
+							>
 						</div>
 					</form>
 				{:else}

@@ -1,8 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
-import { verifyPassword } from '$lib/server/auth';
-import { getUserByUsername } from '$lib/server/users';
-import { startSession } from '$lib/server/session';
+import { ApiError, login } from '$lib/server/api';
 
 export const actions: Actions = {
 	default: async ({ request, cookies }) => {
@@ -14,12 +12,18 @@ export const actions: Actions = {
 			return fail(400, { username, error: 'Enter your username and password' });
 		}
 
-		const user = await getUserByUsername(username);
-		if (!user || !verifyPassword(password, user.passwordHash)) {
-			return fail(401, { username, error: 'Wrong username or password' });
+		try {
+			await login(cookies, { username, password });
+		} catch (error) {
+			if (error instanceof ApiError && error.status === 401) {
+				return fail(401, { username, error: 'Wrong username or password' });
+			}
+			throw error;
 		}
 
-		await startSession(cookies, user._id.toString());
+		if (!cookies.get('gym_session')) {
+			return fail(401, { username, error: 'Wrong username or password' });
+		}
 		throw redirect(303, '/');
 	}
 };

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
+	import { resolve } from '$app/paths';
 	import SessionForm from '$lib/components/SessionForm.svelte';
 	import { formatDate } from '$lib/utils/progression';
 	import type { PageData } from './$types';
@@ -9,7 +10,7 @@
 
 <svelte:head><title>Edit session - Gym Tracker</title></svelte:head>
 
-<a href="/log" class="back">
+<a href={resolve('/log')} class="back">
 	<Icon name="back" size={16} /> Back
 </a>
 
@@ -18,13 +19,15 @@
 	<p class="muted head-sub">{formatDate(data.session.date)}</p>
 </header>
 
-<SessionForm
-	mode="edit"
-	session={data.session}
-	exercises={data.exercises}
-	routines={data.routines}
-	lastByExercise={data.lastByExercise}
-/>
+{#key data.session.id}
+	<SessionForm
+		mode="edit"
+		session={data.session}
+		exercises={data.exercises}
+		routines={data.routines}
+		lastByExercise={data.lastByExercise}
+	/>
+{/key}
 
 <style>
 	.back {

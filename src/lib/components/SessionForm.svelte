@@ -2,8 +2,15 @@
 	import { enhance } from '$app/forms';
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
+	import { resolve } from '$app/paths';
 	import Icon from './Icon.svelte';
-	import { UNIT, type Exercise, type LastPerformance, type Routine, type Session } from '$lib/types';
+	import {
+		UNIT,
+		type Exercise,
+		type LastPerformance,
+		type Routine,
+		type Session
+	} from '$lib/types';
 	import { shortLabel, todayYmd } from '$lib/utils/progression';
 
 	interface Props {
@@ -23,6 +30,12 @@
 		initialRoutineId = '',
 		lastByExercise = {}
 	}: Props = $props();
+	// A session form is deliberately initialized from its input once. Pages key this
+	// component by session id, so a client-side navigation creates a fresh form.
+	function initialProps() {
+		return { session, routineId: initialRoutineId };
+	}
+	const initial = initialProps();
 
 	/** Trim a value for display: "135", "5.5" — no trailing ".0". */
 	const fmt = (n: number) => String(Math.round(n * 100) / 100);
@@ -34,14 +47,14 @@
 	const nextId = () => ++counter;
 
 	function initEntries(): EditEntry[] {
-		if (session) {
-			return session.entries.map((e) => ({
+		if (initial.session) {
+			return initial.session.entries.map((e) => ({
 				exerciseId: e.exerciseId,
 				sets: e.sets.map((s) => ({ id: nextId(), weight: s.weight, reps: s.reps }))
 			}));
 		}
 		// When creating with a preselected routine, preload its exercises + planned sets.
-		const routine = routines.find((r) => r.id === initialRoutineId);
+		const routine = routines.find((r) => r.id === initial.routineId);
 		if (routine) {
 			return routine.exercises
 				.filter((re) => exercises.some((e) => e.id === re.exerciseId))
@@ -50,9 +63,9 @@
 		return [];
 	}
 
-	let date = $state(session?.date ?? todayYmd());
-	let routineId = $state(session?.routineId ?? initialRoutineId ?? '');
-	let notes = $state(session?.notes ?? '');
+	let date = $state(initial.session?.date ?? todayYmd());
+	let routineId = $state(initial.session?.routineId ?? initial.routineId ?? '');
+	let notes = $state(initial.session?.notes ?? '');
 	let entries = $state<EditEntry[]>(initEntries());
 	let pick = $state('');
 
@@ -70,7 +83,9 @@
 			: []
 	);
 	// Any set with a value typed in — used to decide whether it's safe to replace entries.
-	const hasData = $derived(entries.some((e) => e.sets.some((s) => s.weight != null || s.reps != null)));
+	const hasData = $derived(
+		entries.some((e) => e.sets.some((s) => s.weight != null || s.reps != null))
+	);
 
 	const payload = $derived(
 		entries
@@ -174,11 +189,11 @@
 	// Add the routine's exercises that aren't already in the session.
 	function loadRoutine() {
 		if (!selectedRoutine) return;
-		const used = new Set(entries.map((e) => e.exerciseId));
+		const used = entries.map((e) => e.exerciseId);
 		for (const re of selectedRoutine.exercises) {
-			if (exercises.some((e) => e.id === re.exerciseId) && !used.has(re.exerciseId)) {
+			if (exercises.some((e) => e.id === re.exerciseId) && !used.includes(re.exerciseId)) {
 				entries.push(routineEntry(re));
-				used.add(re.exerciseId);
+				used.push(re.exerciseId);
 			}
 		}
 	}
@@ -292,7 +307,8 @@
 						<span class="last-label">Last · {shortLabel(last.date)}</span>
 						<span class="last-sets">
 							{#each last.sets as s, i (i)}
-								<span class="last-set">{fmt(s.weight)}<span class="ls-x">×</span>{fmt(s.reps)}</span>
+								<span class="last-set">{fmt(s.weight)}<span class="ls-x">×</span>{fmt(s.reps)}</span
+								>
 							{/each}
 						</span>
 					</div>
@@ -355,19 +371,32 @@
 					<option value={ex.id}>{ex.name}</option>
 				{/each}
 			</select>
-			<button type="button" class="btn btn-primary" disabled={!pick} onclick={() => addExercise(pick)}>
+			<button
+				type="button"
+				class="btn btn-primary"
+				disabled={!pick}
+				onclick={() => addExercise(pick)}
+			>
 				<Icon name="plus" size={16} stroke={2.5} /> Add
 			</button>
 		</div>
 	{:else if entries.length === 0}
 		<p class="muted empty-note">
-			You have no exercises. Create them in <a href="/exercises" class="accent">Exercises</a>.
+			You have no exercises. Create them in <a href={resolve('/exercises')} class="accent"
+				>Exercises</a
+			>.
 		</p>
 	{/if}
 
 	<div class="field">
 		<label class="label" for="notes">Notes (optional)</label>
-		<input id="notes" name="notes" class="input" placeholder="How you felt, any pain…" bind:value={notes} />
+		<input
+			id="notes"
+			name="notes"
+			class="input"
+			placeholder="How you felt, any pain…"
+			bind:value={notes}
+		/>
 	</div>
 
 	<div class="submit-row">

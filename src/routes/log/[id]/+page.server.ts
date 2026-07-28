@@ -1,45 +1,54 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import {
-	deleteSession,
-	getExercises,
-	getRoutines,
-	getSession,
-	getSessions,
-	updateSession
-} from '$lib/server/repo';
-import { parseSessionForm } from '$lib/server/parseSession';
+import { api, ApiError } from '$lib/server/api';
 import { lastPerformanceByExercise } from '$lib/utils/progression';
+import { sessionInput } from '$lib/utils/sessionForm';
+import type { Exercise, Routine, Session } from '$lib/types';
 
-export const load: PageServerLoad = async ({ params, locals }) => {
-	const uid = locals.user!.id;
-	const [session, exercises, routines, sessions] = await Promise.all([
-		getSession(uid, params.id),
-		getExercises(uid),
-		getRoutines(uid),
-		getSessions(uid)
-	]);
-	if (!session) throw error(404, 'Session not found');
-	// Reference the previous time each exercise was done — not this session itself,
-	// and nothing logged after it.
-	const lastByExercise = lastPerformanceByExercise(sessions, {
-		excludeSessionId: session.id,
-		onOrBefore: session.date
-	});
-	return { session, exercises, routines, lastByExercise };
+export const load: PageServerLoad = async ({ params, cookies }) => {
+	try {
+		const [session, exercises, routines, sessions] = await Promise.all([
+			api<Session>(cookies, `/api/sessions/${params.id}`),
+			api<Exercise[]>(cookies, '/api/exercises'),
+			api<Routine[]>(cookies, '/api/routines'),
+			api<Session[]>(cookies, '/api/sessions')
+		]);
+		return {
+			session,
+			exercises,
+			routines,
+			lastByExercise: lastPerformanceByExercise(sessions, {
+				excludeSessionId: session.id,
+				onOrBefore: session.date
+			})
+		};
+	} catch (cause) {
+		if (cause instanceof ApiError && cause.status === 404) throw error(404, 'Session not found');
+		throw cause;
+	}
 };
 
 export const actions: Actions = {
-	update: async ({ request, params, locals }) => {
-		const parsed = parseSessionForm(await request.formData());
-		if (!parsed.date) return fail(400, { error: 'Date is required' });
-		if (parsed.entries.length === 0) return fail(400, { error: 'Add at least one exercise with reps' });
-		await updateSession(locals.user!.id, params.id, parsed);
+	update: async ({ request, params, cookies }) => {
+		try {
+			await api(cookies, `/api/sessions/${params.id}`, {
+				method: 'PUT',
+				body: JSON.stringify(sessionInput(await request.formData()))
+			});
+		} catch (cause) {
+			if (cause instanceof ApiError) return fail(cause.status, { error: cause.message });
+			throw cause;
+		}
 		throw redirect(303, '/');
 	},
 
-	delete: async ({ params, locals }) => {
-		await deleteSession(locals.user!.id, params.id);
+	delete: async ({ params, cookies }) => {
+		try {
+			await api(cookies, `/api/sessions/${params.id}`, { method: 'DELETE' });
+		} catch (cause) {
+			if (cause instanceof ApiError) return fail(cause.status, { error: cause.message });
+			throw cause;
+		}
 		throw redirect(303, '/');
 	}
 };

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
+	import { resolve } from '$app/paths';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import SessionForm from '$lib/components/SessionForm.svelte';
 	import { formatDate } from '$lib/utils/progression';
@@ -25,7 +26,7 @@
 		<h2 class="block-title"><Icon name="clipboard" size={16} /> History</h2>
 		<div class="stack">
 			{#each data.history as s (s.id)}
-				<a href="/log/{s.id}" class="sess card card-hover">
+				<a href={resolve('/log/[id]', { id: s.id })} class="sess card card-hover">
 					<span class="dot" style="background:{s.routineColor ?? 'var(--color-muted)'}"></span>
 					<div class="sess-info">
 						<span class="sess-routine">{s.routineName ?? 'Free session'}</span>

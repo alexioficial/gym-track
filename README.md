@@ -1,90 +1,47 @@
-# 🏋️ Gym Tracker
+# Gym Tracker — frontend
 
-Personal gym tracker focused on **progressive overload**: log your routines, the exercises for each day and
-your sessions, and every week it tells you where you improved on each exercise (more weight, more reps, both or
-more volume).
+Interfaz SvelteKit del tracker personal de gimnasio. Registra rutinas, ejercicios y sesiones; el análisis de sobrecarga progresiva se calcula en la interfaz a partir de los datos entregados por la API.
 
-- **SvelteKit** (Svelte 5 runes) + **TypeScript**
-- **MongoDB** (official driver)
-- **Bun** as runtime / package manager
-- **Tailwind 4**, dark theme (yellow + grays/blacks), minimalist, mobile-first
-- **Dockerfile** ready to deploy on **Coolify**
-- **Multi-user auth**: username + password, admin-managed accounts — every user's exercises, routines, calendar and sessions are fully separated.
+El backend vive en el proyecto hermano [`gym-tracker-api`](../gym-tracker-api/README.md), implementado con Actix Web y MongoDB. Este proyecto no abre conexiones a la base de datos, no gestiona contraseñas y no contiene reglas de autorización de datos.
 
-## How progressive overload works
+## Desarrollo local
 
-For each exercise, we group your sets by **week** and compute:
-
-- **Volume** = Σ (weight × reps) of all sets.
-- **e1RM (estimated 1RM)** = the **average of five validated formulas** (Epley, Brzycki, Lombardi, Lander, O'Conner), taken from your best set of the week. Averaging cancels each formula's individual bias, and reps are only trusted up to ~12 (beyond that the estimate is clamped, since accuracy drops sharply). Most accurate at 3–8 reps.
-- **Top set** = your best set (heaviest weight, and the reps at that weight).
-
-We compare the latest week against the previous one and give you a verdict: **more weight**, **more reps**, **both**,
-**more volume**, same or down.
-
-## Accounts & data isolation
-
-Sign in with a **username + password**. There is no public sign-up: the **admin** creates every account from
-inside the app. Each account gets its own private set of exercises, routines, weekly calendar and sessions —
-nothing is shared between users.
-
-- **Admin account** is seeded from `ADMIN_USERNAME` / `ADMIN_PASSWORD` (username defaults to `alexioficial`).
-  `ADMIN_PASSWORD` is **authoritative**: the admin's password is synced to it on every start, so to rotate the
-  password you set a new strong `ADMIN_PASSWORD` and redeploy. If `ADMIN_PASSWORD` is omitted, a brand-new admin
-  is bootstrapped with a weak default — always set it in production.
-- **Managing users**: signed in as the admin, open the **Users** panel (people icon, top-right → `/admin`) to
-  create users, reset their password, or delete them. Usernames may only contain **lowercase letters, numbers,
-  dots and underscores** (3–30 chars).
-- **Migrating the old single-user data**: the pre-accounts data is automatically claimed by the admin account
-  on first start.
-- **Staying signed in**: the session lasts 365 days (persistent, http-only, signed cookie backed by an
-  `auth_sessions` document), so you don't re-enter credentials each visit. Logging out truly revokes access.
-  Passwords are hashed with `scrypt`.
-
-## Local development
-
-Requirements: [Bun](https://bun.sh) and a MongoDB instance (free Atlas cluster, or a local Mongo).
+Se necesitan [Bun](https://bun.sh), una instancia MongoDB y la API en ejecución.
 
 ```bash
-# 1. Install dependencies
+# Frontend
+cd gym-tracker
 bun install
-
-# 2. Environment variables
 cp .env.example .env
-# edit .env with your MONGODB_URI and SESSION_SECRET
-
-# 3. Start in dev mode
 bun run dev
+
+# En otra terminal, API
+cd ../gym-tracker-api
+cp .env.example .env
+cargo run
 ```
 
-Open http://localhost:5173 and sign in as the admin (`alexioficial` / `1029384756` by default), then create
-more users from the **Users** panel.
+Por defecto, el frontend se abre en `http://localhost:5173` y llama a la API en `http://localhost:8080`. Al usar Vite, configura en la API `FRONTEND_ORIGIN=http://localhost:5173`; para la imagen de producción del frontend, usa `http://localhost:3000` o el dominio público final en ambos servicios.
 
-Type checking: `bun run check`
+## Variables del frontend
 
-## Environment variables
+| Variable  | Descripción                                                                        |
+| --------- | ---------------------------------------------------------------------------------- |
+| `API_URL` | URL interna, servidor-a-servidor, de `gym-tracker-api`. No se expone al navegador. |
+| `ORIGIN`  | URL pública de SvelteKit; obligatoria en producción para acciones de formulario.   |
+| `PORT`    | Puerto del frontend (por defecto `3000` en la imagen Docker).                      |
 
-| Variable | Description |
-| --- | --- |
-| `MONGODB_URI` | MongoDB connection string. |
-| `MONGODB_DB` | Database name (e.g. `gym_tracker`). |
-| `SESSION_SECRET` | Secret used to sign the session cookie (`openssl rand -hex 32`). |
-| `ORIGIN` | Public URL. **Required in production** for form actions (CSRF). |
-| `ADMIN_USERNAME` | Optional. Seeded admin username (default `alexioficial`). |
-| `ADMIN_PASSWORD` | Admin password. **Authoritative** — synced to the admin on every start; set a strong value and redeploy to rotate. Falls back to a weak default only when bootstrapping a new admin. |
-| `PORT` | Server port (defaults to 3000). |
+Consulta el README de la API para `MONGODB_URI`, `ADMIN_PASSWORD`, cookies, CORS/CSRF y el resto de configuración de seguridad.
 
-## Deploy on Coolify
-
-1. Push this project to a GitHub repo.
-2. In Coolify create an application from that repo and switch the **Build Pack** from Nixpacks to **Dockerfile** (uses the `Dockerfile` at the root).
-3. Set the environment variables from the table above. `ORIGIN` must be the final URL with `https://` (e.g. `https://gym.yourdomain.com`).
-4. The app listens on port **3000** (already exposed in the Dockerfile).
-5. For `MONGODB_URI` use a MongoDB Atlas cluster or a MongoDB service created within the same Coolify.
-
-## Production build (local)
+## Verificación
 
 ```bash
-docker build -t gym-tracker .
-docker run --rm -p 3000:3000 --env-file .env gym-tracker
+bun run check
+bun run lint
+bun test
+bun run build
 ```
+
+## Despliegue
+
+Despliega `gym-tracker-api` y `gym-tracker` como servicios separados. Configura el `API_URL` del frontend con la URL privada/interna de la API, y en la API configura `FRONTEND_ORIGIN` con la URL HTTPS pública del frontend. Ambos valores deben apuntar al mismo origen público para que la protección CSRF permita las mutaciones.

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
+	import { resolve } from '$app/paths';
 	import StatDelta from '$lib/components/StatDelta.svelte';
 	import { UNIT } from '$lib/types';
 	import { VERDICT_LABEL, formatDate } from '$lib/utils/progression';
@@ -8,7 +9,7 @@
 	let { data }: { data: PageData } = $props();
 
 	const logHref = $derived(
-		data.today.routine ? `/log?routine=${data.today.routine.id}` : '/log'
+		data.today.routine ? `${resolve('/log')}?routine=${data.today.routine.id}` : resolve('/log')
 	);
 </script>
 
@@ -33,6 +34,8 @@
 		<p class="muted hero-sub">No routine assigned for today</p>
 	{/if}
 
+	<!-- The URL is base-aware; the query is appended after resolving the route. -->
+	<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 	<a href={logHref} class="btn btn-primary hero-btn">
 		<Icon name="plus" size={18} stroke={2.5} /> Log session
 	</a>
@@ -40,15 +43,15 @@
 
 <!-- Counters -->
 <section class="counters">
-	<a href="/exercises" class="counter card card-hover">
+	<a href={resolve('/exercises')} class="counter card card-hover">
 		<span class="counter-num stat-num">{data.counts.exercises}</span>
 		<span class="counter-label muted">Exercises</span>
 	</a>
-	<a href="/routines" class="counter card card-hover">
+	<a href={resolve('/routines')} class="counter card card-hover">
 		<span class="counter-num stat-num">{data.counts.routines}</span>
 		<span class="counter-label muted">Routines</span>
 	</a>
-	<a href="/log" class="counter card card-hover">
+	<a href={resolve('/log')} class="counter card card-hover">
 		<span class="counter-num stat-num">{data.counts.sessions}</span>
 		<span class="counter-label muted">Sessions</span>
 	</a>
@@ -58,14 +61,17 @@
 <section class="block">
 	<div class="block-head">
 		<h2 class="block-title"><Icon name="flame" size={17} /> Your progress</h2>
-		<a href="/progress" class="block-link">See all <Icon name="chevron" size={14} /></a>
+		<a href={resolve('/progress')} class="block-link">See all <Icon name="chevron" size={14} /></a>
 	</div>
 
 	{#if data.improvements.length > 0}
 		<div class="stack">
 			{#each data.improvements.slice(0, 4) as p (p.exercise.id)}
 				{#if p.delta}
-					<a href="/progress/{p.exercise.id}" class="imp card card-hover">
+					<a
+						href={resolve('/progress/[exerciseId]', { exerciseId: p.exercise.id })}
+						class="imp card card-hover"
+					>
 						<div class="imp-info">
 							<span class="imp-name">{p.exercise.name}</span>
 							<span class="badge badge-accent">{VERDICT_LABEL[p.delta.verdict]}</span>
@@ -89,8 +95,8 @@
 		<div class="card note">
 			<Icon name="trending" size={18} />
 			<p class="muted">
-				Log your sessions for at least <strong class="subtle">2 weeks</strong> to see where you're
-				improving on each exercise.
+				Log your sessions for at least <strong class="subtle">2 weeks</strong> to see where you're improving
+				on each exercise.
 			</p>
 		</div>
 	{/if}
@@ -104,7 +110,7 @@
 		</div>
 		<div class="stack">
 			{#each data.recent as s (s.id)}
-				<a href="/log/{s.id}" class="sess card card-hover">
+				<a href={resolve('/log/[id]', { id: s.id })} class="sess card card-hover">
 					<span class="dot" style="background:{s.routineColor ?? 'var(--color-muted)'}"></span>
 					<div class="sess-info">
 						<span class="sess-routine">{s.routineName ?? 'Free session'}</span>

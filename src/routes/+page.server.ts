@@ -1,15 +1,21 @@
 import type { PageServerLoad } from './$types';
-import { getExercises, getRoutines, getSchedule, getSessions } from '$lib/server/repo';
+import { api } from '$lib/server/api';
 import { buildExerciseProgress, IMPROVEMENT_VERDICTS } from '$lib/utils/progression';
-import { WEEKDAYS, WEEKDAY_LABELS } from '$lib/types';
+import {
+	WEEKDAYS,
+	WEEKDAY_LABELS,
+	type Exercise,
+	type Routine,
+	type Schedule,
+	type Session
+} from '$lib/types';
 
-export const load: PageServerLoad = async ({ locals }) => {
-	const uid = locals.user!.id;
+export const load: PageServerLoad = async ({ cookies }) => {
 	const [schedule, routines, exercises, sessions] = await Promise.all([
-		getSchedule(uid),
-		getRoutines(uid),
-		getExercises(uid),
-		getSessions(uid)
+		api<Schedule>(cookies, '/api/schedule'),
+		api<Routine[]>(cookies, '/api/routines'),
+		api<Exercise[]>(cookies, '/api/exercises'),
+		api<Session[]>(cookies, '/api/sessions')
 	]);
 
 	const todayIdx = (new Date().getDay() + 6) % 7; // Monday = 0

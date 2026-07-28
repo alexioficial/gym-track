@@ -125,7 +125,20 @@ export function isoWeekKey(ymd: string): string {
 	return `${d.getFullYear()}-W${pad(week)}`;
 }
 
-const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTHS_SHORT = [
+	'Jan',
+	'Feb',
+	'Mar',
+	'Apr',
+	'May',
+	'Jun',
+	'Jul',
+	'Aug',
+	'Sep',
+	'Oct',
+	'Nov',
+	'Dec'
+];
 
 /** Short date label, e.g. "Jul 14". */
 export function shortLabel(ymd: string): string {
@@ -163,7 +176,11 @@ export function weeklyStatsForExercise(sessions: Session[], exerciseId: string):
 		const entry = session.entries.find((e) => e.exerciseId === exerciseId);
 		if (!entry || entry.sets.length === 0) continue;
 		const key = isoWeekKey(session.date);
-		const bucket = byWeek.get(key) ?? { date: session.date, sets: [], sessionDates: new Set<string>() };
+		const bucket = byWeek.get(key) ?? {
+			date: session.date,
+			sets: [],
+			sessionDates: new Set<string>()
+		};
 		// Keep the earliest date of the week as the reference.
 		if (session.date < bucket.date) bucket.date = session.date;
 		bucket.sets.push(...entry.sets.filter((s) => s.weight > 0 && s.reps > 0));
@@ -177,7 +194,10 @@ export function weeklyStatsForExercise(sessions: Session[], exerciseId: string):
 		const start = weekStart(bucket.date);
 		const top = topSet(bucket.sets);
 		// Best robust estimate across every set logged that week (not just one set).
-		const bestE1rm = bucket.sets.reduce((max, s) => Math.max(max, estimate1RM(s.weight, s.reps)), 0);
+		const bestE1rm = bucket.sets.reduce(
+			(max, s) => Math.max(max, estimate1RM(s.weight, s.reps)),
+			0
+		);
 		weeks.push({
 			weekKey,
 			weekStart: start,

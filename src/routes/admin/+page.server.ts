@@ -1,69 +1,73 @@
 import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { createUser, deleteUser, getUserById, listUsers, setUserPassword } from '$lib/server/users';
+import { api, ApiError } from '$lib/server/api';
+
+interface AdminUser {
+	id: string;
+	username: string;
+	isAdmin: boolean;
+	createdAt: string;
+}
 
 function requireAdmin(locals: App.Locals) {
 	if (!locals.user?.isAdmin) throw error(403, 'Admins only');
 }
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals, cookies }) => {
 	requireAdmin(locals);
-	const users = await listUsers();
-	return {
-		users: users.map((u) => ({
-			id: u._id.toString(),
-			username: u.username,
-			isAdmin: u.isAdmin,
-			createdAt: u.createdAt.toISOString()
-		}))
-	};
+	return { users: await api<AdminUser[]>(cookies, '/api/admin/users') };
 };
 
-const CREATE_ERRORS: Record<string, string> = {
-	'invalid-username':
-		'Username can only use lowercase letters, numbers, dots and underscores (3–30 chars).',
-	'weak-password': 'Password must be at least 6 characters.',
-	'username-taken': 'That username is already taken.'
-};
+function apiFailure(error: unknown, data: Record<string, string> = {}) {
+	if (error instanceof ApiError) return fail(error.status, { ...data, error: error.message });
+	throw error;
+}
 
 export const actions: Actions = {
-	create: async ({ request, locals }) => {
+	create: async ({ request, locals, cookies }) => {
 		requireAdmin(locals);
 		const data = await request.formData();
 		const username = String(data.get('username') ?? '').trim();
 		const password = String(data.get('password') ?? '');
 		try {
-			await createUser({ username, password });
-		} catch (e) {
-			const key = e instanceof Error ? e.message : '';
-			return fail(400, { username, error: CREATE_ERRORS[key] ?? 'Could not create user.' });
+			await api(cookies, '/api/admin/users', {
+				method: 'POST',
+				body: JSON.stringify({ username, password })
+			});
+		} catch (error) {
+			return apiFailure(error, { username });
 		}
 		return { ok: 'created', username: username.toLowerCase() };
 	},
 
-	resetPassword: async ({ request, locals }) => {
+	resetPassword: async ({ request, locals, cookies }) => {
 		requireAdmin(locals);
 		const data = await request.formData();
 		const id = String(data.get('id') ?? '');
 		const password = String(data.get('password') ?? '');
 		if (!id) return fail(400, { error: 'Missing user' });
 		try {
-			await setUserPassword(id, password);
-		} catch {
-			return fail(400, { error: 'Password must be at least 6 characters.' });
+			await api(cookies, `/api/admin/users/${id}/password`, {
+				method: 'PUT',
+				body: JSON.stringify({ password })
+			});
+		} catch (error) {
+			return apiFailure(error);
 		}
 		return { ok: 'reset' };
 	},
 
-	delete: async ({ request, locals }) => {
+	delete: async ({ request, locals, cookies }) => {
 		requireAdmin(locals);
 		const data = await request.formData();
 		const id = String(data.get('id') ?? '');
 		if (!id) return fail(400, { error: 'Missing user' });
 		if (id === locals.user!.id) return fail(400, { error: 'You cannot delete yourself.' });
-		const target = await getUserById(id);
-		if (target?.isAdmin) return fail(400, { error: 'You cannot delete an admin.' });
-		await deleteUser(id);
+		try {
+			await api(cookies, `/api/admin/users/${id}`, { method: 'DELETE' });
+		} catch (error) {
+			return apiFailure(error);
+		}
 		return { ok: 'deleted' };
 	}
 };

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
+	import { resolve } from '$app/paths';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import Sparkline from '$lib/components/Sparkline.svelte';
@@ -27,7 +28,9 @@
 		title="No data yet"
 		message="Log sessions and you'll see how you progress on each exercise here: more weight, more reps or more volume."
 	>
-		<a href="/log" class="btn btn-primary"><Icon name="plus" size={16} stroke={2.5} /> Log session</a>
+		<a href={resolve('/log')} class="btn btn-primary"
+			><Icon name="plus" size={16} stroke={2.5} /> Log session</a
+		>
 	</EmptyState>
 {:else}
 	<!-- Weekly recap: latest populated week vs the previous one -->
@@ -52,7 +55,9 @@
 
 			<div class="recap-counts">
 				{#if r.improved > 0}
-					<span class="rc good"><Icon name="up" size={13} stroke={2.5} /> {r.improved} improved</span>
+					<span class="rc good"
+						><Icon name="up" size={13} stroke={2.5} /> {r.improved} improved</span
+					>
 				{/if}
 				{#if r.same > 0}
 					<span class="rc">{r.same} same</span>
@@ -64,13 +69,15 @@
 
 			<div class="recap-list">
 				{#each r.items as it (it.exerciseId)}
-					<a href="/progress/{it.exerciseId}" class="rl">
+					<a href={resolve('/progress/[exerciseId]', { exerciseId: it.exerciseId })} class="rl">
 						<div class="rl-head">
 							<span class="rl-name">{it.name}</span>
 							<span class="badge {verdictClass(it.verdict)}">{VERDICT_LABEL[it.verdict]}</span>
 						</div>
 						<div class="rl-change stat-num">
-							<span class="rl-set">{it.prevTopWeight}<span class="mul">×</span>{it.prevTopReps}</span>
+							<span class="rl-set"
+								>{it.prevTopWeight}<span class="mul">×</span>{it.prevTopReps}</span
+							>
 							<Icon name="chevron" size={14} />
 							<span
 								class="rl-set now"
@@ -127,7 +134,10 @@
 {/if}
 
 {#snippet exerciseCard(p: ExerciseProgress)}
-	<a href="/progress/{p.exercise.id}" class="card card-hover ex">
+	<a
+		href={resolve('/progress/[exerciseId]', { exerciseId: p.exercise.id })}
+		class="card card-hover ex"
+	>
 		<div class="ex-main">
 			<div class="ex-title">
 				<span class="ex-name">{p.exercise.name}</span>
@@ -137,7 +147,9 @@
 			</div>
 			{#if p.latest}
 				<div class="ex-stats muted stat-num">
-					<span><strong class="subtle">{p.latest.topWeight}</strong> {UNIT} × {p.latest.topReps}</span>
+					<span
+						><strong class="subtle">{p.latest.topWeight}</strong> {UNIT} × {p.latest.topReps}</span
+					>
 					<span class="sep">·</span>
 					<span>e1RM <strong class="accent">{p.latest.bestE1rm}</strong></span>
 				</div>

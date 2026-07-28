@@ -1,19 +1,22 @@
 import type { PageServerLoad } from './$types';
-import { getExercises, getRoutines, getSessions } from '$lib/server/repo';
-import { buildExerciseProgress, buildWeeklyRecap, groupProgressByRoutine } from '$lib/utils/progression';
+import { api } from '$lib/server/api';
+import {
+	buildExerciseProgress,
+	buildWeeklyRecap,
+	groupProgressByRoutine
+} from '$lib/utils/progression';
+import type { Exercise, Routine, Session } from '$lib/types';
 
-export const load: PageServerLoad = async ({ locals }) => {
-	const uid = locals.user!.id;
+export const load: PageServerLoad = async ({ cookies }) => {
 	const [exercises, routines, sessions] = await Promise.all([
-		getExercises(uid),
-		getRoutines(uid),
-		getSessions(uid)
+		api<Exercise[]>(cookies, '/api/exercises'),
+		api<Routine[]>(cookies, '/api/routines'),
+		api<Session[]>(cookies, '/api/sessions')
 	]);
 	const progress = buildExerciseProgress(sessions, exercises);
-
-	const groups = groupProgressByRoutine(progress, routines);
-	const recap = buildWeeklyRecap(progress);
-	const untracked = progress.filter((p) => p.weeks.length === 0).map((p) => p.exercise);
-
-	return { groups, recap, untracked };
+	return {
+		groups: groupProgressByRoutine(progress, routines),
+		recap: buildWeeklyRecap(progress),
+		untracked: progress.filter((item) => item.weeks.length === 0).map((item) => item.exercise)
+	};
 };

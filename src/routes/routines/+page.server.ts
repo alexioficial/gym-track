@@ -1,28 +1,21 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import {
-	createRoutine,
-	deleteRoutine,
-	getExercises,
-	getRoutines,
-	getSchedule,
-	setScheduleDay,
-	updateRoutine
-} from '$lib/server/repo';
+import { api, ApiError } from '$lib/server/api';
 import {
 	DEFAULT_ROUTINE_SETS,
 	ROUTINE_COLORS,
-	WEEKDAYS,
+	type Exercise,
+	type Routine,
 	type RoutineExercise,
+	type Schedule,
 	type Weekday
 } from '$lib/types';
 
-export const load: PageServerLoad = async ({ locals }) => {
-	const uid = locals.user!.id;
+export const load: PageServerLoad = async ({ cookies }) => {
 	const [routines, exercises, schedule] = await Promise.all([
-		getRoutines(uid),
-		getExercises(uid),
-		getSchedule(uid)
+		api<Routine[]>(cookies, '/api/routines'),
+		api<Exercise[]>(cookies, '/api/exercises'),
+		api<Schedule>(cookies, '/api/schedule')
 	]);
 	return { routines, exercises, schedule };
 };
@@ -33,52 +26,95 @@ function safeColor(value: string): string {
 
 function parseExercises(raw: FormDataEntryValue | null): RoutineExercise[] {
 	try {
-		const arr = JSON.parse(String(raw ?? '[]'));
+		const arr: unknown = JSON.parse(String(raw ?? '[]'));
 		if (!Array.isArray(arr)) return [];
 		return arr
-			.filter((x) => x && typeof x.exerciseId === 'string')
-			.map((x) => ({ exerciseId: x.exerciseId as string, sets: Number(x.sets) || DEFAULT_ROUTINE_SETS }));
+			.filter((value): value is { exerciseId: string; sets?: unknown } =>
+				Boolean(
+					value &&
+					typeof value === 'object' &&
+					typeof (value as { exerciseId?: unknown }).exerciseId === 'string'
+				)
+			)
+			.map((value) => ({
+				exerciseId: value.exerciseId,
+				sets: Number(value.sets) || DEFAULT_ROUTINE_SETS
+			}));
 	} catch {
 		return [];
 	}
 }
 
+function apiFailure(error: unknown) {
+	if (error instanceof ApiError) return fail(error.status, { error: error.message });
+	throw error;
+}
+
 export const actions: Actions = {
-	create: async ({ request, locals }) => {
+	create: async ({ request, cookies }) => {
 		const data = await request.formData();
 		const name = String(data.get('name') ?? '').trim();
-		const color = safeColor(String(data.get('color') ?? ''));
-		const exercises = parseExercises(data.get('exercises'));
 		if (!name) return fail(400, { error: 'Name is required' });
-		await createRoutine(locals.user!.id, { name, color, exercises });
+		try {
+			await api(cookies, '/api/routines', {
+				method: 'POST',
+				body: JSON.stringify({
+					name,
+					color: safeColor(String(data.get('color') ?? '')),
+					exercises: parseExercises(data.get('exercises'))
+				})
+			});
+		} catch (error) {
+			return apiFailure(error);
+		}
 		return { success: true };
 	},
 
-	update: async ({ request, locals }) => {
+	update: async ({ request, cookies }) => {
 		const data = await request.formData();
 		const id = String(data.get('id') ?? '');
 		const name = String(data.get('name') ?? '').trim();
-		const color = safeColor(String(data.get('color') ?? ''));
-		const exercises = parseExercises(data.get('exercises'));
 		if (!id) return fail(400, { error: 'Missing id' });
 		if (!name) return fail(400, { error: 'Name is required' });
-		await updateRoutine(locals.user!.id, id, { name, color, exercises });
+		try {
+			await api(cookies, `/api/routines/${id}`, {
+				method: 'PUT',
+				body: JSON.stringify({
+					name,
+					color: safeColor(String(data.get('color') ?? '')),
+					exercises: parseExercises(data.get('exercises'))
+				})
+			});
+		} catch (error) {
+			return apiFailure(error);
+		}
 		return { success: true };
 	},
 
-	delete: async ({ request, locals }) => {
-		const data = await request.formData();
-		const id = String(data.get('id') ?? '');
-		if (id) await deleteRoutine(locals.user!.id, id);
+	delete: async ({ request, cookies }) => {
+		const id = String((await request.formData()).get('id') ?? '');
+		if (id) {
+			try {
+				await api(cookies, `/api/routines/${id}`, { method: 'DELETE' });
+			} catch (error) {
+				return apiFailure(error);
+			}
+		}
 		return { success: true };
 	},
 
-	setDay: async ({ request, locals }) => {
+	setDay: async ({ request, cookies }) => {
 		const data = await request.formData();
 		const day = String(data.get('day') ?? '') as Weekday;
-		const routineId = String(data.get('routineId') ?? '');
-		if (!WEEKDAYS.includes(day)) return fail(400, { error: 'Invalid day' });
-		await setScheduleDay(locals.user!.id, day, routineId || null);
+		const routineId = String(data.get('routineId') ?? '') || null;
+		try {
+			await api(cookies, `/api/schedule/${day}`, {
+				method: 'PUT',
+				body: JSON.stringify({ routineId })
+			});
+		} catch (error) {
+			return apiFailure(error);
+		}
 		return { success: true };
 	}
 };

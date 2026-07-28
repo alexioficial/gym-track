@@ -1,3 +1,5 @@
+<!-- The HTML below comes exclusively from the static `paths` map in this component. -->
+<!-- eslint-disable svelte/no-at-html-tags -->
 <script lang="ts">
 	interface Props {
 		name: string;
@@ -10,8 +12,7 @@
 	// Iconos tipo "lucide" (stroke, currentColor). Sin dependencias externas.
 	const paths: Record<string, string> = {
 		home: '<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',
-		calendar:
-			'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+		calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
 		dumbbell: '<path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10"/>',
 		plus: '<path d="M12 5v14M5 12h14"/>',
 		minus: '<path d="M5 12h14"/>',
@@ -52,5 +53,6 @@
 	stroke-linejoin="round"
 	class={cls}
 	aria-hidden="true"
-	>{@html paths[name] ?? ''}</svg
+	><!-- eslint-disable-next-line svelte/no-at-html-tags -->
+	{@html paths[name] ?? ''}</svg
 >

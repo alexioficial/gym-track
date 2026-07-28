@@ -26,12 +26,12 @@ ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=3000
 
-# The built app (adapter-node) + runtime deps (mongodb)
+# The built app and its lightweight runtime dependencies.
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=build /app/build ./build
 COPY package.json ./
 
 EXPOSE 3000
 
-# adapter-node serves on $HOST:$PORT. Coolify injects the env vars (MONGODB_URI, SESSION_SECRET, ORIGIN, ...).
+# adapter-node serves on $HOST:$PORT. Configure API_URL and ORIGIN in Coolify.
 CMD ["bun", "./build/index.js"]

@@ -2,6 +2,7 @@
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import { page } from '$app/state';
+	import { resolve } from '$app/paths';
 	import Nav from '$lib/components/Nav.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import type { LayoutData } from './$types';
@@ -10,7 +11,9 @@
 
 	const bare = $derived(page.url.pathname === '/login');
 
-	const initials = $derived((data.user?.username ?? '?').replace(/[._]/g, ' ').trim().slice(0, 2).toUpperCase());
+	const initials = $derived(
+		(data.user?.username ?? '?').replace(/[._]/g, ' ').trim().slice(0, 2).toUpperCase()
+	);
 </script>
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
@@ -21,7 +24,7 @@
 	<div class="app">
 		<header class="topbar">
 			<div class="topbar-inner">
-				<a href="/" class="brand">
+				<a href={resolve('/')} class="brand">
 					<span class="brand-mark"><Icon name="dumbbell" size={18} stroke={2.5} /></span>
 					<span class="brand-name">GYM<span class="accent">TRACK</span></span>
 				</a>
@@ -32,7 +35,12 @@
 							<span class="user-name">{data.user.username}</span>
 						</span>
 						{#if data.user.isAdmin}
-							<a class="icon-btn" href="/admin" title="Manage users" aria-label="Manage users">
+							<a
+								class="icon-btn"
+								href={resolve('/admin')}
+								title="Manage users"
+								aria-label="Manage users"
+							>
 								<Icon name="users" size={18} />
 							</a>
 						{/if}
