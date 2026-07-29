@@ -25,7 +25,11 @@
 
 <svelte:head><title>Users · Gym Tracker</title></svelte:head>
 
-<PageHeader title="Users" subtitle="Create and manage who can sign in" />
+<PageHeader title="Users" subtitle="Create and manage who can sign in">
+	{#snippet action()}
+		<a href="/admin/audit" class="btn btn-subtle btn-sm"><Icon name="trending" size={15} /> Audit</a>
+	{/snippet}
+</PageHeader>
 
 {#if form?.error}
 	<p class="banner banner-bad">{form.error}</p>
