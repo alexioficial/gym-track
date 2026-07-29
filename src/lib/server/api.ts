@@ -18,6 +18,7 @@ export class ApiError extends Error {
 
 async function request(cookies: Cookies, path: string, init: RequestInit = {}): Promise<Response> {
 	const headers = new Headers(init.headers);
+	headers.set('x-gym-client', 'web');
 	const token = cookies.get(SESSION_COOKIE);
 	if (token) headers.set('cookie', `${SESSION_COOKIE}=${token}`);
 	if (init.method && init.method !== 'GET') headers.set('origin', frontendOrigin);
