@@ -19,6 +19,13 @@
 		mode: 'create' | 'edit';
 		session?: Session | null;
 		initialRoutineId?: string;
+		onSave?: (input: {
+			date: string;
+			routineId: string | null;
+			notes: string | undefined;
+			entries: Array<{ exerciseId: string; sets: Array<{ weight: number; reps: number }> }>;
+		}) => Promise<void>;
+		onDelete?: () => Promise<void>;
 		/** Reference: what the user did the last time they logged each exercise. */
 		lastByExercise?: Record<string, LastPerformance>;
 	}
@@ -28,7 +35,9 @@
 		mode,
 		session = null,
 		initialRoutineId = '',
-		lastByExercise = {}
+		lastByExercise = {},
+		onSave,
+		onDelete
 	}: Props = $props();
 	// A session form is deliberately initialized from its input once. Pages key this
 	// component by session id, so a client-side navigation creates a fresh form.
@@ -98,6 +107,8 @@
 			.filter((e) => e.sets.length > 0)
 	);
 	const canSave = $derived(payload.length > 0 && !!date);
+	let mutationError = $state<string | null>(null);
+	let saving = $state(false);
 
 	// ---- Draft autosave (create mode only) ----
 	// The gym is used on a phone: if the screen is left mid-log (navigate away,
@@ -224,12 +235,46 @@
 	function removeSet(entry: EditEntry, setId: number) {
 		entry.sets = entry.sets.filter((s) => s.id !== setId);
 	}
+
+	async function save() {
+		if (!onSave) return;
+		if (!canSave || saving) return;
+		saving = true;
+		try {
+			await onSave({
+				date,
+				routineId: routineId || null,
+				notes: notes.trim() || undefined,
+				entries: payload
+			});
+			clearDraft();
+			mutationError = null;
+		} catch (error) {
+			mutationError = error instanceof Error ? error.message : 'Could not save your session';
+		} finally {
+			saving = false;
+		}
+	}
+
+	async function remove() {
+		if (!onDelete || !confirm('Delete this session?')) return;
+		try {
+			await onDelete();
+			mutationError = null;
+		} catch (error) {
+			mutationError = error instanceof Error ? error.message : 'Could not delete your session';
+		}
+	}
 </script>
 
 <form
 	method="POST"
 	action={mode === 'create' ? '?/create' : '?/update'}
-	use:enhance={() => {
+	use:enhance={({ cancel }) => {
+		if (onSave) {
+			cancel();
+			return async () => save();
+		}
 		return async ({ result, update }) => {
 			// A successful create/update leaves the page (redirect) — drop the draft.
 			if (result.type === 'redirect' || result.type === 'success') clearDraft();
@@ -249,6 +294,7 @@
 			<button type="button" class="draft-discard" onclick={discardDraft}>Discard</button>
 		</div>
 	{/if}
+	{#if mutationError}<p class="form-error">{mutationError}</p>{/if}
 
 	<div class="top card">
 		<div class="field">
@@ -401,26 +447,37 @@
 
 	<div class="submit-row">
 		{#if mode === 'edit'}
-			<button
-				type="submit"
-				formaction="?/delete"
-				formnovalidate
-				class="btn btn-danger"
-				onclick={(e) => {
-					if (!confirm('Delete this session?')) e.preventDefault();
-				}}
-			>
-				<Icon name="trash" size={15} /> Delete
-			</button>
+			{#if onDelete}
+				<button type="button" class="btn btn-danger" onclick={() => void remove()}>
+					<Icon name="trash" size={15} /> Delete
+				</button>
+			{:else}
+				<button
+					type="submit"
+					formaction="?/delete"
+					formnovalidate
+					class="btn btn-danger"
+					onclick={(e) => {
+						if (!confirm('Delete this session?')) e.preventDefault();
+					}}
+				>
+					<Icon name="trash" size={15} /> Delete
+				</button>
+			{/if}
 		{/if}
 		<div class="spacer"></div>
-		<button type="submit" class="btn btn-primary save-btn" disabled={!canSave}>
+		<button type="submit" class="btn btn-primary save-btn" disabled={!canSave || saving}>
 			<Icon name="check" size={17} stroke={2.5} /> Save session
 		</button>
 	</div>
 </form>
 
 <style>
+	.form-error {
+		margin-bottom: 1rem;
+		color: var(--color-bad);
+		font-size: 0.85rem;
+	}
 	.draft-banner {
 		display: flex;
 		align-items: center;

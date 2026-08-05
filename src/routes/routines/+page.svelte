@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import Icon from '$lib/components/Icon.svelte';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
+	import { newEntityId, offlineData, queueOfflineMutation } from '$lib/offline/store';
 	import {
 		DEFAULT_ROUTINE_SETS,
 		MAX_ROUTINE_SETS,
@@ -19,19 +19,23 @@
 
 	let showNew = $state(false);
 	let editingId = $state<string | null>(null);
+	let mutationError = $state<string | null>(null);
+	const exercises = $derived($offlineData?.exercises ?? data.exercises);
+	const routines = $derived($offlineData?.routines ?? data.routines);
+	const schedule = $derived($offlineData?.schedule ?? data.schedule);
 
 	// Assignment state for the currently open form, kept as an ordered list so the
 	// exercise order is exactly how they'll be logged. Only one form is open at a time.
 	type Assigned = { exerciseId: string; sets: number };
 	let assigned = $state<Assigned[]>([]);
 
-	const exerciseName = $derived(new Map(data.exercises.map((e) => [e.id, e.name])));
-	const exerciseMg = $derived(new Map(data.exercises.map((e) => [e.id, e.muscleGroup])));
-	const routineById = $derived(new Map(data.routines.map((r) => [r.id, r])));
+	const exerciseName = $derived(new Map(exercises.map((e) => [e.id, e.name])));
+	const exerciseMg = $derived(new Map(exercises.map((e) => [e.id, e.muscleGroup])));
+	const routineById = $derived(new Map(routines.map((r) => [r.id, r])));
 
 	// Exercises not in the routine yet (available to add), in catalog order.
 	const assignedIds = $derived(new Set(assigned.map((a) => a.exerciseId)));
-	const available = $derived(data.exercises.filter((e) => !assignedIds.has(e.id)));
+	const available = $derived(exercises.filter((e) => !assignedIds.has(e.id)));
 
 	function startNew() {
 		editingId = null;
@@ -70,6 +74,61 @@
 		[next[index], next[to]] = [next[to], next[index]];
 		assigned = next;
 	}
+
+	function payload(form: HTMLFormElement) {
+		const formData = new FormData(form);
+		return {
+			name: String(formData.get('name') ?? '').trim(),
+			color: String(formData.get('color') ?? ROUTINE_COLORS[0]),
+			exercises: assigned.map((item) => ({ ...item }))
+		};
+	}
+
+	async function createRoutine(event: SubmitEvent) {
+		event.preventDefault();
+		const value = payload(event.currentTarget as HTMLFormElement);
+		if (!value.name) return;
+		try {
+			await queueOfflineMutation('routine', 'create', newEntityId(), value);
+			mutationError = null;
+			close();
+		} catch (error) {
+			mutationError = error instanceof Error ? error.message : 'Could not save your routine';
+		}
+	}
+
+	async function updateRoutine(event: SubmitEvent, id: string) {
+		event.preventDefault();
+		const value = payload(event.currentTarget as HTMLFormElement);
+		if (!value.name) return;
+		try {
+			await queueOfflineMutation('routine', 'update', id, value);
+			mutationError = null;
+			close();
+		} catch (error) {
+			mutationError = error instanceof Error ? error.message : 'Could not save your routine';
+		}
+	}
+
+	async function deleteRoutine(id: string, name: string) {
+		if (!confirm(`Delete the routine "${name}"?`)) return;
+		try {
+			await queueOfflineMutation('routine', 'delete', id);
+			mutationError = null;
+			close();
+		} catch (error) {
+			mutationError = error instanceof Error ? error.message : 'Could not delete your routine';
+		}
+	}
+
+	async function setDay(day: string, routineId: string) {
+		try {
+			await queueOfflineMutation('schedule', 'set', day, { routineId: routineId || null });
+			mutationError = null;
+		} catch (error) {
+			mutationError = error instanceof Error ? error.message : 'Could not update your schedule';
+		}
+	}
 </script>
 
 <svelte:head><title>Routines - Gym Tracker</title></svelte:head>
@@ -82,29 +141,30 @@
 	{/snippet}
 </PageHeader>
 
+{#if mutationError}<p class="form-error">{mutationError}</p>{/if}
+
 <!-- Weekly calendar -->
 <section class="block">
 	<h2 class="block-title"><Icon name="calendar" size={17} /> Week</h2>
 	<div class="card week">
 		{#each WEEKDAYS as day (day)}
-			{@const assigned = data.schedule[day] ? routineById.get(data.schedule[day]!) : null}
+			{@const assigned = schedule[day] ? routineById.get(schedule[day]!) : null}
 			<div class="day-row">
 				<span class="day-color" style="background:{assigned?.color ?? 'var(--color-border)'}"
 				></span>
 				<span class="day-name">{WEEKDAY_LABELS[day]}</span>
-				<form method="POST" action="?/setDay" use:enhance class="day-form">
-					<input type="hidden" name="day" value={day} />
+				<div class="day-form">
 					<select
 						name="routineId"
 						class="input day-select"
-						onchange={(e) => e.currentTarget.form?.requestSubmit()}
+						onchange={(e) => void setDay(day, e.currentTarget.value)}
 					>
-						<option value="" selected={!data.schedule[day]}>Rest</option>
-						{#each data.routines as r (r.id)}
-							<option value={r.id} selected={data.schedule[day] === r.id}>{r.name}</option>
+						<option value="" selected={!schedule[day]}>Rest</option>
+						{#each routines as r (r.id)}
+							<option value={r.id} selected={schedule[day] === r.id}>{r.name}</option>
 						{/each}
 					</select>
-				</form>
+				</div>
 			</div>
 		{/each}
 	</div>
@@ -143,7 +203,7 @@
 
 	<div class="field">
 		<span class="label">Exercises & sets</span>
-		{#if data.exercises.length === 0}
+		{#if exercises.length === 0}
 			<p class="muted hint">
 				First create exercises in the <a href={resolve('/exercises')} class="accent">Exercises</a> tab.
 			</p>
@@ -235,11 +295,7 @@
 		method="POST"
 		action="?/create"
 		class="card form-card"
-		use:enhance={() =>
-			async ({ update }) => {
-				await update();
-				close();
-			}}
+		onsubmit={createRoutine}
 	>
 		{@render routineFields(null)}
 		<div class="form-actions">
@@ -255,7 +311,7 @@
 <section class="block">
 	<h2 class="block-title"><Icon name="clipboard" size={17} /> Your routines</h2>
 
-	{#if data.routines.length === 0 && !showNew}
+	{#if routines.length === 0 && !showNew}
 		<EmptyState
 			icon="calendar"
 			title="No routines yet"
@@ -267,29 +323,21 @@
 		</EmptyState>
 	{:else}
 		<div class="stack">
-			{#each data.routines as routine (routine.id)}
+			{#each routines as routine (routine.id)}
 				{#if editingId === routine.id}
 					<form
 						method="POST"
 						action="?/update"
 						class="card form-card"
-						use:enhance={() =>
-							async ({ update }) => {
-								await update();
-								close();
-							}}
+						onsubmit={(event) => updateRoutine(event, routine.id)}
 					>
 						<input type="hidden" name="id" value={routine.id} />
 						{@render routineFields(routine)}
 						<div class="form-actions">
 							<button
-								type="submit"
-								formaction="?/delete"
-								formnovalidate
+								type="button"
 								class="btn btn-danger"
-								onclick={(e) => {
-									if (!confirm(`Delete the routine "${routine.name}"?`)) e.preventDefault();
-								}}
+								onclick={() => void deleteRoutine(routine.id, routine.name)}
 							>
 								<Icon name="trash" size={15} /> Delete
 							</button>
@@ -333,6 +381,11 @@
 <style>
 	.block {
 		margin-top: 1.5rem;
+	}
+	.form-error {
+		margin: 0 0 0.8rem;
+		color: var(--color-bad);
+		font-size: 0.85rem;
 	}
 	.block-title {
 		display: flex;

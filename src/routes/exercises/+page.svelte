@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import Icon from '$lib/components/Icon.svelte';
+	import { newEntityId, offlineData, queueOfflineMutation } from '$lib/offline/store';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import type { Exercise } from '$lib/types';
@@ -10,6 +10,8 @@
 
 	let showNew = $state(false);
 	let editingId = $state<string | null>(null);
+	let mutationError = $state<string | null>(null);
+	const exercises = $derived($offlineData?.exercises ?? data.exercises);
 
 	const MUSCLE_GROUPS = [
 		'Chest',
@@ -37,6 +39,52 @@
 		showNew = false;
 		editingId = null;
 	}
+
+	function values(form: HTMLFormElement) {
+		const data = new FormData(form);
+		return {
+			name: String(data.get('name') ?? '').trim(),
+			muscleGroup: String(data.get('muscleGroup') ?? '').trim(),
+			notes: String(data.get('notes') ?? '').trim()
+		};
+	}
+
+	async function createExercise(event: SubmitEvent) {
+		event.preventDefault();
+		const payload = values(event.currentTarget as HTMLFormElement);
+		if (!payload.name) return;
+		try {
+			await queueOfflineMutation('exercise', 'create', newEntityId(), payload);
+			mutationError = null;
+			closeForms();
+		} catch (error) {
+			mutationError = error instanceof Error ? error.message : 'Could not save your exercise';
+		}
+	}
+
+	async function updateExercise(event: SubmitEvent, id: string) {
+		event.preventDefault();
+		const payload = values(event.currentTarget as HTMLFormElement);
+		if (!payload.name) return;
+		try {
+			await queueOfflineMutation('exercise', 'update', id, payload);
+			mutationError = null;
+			closeForms();
+		} catch (error) {
+			mutationError = error instanceof Error ? error.message : 'Could not save your exercise';
+		}
+	}
+
+	async function deleteExercise(id: string, name: string) {
+		if (!confirm(`Delete "${name}"?`)) return;
+		try {
+			await queueOfflineMutation('exercise', 'delete', id);
+			mutationError = null;
+			closeForms();
+		} catch (error) {
+			mutationError = error instanceof Error ? error.message : 'Could not delete your exercise';
+		}
+	}
 </script>
 
 <svelte:head><title>Exercises - Gym Tracker</title></svelte:head>
@@ -48,6 +96,8 @@
 		</button>
 	{/snippet}
 </PageHeader>
+
+{#if mutationError}<p class="form-error">{mutationError}</p>{/if}
 
 <datalist id="muscle-groups">
 	{#each MUSCLE_GROUPS as g (g)}
@@ -95,11 +145,7 @@
 		method="POST"
 		action="?/create"
 		class="card form-card"
-		use:enhance={() =>
-			async ({ update }) => {
-				await update();
-				closeForms();
-			}}
+		onsubmit={createExercise}
 	>
 		{@render fields(null)}
 		<div class="form-actions">
@@ -109,7 +155,7 @@
 	</form>
 {/if}
 
-{#if data.exercises.length === 0 && !showNew}
+{#if exercises.length === 0 && !showNew}
 	<EmptyState
 		icon="dumbbell"
 		title="No exercises yet"
@@ -121,29 +167,21 @@
 	</EmptyState>
 {:else}
 	<div class="stack">
-		{#each data.exercises as ex (ex.id)}
+		{#each exercises as ex (ex.id)}
 			{#if editingId === ex.id}
 				<form
 					method="POST"
 					action="?/update"
 					class="card form-card"
-					use:enhance={() =>
-						async ({ update }) => {
-							await update();
-							closeForms();
-						}}
+					onsubmit={(event) => updateExercise(event, ex.id)}
 				>
 					<input type="hidden" name="id" value={ex.id} />
 					{@render fields(ex)}
 					<div class="form-actions">
 						<button
-							type="submit"
-							formaction="?/delete"
-							formnovalidate
+							type="button"
 							class="btn btn-danger"
-							onclick={(e) => {
-								if (!confirm(`Delete "${ex.name}"?`)) e.preventDefault();
-							}}
+							onclick={() => void deleteExercise(ex.id, ex.name)}
 						>
 							<Icon name="trash" size={15} /> Delete
 						</button>
@@ -184,6 +222,11 @@
 		flex-direction: column;
 		gap: 0.9rem;
 		margin-bottom: 0.6rem;
+	}
+	.form-error {
+		margin: 0 0 0.8rem;
+		color: var(--color-bad);
+		font-size: 0.85rem;
 	}
 	.field {
 		display: flex;

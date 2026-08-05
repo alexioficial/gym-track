@@ -4,15 +4,29 @@
 	import ProgressChart from '$lib/components/ProgressChart.svelte';
 	import StatDelta from '$lib/components/StatDelta.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
+	import { offlineData } from '$lib/offline/store';
 	import { UNIT, type Delta } from '$lib/types';
-	import { IMPROVEMENT_VERDICTS, VERDICT_LABEL, weekOverWeekDelta } from '$lib/utils/progression';
+	import {
+		IMPROVEMENT_VERDICTS,
+		VERDICT_LABEL,
+		weeklyStatsForExercise,
+		weekOverWeekDelta
+	} from '$lib/utils/progression';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
+	const view = $derived.by(() => {
+		if (!$offlineData) return data;
+		const exercise = $offlineData.exercises.find((item) => item.id === data.exercise.id) ?? data.exercise;
+		const weeks = weeklyStatsForExercise($offlineData.sessions, exercise.id);
+		const latest = weeks.length > 0 ? weeks[weeks.length - 1] : null;
+		const previous = weeks.length >= 2 ? weeks[weeks.length - 2] : null;
+		return { exercise, weeks, latest, previous, delta: latest ? weekOverWeekDelta(previous, latest) : null };
+	});
 	const rows = $derived(
-		data.weeks
-			.map((w, i) => ({ week: w, delta: weekOverWeekDelta(i > 0 ? data.weeks[i - 1] : null, w) }))
+		view.weeks
+			.map((w, i) => ({ week: w, delta: weekOverWeekDelta(i > 0 ? view.weeks[i - 1] : null, w) }))
 			.reverse()
 	);
 
@@ -43,20 +57,20 @@
 	}
 </script>
 
-<svelte:head><title>{data.exercise.name} - Progress</title></svelte:head>
+<svelte:head><title>{view.exercise.name} - Progress</title></svelte:head>
 
 <a href={resolve('/progress')} class="back"><Icon name="back" size={16} /> Progress</a>
 
 <header class="head">
-	<h1 class="head-title">{data.exercise.name}</h1>
+	<h1 class="head-title">{view.exercise.name}</h1>
 	<div class="head-meta">
-		{#if data.exercise.muscleGroup}<span class="badge">{data.exercise.muscleGroup}</span>{/if}
-		<span class="muted small">{data.weeks.length} {data.weeks.length === 1 ? 'week' : 'weeks'}</span
+		{#if view.exercise.muscleGroup}<span class="badge">{view.exercise.muscleGroup}</span>{/if}
+		<span class="muted small">{view.weeks.length} {view.weeks.length === 1 ? 'week' : 'weeks'}</span
 		>
 	</div>
 </header>
 
-{#if !data.latest || !data.delta}
+{#if !view.latest || !view.delta}
 	<EmptyState
 		icon="trending"
 		title="No data yet"
@@ -66,13 +80,13 @@
 	<!-- Verdict of the week -->
 	<div
 		class="verdict card"
-		class:good={IMPROVEMENT_VERDICTS.includes(data.delta.verdict)}
-		class:bad={data.delta.verdict === 'down'}
+		class:good={IMPROVEMENT_VERDICTS.includes(view.delta.verdict)}
+		class:bad={view.delta.verdict === 'down'}
 	>
 		<div class="verdict-icon"><Icon name="flame" size={20} /></div>
 		<div>
-			<span class="verdict-tag">{VERDICT_LABEL[data.delta.verdict]}</span>
-			<p class="verdict-msg">{message(data.delta)}</p>
+			<span class="verdict-tag">{VERDICT_LABEL[view.delta.verdict]}</span>
+			<p class="verdict-msg">{message(view.delta)}</p>
 		</div>
 	</div>
 
@@ -80,25 +94,25 @@
 	<div class="stats">
 		<div class="stat card">
 			<span class="stat-label muted">e1RM</span>
-			<span class="stat-value stat-num accent">{data.latest.bestE1rm}<small>{UNIT}</small></span>
-			{#if data.previous}<StatDelta value={data.delta.e1rm} unit=" {UNIT}" />{/if}
+			<span class="stat-value stat-num accent">{view.latest.bestE1rm}<small>{UNIT}</small></span>
+			{#if view.previous}<StatDelta value={view.delta.e1rm} unit=" {UNIT}" />{/if}
 		</div>
 		<div class="stat card">
 			<span class="stat-label muted">Top set</span>
 			<span class="stat-value stat-num"
-				>{data.latest.topWeight}<small>×{data.latest.topReps}</small></span
+				>{view.latest.topWeight}<small>×{view.latest.topReps}</small></span
 			>
-			{#if data.previous}<StatDelta value={data.delta.weight} unit=" {UNIT}" />{/if}
+			{#if view.previous}<StatDelta value={view.delta.weight} unit=" {UNIT}" />{/if}
 		</div>
 		<div class="stat card">
 			<span class="stat-label muted">Volume</span>
-			<span class="stat-value stat-num">{data.latest.totalVolume}<small>{UNIT}</small></span>
-			{#if data.previous}<StatDelta value={data.delta.volume} unit="" />{/if}
+			<span class="stat-value stat-num">{view.latest.totalVolume}<small>{UNIT}</small></span>
+			{#if view.previous}<StatDelta value={view.delta.volume} unit="" />{/if}
 		</div>
 	</div>
 
 	<!-- Chart -->
-	<ProgressChart weeks={data.weeks} />
+	<ProgressChart weeks={view.weeks} />
 
 	<!-- Weekly table -->
 	<h2 class="sub">Week by week</h2>

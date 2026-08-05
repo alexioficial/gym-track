@@ -2,14 +2,48 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import { resolve } from '$app/paths';
 	import StatDelta from '$lib/components/StatDelta.svelte';
-	import { UNIT } from '$lib/types';
-	import { VERDICT_LABEL, formatDate } from '$lib/utils/progression';
+	import { offlineData } from '$lib/offline/store';
+	import { UNIT, WEEKDAYS, WEEKDAY_LABELS } from '$lib/types';
+	import {
+		IMPROVEMENT_VERDICTS,
+		VERDICT_LABEL,
+		buildExerciseProgress,
+		formatDate
+	} from '$lib/utils/progression';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
+	const view = $derived.by(() => {
+		if (!$offlineData) return data;
+		const { exercises, routines, sessions, schedule } = $offlineData;
+		const todayIndex = (new Date().getDay() + 6) % 7;
+		const todayKey = WEEKDAYS[todayIndex];
+		const routine = routines.find((item) => item.id === schedule[todayKey]) ?? null;
+		const progress = buildExerciseProgress(sessions, exercises);
+		const improvements = progress
+			.filter((item) => item.delta && IMPROVEMENT_VERDICTS.includes(item.delta.verdict))
+			.sort((a, b) => (b.delta?.e1rm ?? 0) - (a.delta?.e1rm ?? 0));
+		const routineById = new Map(routines.map((item) => [item.id, item]));
+		return {
+			today: { label: WEEKDAY_LABELS[todayKey], routine },
+			counts: { exercises: exercises.length, routines: routines.length, sessions: sessions.length },
+			improvements,
+			recent: sessions.slice(0, 5).map((session) => {
+				const linkedRoutine = session.routineId ? routineById.get(session.routineId) : null;
+				return {
+					id: session.id,
+					date: session.date,
+					routineName: linkedRoutine?.name ?? null,
+					routineColor: linkedRoutine?.color ?? null,
+					exerciseCount: session.entries.length,
+					setCount: session.entries.reduce((count, entry) => count + entry.sets.length, 0)
+				};
+			})
+		};
+	});
 	const logHref = $derived(
-		data.today.routine ? `${resolve('/log')}?routine=${data.today.routine.id}` : resolve('/log')
+		view.today.routine ? `${resolve('/log')}?routine=${view.today.routine.id}` : resolve('/log')
 	);
 </script>
 
@@ -18,16 +52,16 @@
 <!-- Today -->
 <section class="hero card">
 	<div class="hero-top">
-		<span class="muted hero-day">Today · {data.today.label}</span>
-		{#if data.today.routine}
-			<span class="dot" style="background:{data.today.routine.color}"></span>
+		<span class="muted hero-day">Today · {view.today.label}</span>
+		{#if view.today.routine}
+			<span class="dot" style="background:{view.today.routine.color}"></span>
 		{/if}
 	</div>
 
-	{#if data.today.routine}
-		<h1 class="hero-title">{data.today.routine.name}</h1>
+	{#if view.today.routine}
+		<h1 class="hero-title">{view.today.routine.name}</h1>
 		<p class="muted hero-sub">
-			{data.today.routine.exercises.length} exercises in this routine
+			{view.today.routine.exercises.length} exercises in this routine
 		</p>
 	{:else}
 		<h1 class="hero-title">Rest day</h1>
@@ -44,15 +78,15 @@
 <!-- Counters -->
 <section class="counters">
 	<a href={resolve('/exercises')} class="counter card card-hover">
-		<span class="counter-num stat-num">{data.counts.exercises}</span>
+		<span class="counter-num stat-num">{view.counts.exercises}</span>
 		<span class="counter-label muted">Exercises</span>
 	</a>
 	<a href={resolve('/routines')} class="counter card card-hover">
-		<span class="counter-num stat-num">{data.counts.routines}</span>
+		<span class="counter-num stat-num">{view.counts.routines}</span>
 		<span class="counter-label muted">Routines</span>
 	</a>
 	<a href={resolve('/log')} class="counter card card-hover">
-		<span class="counter-num stat-num">{data.counts.sessions}</span>
+		<span class="counter-num stat-num">{view.counts.sessions}</span>
 		<span class="counter-label muted">Sessions</span>
 	</a>
 </section>
@@ -64,9 +98,9 @@
 		<a href={resolve('/progress')} class="block-link">See all <Icon name="chevron" size={14} /></a>
 	</div>
 
-	{#if data.improvements.length > 0}
+	{#if view.improvements.length > 0}
 		<div class="stack">
-			{#each data.improvements.slice(0, 4) as p (p.exercise.id)}
+			{#each view.improvements.slice(0, 4) as p (p.exercise.id)}
 				{#if p.delta}
 					<a
 						href={resolve('/progress/[exerciseId]', { exerciseId: p.exercise.id })}
@@ -103,13 +137,13 @@
 </section>
 
 <!-- Recent sessions -->
-{#if data.recent.length > 0}
+{#if view.recent.length > 0}
 	<section class="block">
 		<div class="block-head">
 			<h2 class="block-title"><Icon name="clipboard" size={17} /> Recent sessions</h2>
 		</div>
 		<div class="stack">
-			{#each data.recent as s (s.id)}
+			{#each view.recent as s (s.id)}
 				<a href={resolve('/log/[id]', { id: s.id })} class="sess card card-hover">
 					<span class="dot" style="background:{s.routineColor ?? 'var(--color-muted)'}"></span>
 					<div class="sess-info">
