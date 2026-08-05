@@ -1,7 +1,7 @@
 // Types that travel to the client (serializable — ids as strings).
 
 /** Weight unit used across the whole app. */
-export const UNIT = 'lb';
+export const UNIT = 'lbs';
 
 /** The authenticated user, as exposed to the client (ids as strings). */
 export interface SessionUser {

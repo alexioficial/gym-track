@@ -5,6 +5,9 @@
 	import { resolve } from '$app/paths';
 	import Nav from '$lib/components/Nav.svelte';
 	import Icon from '$lib/components/Icon.svelte';
+	import OfflineBootstrap from '$lib/offline/OfflineBootstrap.svelte';
+	import SyncIndicator from '$lib/offline/SyncIndicator.svelte';
+	import { clearOfflineData } from '$lib/offline/store';
 	import type { LayoutData } from './$types';
 
 	let { children, data }: { children: import('svelte').Snippet; data: LayoutData } = $props();
@@ -14,6 +17,16 @@
 	const initials = $derived(
 		(data.user?.username ?? '?').replace(/[._]/g, ' ').trim().slice(0, 2).toUpperCase()
 	);
+
+	async function logout(event: SubmitEvent) {
+		event.preventDefault();
+		await clearOfflineData(data.user?.id);
+		navigator.serviceWorker?.controller?.postMessage({ type: 'clear-user-data' });
+		if (navigator.onLine) {
+			await fetch('/logout', { method: 'POST', redirect: 'manual' }).catch(() => undefined);
+		}
+		window.location.assign(resolve('/login'));
+	}
 </script>
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
@@ -21,6 +34,9 @@
 {#if bare}
 	{@render children()}
 {:else}
+	{#if data.user && data.offline}
+		<OfflineBootstrap userId={data.user.id} seed={data.offline} />
+	{/if}
 	<div class="app">
 		<header class="topbar">
 			<div class="topbar-inner">
@@ -45,11 +61,12 @@
 							</a>
 						{/if}
 					{/if}
-					<form method="POST" action="/logout">
+					<form method="POST" action="/logout" onsubmit={logout}>
 						<button class="icon-btn" title="Log out" aria-label="Log out">
 							<Icon name="logout" size={18} />
 						</button>
 					</form>
+					{#if data.user}<SyncIndicator />{/if}
 				</div>
 			</div>
 		</header>

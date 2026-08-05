@@ -1,12 +1,45 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
+	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { newEntityId, offlineData, queueOfflineMutation } from '$lib/offline/store';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import SessionForm from '$lib/components/SessionForm.svelte';
-	import { formatDate } from '$lib/utils/progression';
+	import { formatDate, lastPerformanceByExercise } from '$lib/utils/progression';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+	const exercises = $derived($offlineData?.exercises ?? data.exercises);
+	const routines = $derived($offlineData?.routines ?? data.routines);
+	const sessions = $derived($offlineData?.sessions ?? []);
+	const history = $derived.by(() => {
+		if (!$offlineData) return data.history;
+		const routineById = new Map(routines.map((routine) => [routine.id, routine]));
+		return sessions.slice(0, 12).map((session) => {
+			const routine = session.routineId ? routineById.get(session.routineId) : null;
+			return {
+				id: session.id,
+				date: session.date,
+				routineName: routine?.name ?? null,
+				routineColor: routine?.color ?? null,
+				exerciseCount: session.entries.length,
+				setCount: session.entries.reduce((count, entry) => count + entry.sets.length, 0)
+			};
+		});
+	});
+	const lastByExercise = $derived(
+		$offlineData ? lastPerformanceByExercise(sessions) : data.lastByExercise
+	);
+
+	async function saveSession(input: {
+		date: string;
+		routineId: string | null;
+		notes: string | undefined;
+		entries: Array<{ exerciseId: string; sets: Array<{ weight: number; reps: number }> }>;
+	}) {
+		await queueOfflineMutation('session', 'create', newEntityId(), input);
+		await goto(resolve('/'));
+	}
 </script>
 
 <svelte:head><title>Log session - Gym Tracker</title></svelte:head>
@@ -15,17 +48,18 @@
 
 <SessionForm
 	mode="create"
-	exercises={data.exercises}
-	routines={data.routines}
+	exercises={exercises}
+	routines={routines}
 	initialRoutineId={data.initialRoutineId}
-	lastByExercise={data.lastByExercise}
+	lastByExercise={lastByExercise}
+	onSave={saveSession}
 />
 
-{#if data.history.length > 0}
+{#if history.length > 0}
 	<section class="block">
 		<h2 class="block-title"><Icon name="clipboard" size={16} /> History</h2>
 		<div class="stack">
-			{#each data.history as s (s.id)}
+			{#each history as s (s.id)}
 				<a href={resolve('/log/[id]', { id: s.id })} class="sess card card-hover">
 					<span class="dot" style="background:{s.routineColor ?? 'var(--color-muted)'}"></span>
 					<div class="sess-info">

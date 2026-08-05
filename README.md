@@ -33,6 +33,14 @@ Por defecto, el frontend se abre en `http://localhost:5173` y llama a la API en 
 
 Consulta el README de la API para `MONGODB_URI`, `ADMIN_PASSWORD`, cookies, CORS/CSRF y el resto de configuración de seguridad.
 
+## Uso sin conexión
+
+La web es una PWA *offline-first*. Tras iniciar sesión una vez con conexión, guarda en IndexedDB los ejercicios, rutinas, calendario y sesiones del usuario; el service worker conserva las pantallas visitadas y los recursos de la aplicación. Los cambios hechos sin red se aplican al instante en el dispositivo y quedan en una cola local.
+
+Al volver la conexión (o al abrir de nuevo la app), la cola se sincroniza de forma idempotente contra la API. El indicador junto a la cuenta muestra si está sincronizada, sin conexión o si existen cambios pendientes. Cerrar sesión borra tanto los datos locales como las páginas personalizadas cacheadas en ese navegador.
+
+La primera carga y el primer inicio de sesión requieren internet; una PWA no puede descargar datos de una cuenta que nunca se haya abierto en el dispositivo.
+
 ## Verificación
 
 ```bash

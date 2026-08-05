@@ -5,11 +5,27 @@
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import Sparkline from '$lib/components/Sparkline.svelte';
 	import StatDelta from '$lib/components/StatDelta.svelte';
+	import { offlineData } from '$lib/offline/store';
 	import { UNIT, type ExerciseProgress, type Verdict } from '$lib/types';
-	import { IMPROVEMENT_VERDICTS, VERDICT_LABEL } from '$lib/utils/progression';
+	import {
+		IMPROVEMENT_VERDICTS,
+		VERDICT_LABEL,
+		buildExerciseProgress,
+		buildWeeklyRecap,
+		groupProgressByRoutine
+	} from '$lib/utils/progression';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+	const view = $derived.by(() => {
+		if (!$offlineData) return data;
+		const progress = buildExerciseProgress($offlineData.sessions, $offlineData.exercises);
+		return {
+			groups: groupProgressByRoutine(progress, $offlineData.routines),
+			recap: buildWeeklyRecap(progress),
+			untracked: progress.filter((item) => item.weeks.length === 0).map((item) => item.exercise)
+		};
+	});
 
 	function verdictClass(verdict: Verdict): string {
 		if (IMPROVEMENT_VERDICTS.includes(verdict)) return 'badge-accent';
@@ -22,7 +38,7 @@
 
 <PageHeader title="Progress" subtitle="Your progressive overload, week by week" />
 
-{#if data.groups.length === 0}
+{#if view.groups.length === 0}
 	<EmptyState
 		icon="trending"
 		title="No data yet"
@@ -34,8 +50,8 @@
 	</EmptyState>
 {:else}
 	<!-- Weekly recap: latest populated week vs the previous one -->
-	{#if data.recap}
-		{@const r = data.recap}
+	{#if view.recap}
+		{@const r = view.recap}
 		<section class="recap card">
 			<div class="recap-head">
 				<div class="recap-headings">
@@ -101,7 +117,7 @@
 	{/if}
 
 	<!-- Exercises grouped by routine -->
-	{#each data.groups as g (g.routine?.id ?? 'other')}
+	{#each view.groups as g (g.routine?.id ?? 'other')}
 		<section class="group">
 			<div class="group-head">
 				{#if g.routine}
@@ -120,10 +136,10 @@
 		</section>
 	{/each}
 
-	{#if data.untracked.length > 0}
+	{#if view.untracked.length > 0}
 		<h2 class="sub">No data yet</h2>
 		<div class="stack">
-			{#each data.untracked as ex (ex.id)}
+			{#each view.untracked as ex (ex.id)}
 				<div class="card untracked">
 					<span class="ex-name">{ex.name}</span>
 					<span class="muted small">Log it to start tracking</span>

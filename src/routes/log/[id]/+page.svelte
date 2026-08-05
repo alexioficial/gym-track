@@ -1,11 +1,41 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
+	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { offlineData, queueOfflineMutation } from '$lib/offline/store';
 	import SessionForm from '$lib/components/SessionForm.svelte';
-	import { formatDate } from '$lib/utils/progression';
+	import { formatDate, lastPerformanceByExercise } from '$lib/utils/progression';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+	const session = $derived(
+		$offlineData?.sessions.find((item) => item.id === data.session.id) ?? data.session
+	);
+	const exercises = $derived($offlineData?.exercises ?? data.exercises);
+	const routines = $derived($offlineData?.routines ?? data.routines);
+	const lastByExercise = $derived(
+		$offlineData
+			? lastPerformanceByExercise($offlineData.sessions, {
+					excludeSessionId: session.id,
+					onOrBefore: session.date
+				})
+			: data.lastByExercise
+	);
+
+	async function saveSession(input: {
+		date: string;
+		routineId: string | null;
+		notes: string | undefined;
+		entries: Array<{ exerciseId: string; sets: Array<{ weight: number; reps: number }> }>;
+	}) {
+		await queueOfflineMutation('session', 'update', session.id, input);
+		await goto(resolve('/'));
+	}
+
+	async function deleteSession() {
+		await queueOfflineMutation('session', 'delete', session.id);
+		await goto(resolve('/'));
+	}
 </script>
 
 <svelte:head><title>Edit session - Gym Tracker</title></svelte:head>
@@ -16,16 +46,18 @@
 
 <header class="head">
 	<h1 class="head-title">Edit session</h1>
-	<p class="muted head-sub">{formatDate(data.session.date)}</p>
+	<p class="muted head-sub">{formatDate(session.date)}</p>
 </header>
 
-{#key data.session.id}
+{#key session.id}
 	<SessionForm
 		mode="edit"
-		session={data.session}
-		exercises={data.exercises}
-		routines={data.routines}
-		lastByExercise={data.lastByExercise}
+		session={session}
+		exercises={exercises}
+		routines={routines}
+		lastByExercise={lastByExercise}
+		onSave={saveSession}
+		onDelete={deleteSession}
 	/>
 {/key}
 
