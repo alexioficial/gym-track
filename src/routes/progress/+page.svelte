@@ -203,6 +203,18 @@
 			radial-gradient(120% 120% at 100% 0%, rgba(234, 179, 8, 0.1), transparent 55%),
 			var(--color-surface);
 	}
+	@media (max-width: 600px) {
+		.recap {
+			/* Keep the glow circular when the recap becomes tall on narrow screens. */
+			background:
+				radial-gradient(
+					circle 15rem at calc(100% - 2rem) 7rem,
+					rgba(234, 179, 8, 0.09),
+					transparent 72%
+				),
+				var(--color-surface);
+		}
+	}
 	.recap-head {
 		display: flex;
 		align-items: flex-start;
