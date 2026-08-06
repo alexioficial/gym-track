@@ -1,8 +1,6 @@
-import { fail, redirect } from '@sveltejs/kit';
-import type { Actions, PageServerLoad } from './$types';
-import { api, ApiError } from '$lib/server/api';
+import type { PageServerLoad } from './$types';
+import { api } from '$lib/server/api';
 import { lastPerformanceByExercise } from '$lib/utils/progression';
-import { sessionInput } from '$lib/utils/sessionForm';
 import type { Exercise, Routine, Session } from '$lib/types';
 
 export const load: PageServerLoad = async ({ url, cookies }) => {
@@ -30,19 +28,4 @@ export const load: PageServerLoad = async ({ url, cookies }) => {
 		history,
 		lastByExercise: lastPerformanceByExercise(sessions)
 	};
-};
-
-export const actions: Actions = {
-	create: async ({ request, cookies }) => {
-		try {
-			await api(cookies, '/api/sessions', {
-				method: 'POST',
-				body: JSON.stringify(sessionInput(await request.formData()))
-			});
-		} catch (error) {
-			if (error instanceof ApiError) return fail(error.status, { error: error.message });
-			throw error;
-		}
-		throw redirect(303, '/');
-	}
 };

@@ -1,12 +1,16 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
+	import { jsonRequest, ClientApiError } from '$lib/client/json';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import Icon from '$lib/components/Icon.svelte';
-	import type { ActionData, PageData } from './$types';
+	import type { PageData } from './$types';
 
-	let { data, form }: { data: PageData; form: ActionData } = $props();
+	let { data }: { data: PageData } = $props();
 
 	let creating = $state(false);
+	let deletingId = $state<string | null>(null);
+	let resettingId = $state<string | null>(null);
+	let notice = $state<{ kind: 'good' | 'bad'; text: string } | null>(null);
 	const usernamePattern = '[a-z0-9._]{3,30}';
 	// Which user row has its reset-password field open.
 	let resetOpen = $state<string | null>(null);
@@ -21,39 +25,93 @@
 			day: 'numeric'
 		});
 	}
+
+	function message(error: unknown): string {
+		return error instanceof ClientApiError ? error.message : 'Could not reach the API';
+	}
+
+	async function createUser(event: SubmitEvent) {
+		event.preventDefault();
+		if (creating) return;
+		const form = event.currentTarget as HTMLFormElement;
+		const values = new FormData(form);
+		creating = true;
+		notice = null;
+		try {
+			const username = String(values.get('username') ?? '').trim();
+			await jsonRequest('/api/admin/users', 'POST', {
+				username,
+				password: String(values.get('password') ?? '')
+			});
+			form.reset();
+			notice = { kind: 'good', text: `Created ${username.toLowerCase()}.` };
+			await invalidateAll();
+		} catch (error) {
+			notice = { kind: 'bad', text: message(error) };
+		} finally {
+			creating = false;
+		}
+	}
+
+	async function deleteUser(id: string, username: string) {
+		if (deletingId || !confirm(`Delete user "${username}"? This cannot be undone.`)) return;
+		deletingId = id;
+		notice = null;
+		try {
+			await jsonRequest(`/api/admin/users/${id}`, 'DELETE');
+			notice = { kind: 'good', text: 'User deleted.' };
+			await invalidateAll();
+		} catch (error) {
+			notice = { kind: 'bad', text: message(error) };
+		} finally {
+			deletingId = null;
+		}
+	}
+
+	async function resetPassword(event: SubmitEvent, id: string) {
+		event.preventDefault();
+		if (resettingId) return;
+		const form = event.currentTarget as HTMLFormElement;
+		const values = new FormData(form);
+		resettingId = id;
+		notice = null;
+		try {
+			await jsonRequest(`/api/admin/users/${id}/password`, 'PUT', {
+				password: String(values.get('password') ?? '')
+			});
+			form.reset();
+			resetOpen = null;
+			notice = { kind: 'good', text: 'Password updated.' };
+		} catch (error) {
+			notice = { kind: 'bad', text: message(error) };
+		} finally {
+			resettingId = null;
+		}
+	}
 </script>
 
 <svelte:head><title>Users · Gym Tracker</title></svelte:head>
 
 <PageHeader title="Users" subtitle="Create and manage who can sign in">
 	{#snippet action()}
-		<a href="/admin/audit" class="btn btn-subtle btn-sm"><Icon name="trending" size={15} /> Audit</a>
+		<a href="/admin/audit" class="btn btn-subtle btn-sm"><Icon name="trending" size={15} /> Audit</a
+		>
 	{/snippet}
 </PageHeader>
 
-{#if form?.error}
-	<p class="banner banner-bad">{form.error}</p>
-{:else if form?.ok === 'created'}
-	<p class="banner banner-good">Created <strong>{form?.username}</strong>.</p>
-{:else if form?.ok === 'reset'}
-	<p class="banner banner-good">Password updated.</p>
-{:else if form?.ok === 'deleted'}
-	<p class="banner banner-good">User deleted.</p>
+{#if notice}
+	<p
+		class="banner"
+		class:banner-good={notice.kind === 'good'}
+		class:banner-bad={notice.kind === 'bad'}
+	>
+		{notice.text}
+	</p>
 {/if}
 
 <section class="card create-card">
 	<h2 class="block-title"><Icon name="plus" size={16} /> New user</h2>
-	<form
-		method="POST"
-		action="?/create"
-		use:enhance={() => {
-			creating = true;
-			return async ({ update }) => {
-				await update();
-				creating = false;
-			};
-		}}
-	>
+	<form onsubmit={createUser}>
 		<div class="create-grid">
 			<div>
 				<label class="label" for="new-username">Username</label>
@@ -68,7 +126,6 @@
 					spellcheck="false"
 					pattern={usernamePattern}
 					title="Lowercase letters, numbers, dots and underscores (3–30 chars)"
-					value={form?.error ? (form?.username ?? '') : ''}
 					required
 				/>
 			</div>
@@ -117,36 +174,21 @@
 							>
 								<Icon name="lock" size={14} /> Reset
 							</button>
-							<form
-								method="POST"
-								action="?/delete"
-								use:enhance={({ cancel }) => {
-									if (!confirm(`Delete user "${u.username}"? This cannot be undone.`)) cancel();
-									return async ({ update }) => update();
-								}}
+							<button
+								type="button"
+								class="btn btn-danger btn-sm"
+								aria-label="Delete user"
+								disabled={deletingId === u.id}
+								onclick={() => void deleteUser(u.id, u.username)}
 							>
-								<input type="hidden" name="id" value={u.id} />
-								<button type="submit" class="btn btn-danger btn-sm" aria-label="Delete user">
-									<Icon name="trash" size={14} />
-								</button>
-							</form>
+								<Icon name="trash" size={14} />
+							</button>
 						</div>
 					{/if}
 				</div>
 
 				{#if resetOpen === u.id}
-					<form
-						method="POST"
-						action="?/resetPassword"
-						class="reset-row"
-						use:enhance={() => {
-							return async ({ update }) => {
-								await update();
-								resetOpen = null;
-							};
-						}}
-					>
-						<input type="hidden" name="id" value={u.id} />
+					<form class="reset-row" onsubmit={(event) => resetPassword(event, u.id)}>
 						<input
 							name="password"
 							type="password"
@@ -156,7 +198,9 @@
 							minlength="6"
 							required
 						/>
-						<button type="submit" class="btn btn-primary btn-sm">Set</button>
+						<button type="submit" class="btn btn-primary btn-sm" disabled={resettingId === u.id}
+							>Set</button
+						>
 					</form>
 				{/if}
 			</div>

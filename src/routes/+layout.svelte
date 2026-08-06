@@ -18,12 +18,14 @@
 		(data.user?.username ?? '?').replace(/[._]/g, ' ').trim().slice(0, 2).toUpperCase()
 	);
 
-	async function logout(event: SubmitEvent) {
-		event.preventDefault();
+	async function logout() {
 		await clearOfflineData(data.user?.id);
 		navigator.serviceWorker?.controller?.postMessage({ type: 'clear-user-data' });
 		if (navigator.onLine) {
-			await fetch('/logout', { method: 'POST', redirect: 'manual' }).catch(() => undefined);
+			await fetch('/api/auth/logout', {
+				method: 'POST',
+				headers: { accept: 'application/json' }
+			}).catch(() => undefined);
 		}
 		window.location.assign(resolve('/login'));
 	}
@@ -61,11 +63,9 @@
 							</a>
 						{/if}
 					{/if}
-					<form method="POST" action="/logout" onsubmit={logout}>
-						<button class="icon-btn" title="Log out" aria-label="Log out">
-							<Icon name="logout" size={18} />
-						</button>
-					</form>
+					<button class="icon-btn" title="Log out" aria-label="Log out" onclick={logout}>
+						<Icon name="logout" size={18} />
+					</button>
 					{#if data.user}<SyncIndicator />{/if}
 				</div>
 			</div>

@@ -291,12 +291,7 @@
 {/snippet}
 
 {#if showNew}
-	<form
-		method="POST"
-		action="?/create"
-		class="card form-card"
-		onsubmit={createRoutine}
-	>
+	<form class="card form-card" onsubmit={createRoutine}>
 		{@render routineFields(null)}
 		<div class="form-actions">
 			<button type="button" class="btn btn-subtle" onclick={close}>Cancel</button>
@@ -325,13 +320,7 @@
 		<div class="stack">
 			{#each routines as routine (routine.id)}
 				{#if editingId === routine.id}
-					<form
-						method="POST"
-						action="?/update"
-						class="card form-card"
-						onsubmit={(event) => updateRoutine(event, routine.id)}
-					>
-						<input type="hidden" name="id" value={routine.id} />
+					<form class="card form-card" onsubmit={(event) => updateRoutine(event, routine.id)}>
 						{@render routineFields(routine)}
 						<div class="form-actions">
 							<button

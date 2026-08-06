@@ -18,7 +18,7 @@
 		mode: 'create' | 'edit';
 		session?: Session | null;
 		initialRoutineId?: string;
-		onSave?: (input: {
+		onSave: (input: {
 			date: string;
 			routineId: string | null;
 			notes: string | undefined;
@@ -236,7 +236,6 @@
 	}
 
 	async function save() {
-		if (!onSave) return;
 		if (!canSave || saving) return;
 		saving = true;
 		try {
@@ -256,12 +255,6 @@
 	}
 
 	function submit(event: SubmitEvent) {
-		// `enhance`'s cancel callback prevents its post-response callback from
-		// running. The offline path used to call cancel and then wait for that
-		// callback, leaving the Save button with nothing to execute. Intercept
-		// the form directly instead; with no offline callback, retain the native
-		// form submission as a reliable server-side fallback.
-		if (!onSave) return;
 		event.preventDefault();
 		void save();
 	}
@@ -277,16 +270,7 @@
 	}
 </script>
 
-<form
-	method="POST"
-	action={mode === 'create' ? '?/create' : '?/update'}
-	onsubmit={submit}
->
-	{#if mode === 'edit' && session}
-		<input type="hidden" name="id" value={session.id} />
-	{/if}
-	<input type="hidden" name="entries" value={JSON.stringify(payload)} />
-
+<form onsubmit={submit}>
 	{#if draftRecovered}
 		<div class="draft-banner">
 			<Icon name="clipboard" size={16} />
@@ -449,18 +433,6 @@
 		{#if mode === 'edit'}
 			{#if onDelete}
 				<button type="button" class="btn btn-danger" onclick={() => void remove()}>
-					<Icon name="trash" size={15} /> Delete
-				</button>
-			{:else}
-				<button
-					type="submit"
-					formaction="?/delete"
-					formnovalidate
-					class="btn btn-danger"
-					onclick={(e) => {
-						if (!confirm('Delete this session?')) e.preventDefault();
-					}}
-				>
 					<Icon name="trash" size={15} /> Delete
 				</button>
 			{/if}

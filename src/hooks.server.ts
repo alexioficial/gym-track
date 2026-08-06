@@ -3,7 +3,7 @@ import { api, ApiError } from '$lib/server/api';
 import type { SessionUser } from '$lib/types';
 
 // Only the login page is reachable without a session.
-const PUBLIC_ROUTES = new Set(['/login']);
+const PUBLIC_ROUTES = new Set(['/login', '/api/auth/login']);
 
 export const handle: Handle = async ({ event, resolve }) => {
 	try {

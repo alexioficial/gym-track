@@ -141,12 +141,7 @@
 {/snippet}
 
 {#if showNew}
-	<form
-		method="POST"
-		action="?/create"
-		class="card form-card"
-		onsubmit={createExercise}
-	>
+	<form class="card form-card" onsubmit={createExercise}>
 		{@render fields(null)}
 		<div class="form-actions">
 			<button type="button" class="btn btn-subtle" onclick={closeForms}>Cancel</button>
@@ -169,13 +164,7 @@
 	<div class="stack">
 		{#each exercises as ex (ex.id)}
 			{#if editingId === ex.id}
-				<form
-					method="POST"
-					action="?/update"
-					class="card form-card"
-					onsubmit={(event) => updateExercise(event, ex.id)}
-				>
-					<input type="hidden" name="id" value={ex.id} />
+				<form class="card form-card" onsubmit={(event) => updateExercise(event, ex.id)}>
 					{@render fields(ex)}
 					<div class="form-actions">
 						<button

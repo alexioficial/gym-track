@@ -1,10 +1,27 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import Icon from '$lib/components/Icon.svelte';
-	import type { ActionData } from './$types';
+	import { jsonRequest, ClientApiError } from '$lib/client/json';
 
-	let { form }: { form: ActionData } = $props();
 	let loading = $state(false);
+	let loginError = $state<string | null>(null);
+
+	async function submit(event: SubmitEvent) {
+		event.preventDefault();
+		if (loading) return;
+		const data = new FormData(event.currentTarget as HTMLFormElement);
+		loading = true;
+		loginError = null;
+		try {
+			await jsonRequest('/api/auth/login', 'POST', {
+				username: String(data.get('username') ?? '').trim(),
+				password: String(data.get('password') ?? '')
+			});
+			window.location.assign('/');
+		} catch (error) {
+			loginError = error instanceof ClientApiError ? error.message : 'Could not reach the API';
+			loading = false;
+		}
+	}
 </script>
 
 <svelte:head><title>Sign in - Gym Tracker</title></svelte:head>
@@ -15,16 +32,7 @@
 		<h1 class="auth-title">GYM<span class="accent">TRACK</span></h1>
 		<p class="muted auth-sub">Sign in to your account</p>
 
-		<form
-			method="POST"
-			use:enhance={() => {
-				loading = true;
-				return async ({ update }) => {
-					await update();
-					loading = false;
-				};
-			}}
-		>
+		<form onsubmit={submit}>
 			<label class="label" for="username">Username</label>
 			<input
 				id="username"
@@ -36,7 +44,6 @@
 				spellcheck="false"
 				placeholder="username"
 				class="input field"
-				value={form?.username ?? ''}
 				required
 			/>
 
@@ -51,8 +58,8 @@
 				required
 			/>
 
-			{#if form?.error}
-				<p class="error">{form.error}</p>
+			{#if loginError}
+				<p class="error">{loginError}</p>
 			{/if}
 
 			<button type="submit" class="btn btn-primary auth-btn" disabled={loading}>
