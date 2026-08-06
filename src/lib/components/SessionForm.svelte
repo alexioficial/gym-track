@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { resolve } from '$app/paths';
@@ -256,6 +255,17 @@
 		}
 	}
 
+	function submit(event: SubmitEvent) {
+		// `enhance`'s cancel callback prevents its post-response callback from
+		// running. The offline path used to call cancel and then wait for that
+		// callback, leaving the Save button with nothing to execute. Intercept
+		// the form directly instead; with no offline callback, retain the native
+		// form submission as a reliable server-side fallback.
+		if (!onSave) return;
+		event.preventDefault();
+		void save();
+	}
+
 	async function remove() {
 		if (!onDelete || !confirm('Delete this session?')) return;
 		try {
@@ -270,17 +280,7 @@
 <form
 	method="POST"
 	action={mode === 'create' ? '?/create' : '?/update'}
-	use:enhance={({ cancel }) => {
-		if (onSave) {
-			cancel();
-			return async () => save();
-		}
-		return async ({ result, update }) => {
-			// A successful create/update leaves the page (redirect) — drop the draft.
-			if (result.type === 'redirect' || result.type === 'success') clearDraft();
-			await update();
-		};
-	}}
+	onsubmit={submit}
 >
 	{#if mode === 'edit' && session}
 		<input type="hidden" name="id" value={session.id} />
