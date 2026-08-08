@@ -14,10 +14,6 @@
 
 	const bare = $derived(page.url.pathname === '/login');
 
-	const initials = $derived(
-		(data.user?.username ?? '?').replace(/[._]/g, ' ').trim().slice(0, 2).toUpperCase()
-	);
-
 	async function logout() {
 		await clearOfflineData(data.user?.id);
 		navigator.serviceWorker?.controller?.postMessage({ type: 'clear-user-data' });
@@ -44,12 +40,10 @@
 			<div class="topbar-inner">
 				<a href={resolve('/')} class="brand">
 					<span class="brand-mark"><Icon name="dumbbell" size={18} stroke={2.5} /></span>
-					<span class="brand-name">GYM<span class="accent">TRACK</span></span>
 				</a>
 				<div class="account">
 					{#if data.user}
 						<span class="user-chip" title={data.user.username}>
-							<span class="avatar avatar-initials">{initials}</span>
 							<span class="user-name">{data.user.username}</span>
 						</span>
 						{#if data.user.isAdmin}
@@ -112,11 +106,6 @@
 		background: var(--color-accent);
 		color: #0a0a0a;
 	}
-	.brand-name {
-		font-weight: 800;
-		letter-spacing: 0.02em;
-		font-size: 1.02rem;
-	}
 	.account {
 		display: flex;
 		align-items: center;
@@ -127,22 +116,6 @@
 		align-items: center;
 		gap: 0.5rem;
 		max-width: 11rem;
-	}
-	.avatar {
-		width: 2rem;
-		height: 2rem;
-		border-radius: 999px;
-		flex-shrink: 0;
-		object-fit: cover;
-		border: 1px solid var(--color-border);
-	}
-	.avatar-initials {
-		display: grid;
-		place-items: center;
-		background: color-mix(in srgb, var(--color-accent) 18%, var(--color-surface-2));
-		color: var(--color-accent-bright);
-		font-size: 0.72rem;
-		font-weight: 700;
 	}
 	.user-name {
 		font-size: 0.85rem;

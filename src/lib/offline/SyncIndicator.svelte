@@ -12,27 +12,27 @@
 </script>
 
 <button
+	class:idle={tone === 'idle'}
 	class:offline={tone === 'offline'}
 	class:error={tone === 'error'}
 	class:busy={tone === 'syncing'}
 	class="sync"
-	title={$syncStatus.message ?? 'Synchronize now'}
+	title={$syncStatus.message ?? label}
+	aria-label={label}
 	onclick={() => void synchronize()}
 >
-	<span class="dot"></span>{label}
+	<span class="dot"></span>
 </button>
 
 <style>
 	.sync {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.35rem;
+		display: inline-grid;
+		place-items: center;
 		border: 0;
 		background: transparent;
-		color: var(--color-muted);
-		font: inherit;
-		font-size: 0.72rem;
-		padding: 0.25rem 0;
+		width: 2.6rem;
+		height: 2.6rem;
+		padding: 0;
 		cursor: pointer;
 	}
 	.dot {
@@ -40,6 +40,9 @@
 		height: 0.42rem;
 		border-radius: 999px;
 		background: var(--color-good);
+	}
+	.idle .dot {
+		background: var(--color-muted);
 	}
 	.offline .dot {
 		background: var(--color-accent);
