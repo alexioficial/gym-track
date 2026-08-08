@@ -9,9 +9,11 @@
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+	let logMode = $state<'create' | 'edit-last'>('create');
 	const exercises = $derived($offlineData?.exercises ?? data.exercises);
 	const routines = $derived($offlineData?.routines ?? data.routines);
 	const sessions = $derived($offlineData?.sessions ?? []);
+	const latestSession = $derived($offlineData ? (sessions[0] ?? null) : data.latestSession);
 	const history = $derived.by(() => {
 		if (!$offlineData) return data.history;
 		const routineById = new Map(routines.map((routine) => [routine.id, routine]));
@@ -30,6 +32,14 @@
 	const lastByExercise = $derived(
 		$offlineData ? lastPerformanceByExercise(sessions) : data.lastByExercise
 	);
+	const lastByExerciseBeforeLatest = $derived(
+		$offlineData && latestSession
+			? lastPerformanceByExercise(sessions, {
+					excludeSessionId: latestSession.id,
+					onOrBefore: latestSession.date
+				})
+			: data.lastByExerciseBeforeLatest
+	);
 
 	async function saveSession(input: {
 		date: string;
@@ -40,20 +50,77 @@
 		await queueOfflineMutation('session', 'create', newEntityId(), input);
 		await goto(resolve('/'));
 	}
+
+	async function updateLatestSession(input: {
+		date: string;
+		routineId: string | null;
+		notes: string | undefined;
+		entries: Array<{ exerciseId: string; sets: Array<{ weight: number; reps: number }> }>;
+	}) {
+		if (!latestSession) return;
+		await queueOfflineMutation('session', 'update', latestSession.id, input);
+		await goto(resolve('/'));
+	}
 </script>
 
 <svelte:head><title>Log session - Gym Tracker</title></svelte:head>
 
-<PageHeader title="New session" subtitle="Log what you did today" />
-
-<SessionForm
-	mode="create"
-	exercises={exercises}
-	routines={routines}
-	initialRoutineId={data.initialRoutineId}
-	lastByExercise={lastByExercise}
-	onSave={saveSession}
+<PageHeader
+	title={logMode === 'create' ? 'New session' : 'Modify last log'}
+	subtitle={logMode === 'create'
+		? 'Log what you did today'
+		: latestSession
+			? `Editing ${formatDate(latestSession.date)}`
+			: 'There are no sessions to modify'}
 />
+
+<div class="log-mode card" role="group" aria-label="Choose logging action">
+	<button
+		type="button"
+		class="mode-option"
+		class:active={logMode === 'create'}
+		aria-pressed={logMode === 'create'}
+		onclick={() => (logMode = 'create')}
+	>
+		<Icon name="plus" size={17} stroke={2.5} />
+		<span>New log</span>
+	</button>
+	<button
+		type="button"
+		class="mode-option"
+		class:active={logMode === 'edit-last'}
+		aria-pressed={logMode === 'edit-last'}
+		disabled={!latestSession}
+		onclick={() => (logMode = 'edit-last')}
+	>
+		<Icon name="pencil" size={16} />
+		<span>Modify last log</span>
+	</button>
+</div>
+
+{#if logMode === 'create'}
+	{#key 'create'}
+		<SessionForm
+			mode="create"
+			{exercises}
+			{routines}
+			initialRoutineId={data.initialRoutineId}
+			{lastByExercise}
+			onSave={saveSession}
+		/>
+	{/key}
+{:else if latestSession}
+	{#key latestSession.id}
+		<SessionForm
+			mode="edit"
+			session={latestSession}
+			{exercises}
+			{routines}
+			lastByExercise={lastByExerciseBeforeLatest}
+			onSave={updateLatestSession}
+		/>
+	{/key}
+{/if}
 
 {#if history.length > 0}
 	<section class="block">
@@ -75,6 +142,37 @@
 {/if}
 
 <style>
+	.log-mode {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.35rem;
+		padding: 0.35rem;
+		margin-bottom: 1rem;
+	}
+	.mode-option {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.45rem;
+		min-height: 2.7rem;
+		padding: 0.55rem 0.75rem;
+		border-radius: 0.8rem;
+		color: var(--color-muted);
+		font-size: 0.85rem;
+		font-weight: 700;
+		cursor: pointer;
+		transition:
+			background-color 0.15s ease,
+			color 0.15s ease;
+	}
+	.mode-option.active {
+		background: var(--color-accent);
+		color: var(--color-bg);
+	}
+	.mode-option:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
+	}
 	.block {
 		margin-top: 2rem;
 	}

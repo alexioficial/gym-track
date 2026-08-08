@@ -245,7 +245,7 @@
 				notes: notes.trim() || undefined,
 				entries: payload
 			});
-			clearDraft();
+			if (mode === 'create') clearDraft();
 			mutationError = null;
 		} catch (error) {
 			mutationError = error instanceof Error ? error.message : 'Could not save your session';

@@ -257,7 +257,7 @@ export function lastPerformanceByExercise(
 	sessions: Session[],
 	opts: { excludeSessionId?: string; onOrBefore?: string } = {}
 ): Record<string, LastPerformance> {
-	const sorted = [...sessions].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+	const sorted = [...sessions].sort(newestSessionFirst);
 	const out: Record<string, LastPerformance> = {};
 	for (const s of sorted) {
 		if (opts.excludeSessionId && s.id === opts.excludeSessionId) continue;
@@ -277,6 +277,14 @@ export function lastPerformanceByExercise(
 		}
 	}
 	return out;
+}
+
+/** Sort sessions by workout date, then by their actual creation order. */
+export function newestSessionFirst(a: Session, b: Session): number {
+	const byDate = b.date.localeCompare(a.date);
+	if (byDate !== 0) return byDate;
+	const byCreatedAt = (b.createdAt ?? 0) - (a.createdAt ?? 0);
+	return byCreatedAt !== 0 ? byCreatedAt : b.id.localeCompare(a.id);
 }
 
 /** Progress per exercise: weeks + latest vs previous comparison. */

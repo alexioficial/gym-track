@@ -1,6 +1,7 @@
 import { browser } from '$app/environment';
 import { get, writable } from 'svelte/store';
 import type { Exercise, Routine, Schedule, Session, Weekday } from '$lib/types';
+import { newestSessionFirst } from '$lib/utils/progression';
 import {
 	emptySchedule,
 	isWeekday,
@@ -38,12 +39,14 @@ function clone<T>(value: T): T {
 }
 
 function database(): Promise<IDBDatabase> {
-	if (!browser) return Promise.reject(new Error('Offline storage is only available in the browser'));
+	if (!browser)
+		return Promise.reject(new Error('Offline storage is only available in the browser'));
 	return new Promise((resolve, reject) => {
 		const open = indexedDB.open(DB_NAME, DB_VERSION);
 		open.onupgradeneeded = () => {
 			const db = open.result;
-			if (!db.objectStoreNames.contains(SNAPSHOTS)) db.createObjectStore(SNAPSHOTS, { keyPath: 'userId' });
+			if (!db.objectStoreNames.contains(SNAPSHOTS))
+				db.createObjectStore(SNAPSHOTS, { keyPath: 'userId' });
 			if (!db.objectStoreNames.contains(MUTATIONS)) {
 				const store = db.createObjectStore(MUTATIONS, { keyPath: 'mutationId' });
 				store.createIndex('by-user', 'userId');
@@ -65,8 +68,10 @@ function request<T>(value: IDBRequest<T>): Promise<T> {
 function completed(transaction: IDBTransaction): Promise<void> {
 	return new Promise((resolve, reject) => {
 		transaction.oncomplete = () => resolve();
-		transaction.onabort = () => reject(transaction.error ?? new Error('Local storage transaction failed'));
-		transaction.onerror = () => reject(transaction.error ?? new Error('Local storage transaction failed'));
+		transaction.onabort = () =>
+			reject(transaction.error ?? new Error('Local storage transaction failed'));
+		transaction.onerror = () =>
+			reject(transaction.error ?? new Error('Local storage transaction failed'));
 	});
 }
 
@@ -81,7 +86,11 @@ async function readSnapshot(userId: string): Promise<StoredSnapshot | undefined>
 async function writeSnapshot(userId: string, snapshot: OfflineSnapshot): Promise<void> {
 	const db = await database();
 	const tx = db.transaction(SNAPSHOTS, 'readwrite');
-	tx.objectStore(SNAPSHOTS).put({ userId, snapshot, updatedAt: Date.now() } satisfies StoredSnapshot);
+	tx.objectStore(SNAPSHOTS).put({
+		userId,
+		snapshot,
+		updatedAt: Date.now()
+	} satisfies StoredSnapshot);
 	await completed(tx);
 }
 
@@ -106,14 +115,17 @@ async function replaceMutations(userId: string, mutations: OfflineMutation[]): P
 	await completed(tx);
 }
 
-function entityItems(snapshot: OfflineSnapshot, entity: Exclude<OfflineEntity, 'schedule'>): Exercise[] | Routine[] | Session[] {
+function entityItems(
+	snapshot: OfflineSnapshot,
+	entity: Exclude<OfflineEntity, 'schedule'>
+): Exercise[] | Routine[] | Session[] {
 	return snapshot[`${entity}s` as 'exercises' | 'routines' | 'sessions'];
 }
 
 function sortSnapshot(snapshot: OfflineSnapshot): void {
 	snapshot.exercises.sort((a, b) => a.name.localeCompare(b.name));
 	snapshot.routines.sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
-	snapshot.sessions.sort((a, b) => b.date.localeCompare(a.date));
+	snapshot.sessions.sort(newestSessionFirst);
 }
 
 function applyMutation(snapshot: OfflineSnapshot, mutation: OfflineMutation): OfflineSnapshot {
@@ -157,12 +169,15 @@ function applyMutation(snapshot: OfflineSnapshot, mutation: OfflineMutation): Of
 				(items as Session[]).push({
 					id: mutation.entityId,
 					date: String(mutation.payload.date ?? ''),
+					createdAt: mutation.createdAt,
 					routineId:
 						typeof mutation.payload.routineId === 'string' ? mutation.payload.routineId : null,
 					...(typeof mutation.payload.notes === 'string' && mutation.payload.notes
 						? { notes: mutation.payload.notes }
 						: {}),
-					entries: Array.isArray(mutation.payload.entries) ? (mutation.payload.entries as Session['entries']) : []
+					entries: Array.isArray(mutation.payload.entries)
+						? (mutation.payload.entries as Session['entries'])
+						: []
 				});
 			}
 		}
@@ -172,7 +187,9 @@ function applyMutation(snapshot: OfflineSnapshot, mutation: OfflineMutation): Of
 		if (index >= 0) items.splice(index, 1);
 		if (mutation.entity === 'exercise') {
 			for (const routine of next.routines) {
-				routine.exercises = routine.exercises.filter((entry) => entry.exerciseId !== mutation.entityId);
+				routine.exercises = routine.exercises.filter(
+					(entry) => entry.exerciseId !== mutation.entityId
+				);
 			}
 		} else if (mutation.entity === 'routine') {
 			for (const day of Object.keys(next.schedule) as Weekday[]) {
@@ -187,7 +204,8 @@ function applyMutation(snapshot: OfflineSnapshot, mutation: OfflineMutation): Of
 function coalesce(queue: OfflineMutation[], mutation: OfflineMutation): OfflineMutation[] {
 	const sameTarget = (item: OfflineMutation) =>
 		item.entity === mutation.entity && item.entityId === mutation.entityId;
-	if (mutation.entity === 'schedule') return [...queue.filter((item) => !sameTarget(item)), mutation];
+	if (mutation.entity === 'schedule')
+		return [...queue.filter((item) => !sameTarget(item)), mutation];
 
 	const create = queue.find((item) => sameTarget(item) && item.operation === 'create');
 	if (mutation.operation === 'update' && create) {
@@ -196,18 +214,27 @@ function coalesce(queue: OfflineMutation[], mutation: OfflineMutation): OfflineM
 		);
 	}
 	if (mutation.operation === 'update') {
-		return [...queue.filter((item) => !(sameTarget(item) && item.operation === 'update')), mutation];
+		return [
+			...queue.filter((item) => !(sameTarget(item) && item.operation === 'update')),
+			mutation
+		];
 	}
 	if (mutation.operation === 'delete' && create) {
 		return queue.filter((item) => !sameTarget(item));
 	}
 	if (mutation.operation === 'delete') {
-		return [...queue.filter((item) => !(sameTarget(item) && item.operation === 'update')), mutation];
+		return [
+			...queue.filter((item) => !(sameTarget(item) && item.operation === 'update')),
+			mutation
+		];
 	}
 	return [...queue, mutation];
 }
 
-async function updateStatus(phase: SyncStatus['phase'], message: string | null = null): Promise<void> {
+async function updateStatus(
+	phase: SyncStatus['phase'],
+	message: string | null = null
+): Promise<void> {
 	const pending = currentUserId ? (await readMutations(currentUserId)).length : 0;
 	syncStatus.set({ phase, pending, message });
 }
@@ -259,7 +286,10 @@ export async function queueOfflineMutation(
 	};
 	currentSnapshot = applyMutation(currentSnapshot!, mutation);
 	const queue = coalesce(await readMutations(currentUserId!), mutation);
-	await Promise.all([writeSnapshot(currentUserId!, currentSnapshot), replaceMutations(currentUserId!, queue)]);
+	await Promise.all([
+		writeSnapshot(currentUserId!, currentSnapshot),
+		replaceMutations(currentUserId!, queue)
+	]);
 	offlineData.set(clone(currentSnapshot));
 	await updateStatus(navigator.onLine ? 'idle' : 'offline');
 	if (navigator.onLine) void synchronize();
@@ -292,11 +322,17 @@ export async function synchronize(): Promise<void> {
 			let merged = clone(body.snapshot);
 			for (const mutation of remaining) merged = applyMutation(merged, mutation);
 			currentSnapshot = merged;
-			await Promise.all([writeSnapshot(currentUserId!, merged), replaceMutations(currentUserId!, remaining)]);
+			await Promise.all([
+				writeSnapshot(currentUserId!, merged),
+				replaceMutations(currentUserId!, remaining)
+			]);
 			offlineData.set(clone(merged));
 			await updateStatus('synced');
 		} catch (error) {
-			await updateStatus(navigator.onLine ? 'error' : 'offline', error instanceof Error ? error.message : null);
+			await updateStatus(
+				navigator.onLine ? 'error' : 'offline',
+				error instanceof Error ? error.message : null
+			);
 		} finally {
 			syncing = null;
 		}
@@ -324,10 +360,12 @@ export async function clearOfflineData(userId?: string): Promise<void> {
 }
 
 export function currentOfflineSnapshot(): OfflineSnapshot {
-	return get(offlineData) ?? {
-		exercises: [],
-		routines: [],
-		sessions: [],
-		schedule: emptySchedule()
-	};
+	return (
+		get(offlineData) ?? {
+			exercises: [],
+			routines: [],
+			sessions: [],
+			schedule: emptySchedule()
+		}
+	);
 }

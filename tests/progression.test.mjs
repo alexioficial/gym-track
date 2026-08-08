@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'bun:test';
-import { isoWeekKey, weeklyStatsForExercise } from '../src/lib/utils/progression.ts';
+import {
+	isoWeekKey,
+	newestSessionFirst,
+	weeklyStatsForExercise
+} from '../src/lib/utils/progression.ts';
 
 describe('progression calculations', () => {
 	test('uses ISO weeks across a year boundary', () => {
@@ -27,5 +31,17 @@ describe('progression calculations', () => {
 
 		expect(weeks).toHaveLength(1);
 		expect(weeks[0]).toMatchObject({ topWeight: 110, topReps: 3, totalVolume: 830, totalSets: 2 });
+	});
+
+	test('sorts same-day sessions by creation time', () => {
+		const sessions = [
+			{ id: 'older', date: '2026-08-07', createdAt: 100, routineId: null, entries: [] },
+			{ id: 'newer', date: '2026-08-07', createdAt: 200, routineId: null, entries: [] }
+		];
+
+		expect(sessions.sort(newestSessionFirst).map((session) => session.id)).toEqual([
+			'newer',
+			'older'
+		]);
 	});
 });

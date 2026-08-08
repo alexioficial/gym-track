@@ -26,6 +26,13 @@ export const load: PageServerLoad = async ({ url, cookies }) => {
 		routines,
 		initialRoutineId: url.searchParams.get('routine') ?? '',
 		history,
-		lastByExercise: lastPerformanceByExercise(sessions)
+		latestSession: sessions[0] ?? null,
+		lastByExercise: lastPerformanceByExercise(sessions),
+		lastByExerciseBeforeLatest: sessions[0]
+			? lastPerformanceByExercise(sessions, {
+					excludeSessionId: sessions[0].id,
+					onOrBefore: sessions[0].date
+				})
+			: {}
 	};
 };

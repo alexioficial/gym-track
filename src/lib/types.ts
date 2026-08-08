@@ -96,6 +96,7 @@ export interface LastPerformance {
 export interface Session {
 	id: string;
 	date: string; // YYYY-MM-DD
+	createdAt?: number; // epoch milliseconds; optional for older offline snapshots
 	routineId: string | null;
 	notes?: string;
 	entries: SessionEntry[];
