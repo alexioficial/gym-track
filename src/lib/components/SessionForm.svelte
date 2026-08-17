@@ -11,6 +11,7 @@
 		type Session
 	} from '$lib/types';
 	import { shortLabel, todayYmd } from '$lib/utils/progression';
+	import { missingExerciseOccurrences } from '$lib/utils/routines';
 
 	interface Props {
 		exercises: Exercise[];
@@ -49,7 +50,7 @@
 	const fmt = (n: number) => String(Math.round(n * 100) / 100);
 
 	type EditSet = { id: number; weight: number | null; reps: number | null };
-	type EditEntry = { exerciseId: string; sets: EditSet[] };
+	type EditEntry = { id: number; exerciseId: string; sets: EditSet[] };
 
 	let counter = 0;
 	const nextId = () => ++counter;
@@ -57,6 +58,7 @@
 	function initEntries(): EditEntry[] {
 		if (initial.session) {
 			return initial.session.entries.map((e) => ({
+				id: nextId(),
 				exerciseId: e.exerciseId,
 				sets: e.sets.map((s) => ({ id: nextId(), weight: s.weight, reps: s.reps }))
 			}));
@@ -79,14 +81,13 @@
 
 	const exerciseName = $derived(new Map(exercises.map((e) => [e.id, e.name])));
 	const exerciseMg = $derived(new Map(exercises.map((e) => [e.id, e.muscleGroup])));
-	const usedIds = $derived(new Set(entries.map((e) => e.exerciseId)));
-	const available = $derived(exercises.filter((e) => !usedIds.has(e.id)));
 	const selectedRoutine = $derived(routines.find((r) => r.id === routineId) ?? null);
-	// Exercises assigned to the selected routine that aren't in the session yet.
+	// Planned occurrences from the selected routine that aren't in the session yet.
 	const missingFromRoutine = $derived(
 		selectedRoutine
-			? selectedRoutine.exercises.filter(
-					(re) => exercises.some((e) => e.id === re.exerciseId) && !usedIds.has(re.exerciseId)
+			? missingExerciseOccurrences(
+					selectedRoutine.exercises.filter((re) => exercises.some((e) => e.id === re.exerciseId)),
+					entries
 				)
 			: []
 	);
@@ -146,6 +147,7 @@
 					? d.entries
 							.filter((e: EditEntry) => e && exercises.some((x) => x.id === e.exerciseId))
 							.map((e: EditEntry) => ({
+								id: nextId(),
 								exerciseId: String(e.exerciseId),
 								sets: (Array.isArray(e.sets) ? e.sets : []).map((s: EditSet) => ({
 									id: nextId(),
@@ -182,8 +184,12 @@
 	});
 
 	function addExercise(id: string) {
-		if (!id || usedIds.has(id)) return;
-		entries.push({ exerciseId: id, sets: [{ id: nextId(), weight: null, reps: null }] });
+		if (!id) return;
+		entries.push({
+			id: nextId(),
+			exerciseId: id,
+			sets: [{ id: nextId(), weight: null, reps: null }]
+		});
 		pick = '';
 	}
 
@@ -191,20 +197,20 @@
 	function routineEntry(re: { exerciseId: string; sets: number }): EditEntry {
 		const n = Math.max(1, re.sets);
 		return {
+			id: nextId(),
 			exerciseId: re.exerciseId,
 			sets: Array.from({ length: n }, () => ({ id: nextId(), weight: null, reps: null }))
 		};
 	}
 
-	// Add the routine's exercises that aren't already in the session.
+	// Add only the routine occurrences that aren't already represented in the session.
 	function loadRoutine() {
 		if (!selectedRoutine) return;
-		const used = entries.map((e) => e.exerciseId);
-		for (const re of selectedRoutine.exercises) {
-			if (exercises.some((e) => e.id === re.exerciseId) && !used.includes(re.exerciseId)) {
-				entries.push(routineEntry(re));
-				used.push(re.exerciseId);
-			}
+		const planned = selectedRoutine.exercises.filter((re) =>
+			exercises.some((e) => e.id === re.exerciseId)
+		);
+		for (const re of missingExerciseOccurrences(planned, entries)) {
+			entries.push(routineEntry(re));
 		}
 	}
 
@@ -222,8 +228,8 @@
 		}
 	}
 
-	function removeEntry(exerciseId: string) {
-		entries = entries.filter((e) => e.exerciseId !== exerciseId);
+	function removeEntry(id: number) {
+		entries = entries.filter((e) => e.id !== id);
 	}
 
 	function addSet(entry: EditEntry) {
@@ -311,7 +317,7 @@
 
 	<!-- Exercises -->
 	<div class="entries">
-		{#each entries as entry (entry.exerciseId)}
+		{#each entries as entry (entry.id)}
 			<div class="entry card">
 				<div class="entry-head">
 					<div class="entry-title">
@@ -324,7 +330,7 @@
 						type="button"
 						class="icon-action"
 						aria-label="Remove exercise"
-						onclick={() => removeEntry(entry.exerciseId)}
+						onclick={() => removeEntry(entry.id)}
 					>
 						<Icon name="x" size={16} />
 					</button>
@@ -393,11 +399,11 @@
 	</div>
 
 	<!-- Add exercise -->
-	{#if available.length > 0}
+	{#if exercises.length > 0}
 		<div class="add-ex card">
 			<select class="input" bind:value={pick}>
 				<option value="">Add exercise…</option>
-				{#each available as ex (ex.id)}
+				{#each exercises as ex (ex.id)}
 					<option value={ex.id}>{ex.name}</option>
 				{/each}
 			</select>

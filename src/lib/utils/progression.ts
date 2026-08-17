@@ -173,8 +173,11 @@ export function weeklyStatsForExercise(sessions: Session[], exerciseId: string):
 	const byWeek = new Map<string, { date: string; sets: WorkoutSet[]; sessionDates: Set<string> }>();
 
 	for (const session of sessions) {
-		const entry = session.entries.find((e) => e.exerciseId === exerciseId);
-		if (!entry || entry.sets.length === 0) continue;
+		const sessionSets = session.entries
+			.filter((entry) => entry.exerciseId === exerciseId)
+			.flatMap((entry) => entry.sets)
+			.filter((set) => set.weight > 0 && set.reps > 0);
+		if (sessionSets.length === 0) continue;
 		const key = isoWeekKey(session.date);
 		const bucket = byWeek.get(key) ?? {
 			date: session.date,
@@ -183,7 +186,7 @@ export function weeklyStatsForExercise(sessions: Session[], exerciseId: string):
 		};
 		// Keep the earliest date of the week as the reference.
 		if (session.date < bucket.date) bucket.date = session.date;
-		bucket.sets.push(...entry.sets.filter((s) => s.weight > 0 && s.reps > 0));
+		bucket.sets.push(...sessionSets);
 		bucket.sessionDates.add(session.date);
 		byWeek.set(key, bucket);
 	}
@@ -262,12 +265,17 @@ export function lastPerformanceByExercise(
 	for (const s of sorted) {
 		if (opts.excludeSessionId && s.id === opts.excludeSessionId) continue;
 		if (opts.onOrBefore && s.date > opts.onOrBefore) continue;
+		const setsByExercise = new Map<string, WorkoutSet[]>();
 		for (const entry of s.entries) {
-			if (out[entry.exerciseId]) continue; // already have a more recent one
-			const sets = entry.sets.filter((st) => st.reps > 0);
+			const sets = setsByExercise.get(entry.exerciseId) ?? [];
+			sets.push(...entry.sets.filter((set) => set.reps > 0));
+			setsByExercise.set(entry.exerciseId, sets);
+		}
+		for (const [exerciseId, sets] of setsByExercise) {
+			if (out[exerciseId]) continue; // already have a more recent session
 			if (sets.length === 0) continue;
 			const top = topSet(sets);
-			out[entry.exerciseId] = {
+			out[exerciseId] = {
 				date: s.date,
 				sets: sets.map((st) => ({ weight: st.weight, reps: st.reps })),
 				topWeight: top?.weight ?? 0,

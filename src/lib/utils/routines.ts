@@ -17,3 +17,20 @@ export function duplicatedRoutineName(source: string, existingNames: Iterable<st
 		number += 1;
 	}
 }
+
+/** Returns the planned occurrences that are not represented in the current ordered list. */
+export function missingExerciseOccurrences<T extends { exerciseId: string }>(
+	planned: readonly T[],
+	present: readonly { exerciseId: string }[]
+): T[] {
+	const remaining = new Map<string, number>();
+	for (const item of present) {
+		remaining.set(item.exerciseId, (remaining.get(item.exerciseId) ?? 0) + 1);
+	}
+	return planned.filter((item) => {
+		const count = remaining.get(item.exerciseId) ?? 0;
+		if (count === 0) return true;
+		remaining.set(item.exerciseId, count - 1);
+		return false;
+	});
+}

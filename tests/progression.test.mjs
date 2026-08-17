@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
 	isoWeekKey,
+	lastPerformanceByExercise,
 	newestSessionFirst,
 	weeklyStatsForExercise
 } from '../src/lib/utils/progression.ts';
@@ -43,5 +44,41 @@ describe('progression calculations', () => {
 			'newer',
 			'older'
 		]);
+	});
+
+	test('aggregates repeated occurrences of an exercise within one session', () => {
+		const weeks = weeklyStatsForExercise(
+			[
+				{
+					id: 'session',
+					date: '2026-08-17',
+					routineId: 'routine',
+					entries: [
+						{ exerciseId: 'squat', sets: [{ weight: 100, reps: 5 }] },
+						{ exerciseId: 'row', sets: [{ weight: 50, reps: 10 }] },
+						{ exerciseId: 'squat', sets: [{ weight: 80, reps: 8 }] }
+					]
+				}
+			],
+			'squat'
+		);
+
+		expect(weeks[0]).toMatchObject({ totalSets: 2, totalReps: 13, totalVolume: 1140 });
+	});
+
+	test('uses every repeated occurrence as the last-performance reference', () => {
+		const latest = lastPerformanceByExercise([
+			{
+				id: 'session',
+				date: '2026-08-17',
+				routineId: null,
+				entries: [
+					{ exerciseId: 'squat', sets: [{ weight: 100, reps: 5 }] },
+					{ exerciseId: 'squat', sets: [{ weight: 80, reps: 8 }] }
+				]
+			}
+		]);
+
+		expect(latest.squat.sets).toHaveLength(2);
 	});
 });

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { duplicatedRoutineName } from '../src/lib/utils/routines.ts';
+import { duplicatedRoutineName, missingExerciseOccurrences } from '../src/lib/utils/routines.ts';
 
 describe('routine duplication', () => {
 	test('chooses the first available copy number', () => {
@@ -18,5 +18,20 @@ describe('routine duplication', () => {
 		const emojiName = duplicatedRoutineName('🏋️'.repeat(100), []);
 		expect(Array.from(emojiName).length).toBeLessThanOrEqual(100);
 		expect(emojiName.endsWith(' (Copy)')).toBe(true);
+	});
+});
+
+describe('repeated routine exercises', () => {
+	test('matches existing entries by occurrence rather than by unique exercise id', () => {
+		const planned = [
+			{ exerciseId: 'squat', sets: 3 },
+			{ exerciseId: 'row', sets: 3 },
+			{ exerciseId: 'squat', sets: 2 }
+		];
+
+		expect(missingExerciseOccurrences(planned, [{ exerciseId: 'squat' }])).toEqual([
+			{ exerciseId: 'row', sets: 3 },
+			{ exerciseId: 'squat', sets: 2 }
+		]);
 	});
 });

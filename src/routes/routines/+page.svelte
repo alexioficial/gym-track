@@ -28,16 +28,18 @@
 
 	// Assignment state for the currently open form, kept as an ordered list so the
 	// exercise order is exactly how they'll be logged. Only one form is open at a time.
-	type Assigned = { exerciseId: string; sets: number };
+	type Assigned = { rowId: number; exerciseId: string; sets: number };
+	let assignmentCounter = 0;
+	const assignedRow = (exerciseId: string, sets: number): Assigned => ({
+		rowId: ++assignmentCounter,
+		exerciseId,
+		sets
+	});
 	let assigned = $state<Assigned[]>([]);
 
 	const exerciseName = $derived(new Map(exercises.map((e) => [e.id, e.name])));
 	const exerciseMg = $derived(new Map(exercises.map((e) => [e.id, e.muscleGroup])));
 	const routineById = $derived(new Map(routines.map((r) => [r.id, r])));
-
-	// Exercises not in the routine yet (available to add), in catalog order.
-	const assignedIds = $derived(new Set(assigned.map((a) => a.exerciseId)));
-	const available = $derived(exercises.filter((e) => !assignedIds.has(e.id)));
 
 	function startNew() {
 		editingId = null;
@@ -47,7 +49,7 @@
 	function startEdit(id: string) {
 		showNew = false;
 		const r = routineById.get(id);
-		assigned = r ? r.exercises.map((e) => ({ exerciseId: e.exerciseId, sets: e.sets })) : [];
+		assigned = r ? r.exercises.map((e) => assignedRow(e.exerciseId, e.sets)) : [];
 		editingId = id;
 	}
 	function close() {
@@ -56,15 +58,14 @@
 	}
 
 	function addExercise(id: string) {
-		if (assigned.some((a) => a.exerciseId === id)) return;
-		assigned = [...assigned, { exerciseId: id, sets: DEFAULT_ROUTINE_SETS }];
+		assigned = [...assigned, assignedRow(id, DEFAULT_ROUTINE_SETS)];
 	}
-	function removeExercise(id: string) {
-		assigned = assigned.filter((a) => a.exerciseId !== id);
+	function removeExercise(rowId: number) {
+		assigned = assigned.filter((a) => a.rowId !== rowId);
 	}
-	function changeSets(id: string, delta: number) {
+	function changeSets(rowId: number, delta: number) {
 		assigned = assigned.map((a) =>
-			a.exerciseId === id
+			a.rowId === rowId
 				? { ...a, sets: Math.min(MAX_ROUTINE_SETS, Math.max(MIN_ROUTINE_SETS, a.sets + delta)) }
 				: a
 		);
@@ -82,7 +83,7 @@
 		return {
 			name: String(formData.get('name') ?? '').trim(),
 			color: String(formData.get('color') ?? ROUTINE_COLORS[0]),
-			exercises: assigned.map((item) => ({ ...item }))
+			exercises: assigned.map(({ exerciseId, sets }) => ({ exerciseId, sets }))
 		};
 	}
 
@@ -231,12 +232,10 @@
 				First create exercises in the <a href={resolve('/exercises')} class="accent">Exercises</a> tab.
 			</p>
 		{:else}
-			<input type="hidden" name="exercises" value={JSON.stringify(assigned)} />
-
 			{#if assigned.length > 0}
 				<p class="muted micro">In the order you'll do them — use ↑ ↓ to reorder.</p>
 				<div class="assigned">
-					{#each assigned as a, i (a.exerciseId)}
+					{#each assigned as a, i (a.rowId)}
 						<div class="arow">
 							<div class="reorder">
 								<button
@@ -270,7 +269,7 @@
 									class="step"
 									aria-label="Fewer sets"
 									disabled={a.sets <= MIN_ROUTINE_SETS}
-									onclick={() => changeSets(a.exerciseId, -1)}
+									onclick={() => changeSets(a.rowId, -1)}
 								>
 									<Icon name="minus" size={14} />
 								</button>
@@ -280,7 +279,7 @@
 									class="step"
 									aria-label="More sets"
 									disabled={a.sets >= MAX_ROUTINE_SETS}
-									onclick={() => changeSets(a.exerciseId, 1)}
+									onclick={() => changeSets(a.rowId, 1)}
 								>
 									<Icon name="plus" size={14} />
 								</button>
@@ -289,7 +288,7 @@
 								type="button"
 								class="arow-del"
 								aria-label="Remove"
-								onclick={() => removeExercise(a.exerciseId)}
+								onclick={() => removeExercise(a.rowId)}
 							>
 								<Icon name="x" size={16} />
 							</button>
@@ -298,9 +297,9 @@
 				</div>
 			{/if}
 
-			{#if available.length > 0}
+			{#if exercises.length > 0}
 				<div class="add-list">
-					{#each available as ex (ex.id)}
+					{#each exercises as ex (ex.id)}
 						<button type="button" class="add-row" onclick={() => addExercise(ex.id)}>
 							<span class="add-plus"><Icon name="plus" size={14} stroke={2.5} /></span>
 							<span class="add-name">{ex.name}</span>
@@ -381,7 +380,7 @@
 						</div>
 						{#if routine.exercises.length > 0}
 							<div class="chips">
-								{#each routine.exercises as re (re.exerciseId)}
+								{#each routine.exercises as re, i (`${re.exerciseId}-${i}`)}
 									{#if exerciseName.has(re.exerciseId)}
 										<span class="chip">
 											{exerciseName.get(re.exerciseId)}
