@@ -193,6 +193,7 @@
 						type="radio"
 						name="color"
 						value={color}
+						aria-label="Routine color {i + 1}"
 						checked={routine ? routine.color === color : i === 0}
 					/>
 					<span class="swatch-dot"></span>
@@ -440,11 +441,16 @@
 	}
 
 	.colors {
-		display: flex;
-		flex-wrap: wrap;
+		display: grid;
+		grid-template-columns: repeat(8, minmax(0, 1fr));
 		gap: 0.5rem;
+		width: 100%;
+		max-width: 17.1rem;
 	}
 	.swatch {
+		display: grid;
+		place-items: center;
+		min-width: 0;
 		cursor: pointer;
 	}
 	.swatch input {
@@ -454,8 +460,9 @@
 	}
 	.swatch-dot {
 		display: block;
-		width: 1.7rem;
-		height: 1.7rem;
+		width: 100%;
+		max-width: 1.7rem;
+		aspect-ratio: 1;
 		border-radius: 999px;
 		background: var(--c);
 		border: 2px solid transparent;
