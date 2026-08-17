@@ -4,6 +4,7 @@
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { newEntityId, offlineData, queueOfflineMutation } from '$lib/offline/store';
+	import { duplicatedRoutineName } from '$lib/utils/routines';
 	import {
 		DEFAULT_ROUTINE_SETS,
 		MAX_ROUTINE_SETS,
@@ -19,6 +20,7 @@
 
 	let showNew = $state(false);
 	let editingId = $state<string | null>(null);
+	let duplicatingId = $state<string | null>(null);
 	let mutationError = $state<string | null>(null);
 	const exercises = $derived($offlineData?.exercises ?? data.exercises);
 	const routines = $derived($offlineData?.routines ?? data.routines);
@@ -118,6 +120,26 @@
 			close();
 		} catch (error) {
 			mutationError = error instanceof Error ? error.message : 'Could not delete your routine';
+		}
+	}
+
+	async function duplicateRoutine(routine: Routine) {
+		if (duplicatingId !== null) return;
+		duplicatingId = routine.id;
+		try {
+			await queueOfflineMutation('routine', 'create', newEntityId(), {
+				name: duplicatedRoutineName(
+					routine.name,
+					routines.map((item) => item.name)
+				),
+				color: routine.color,
+				exercises: routine.exercises.map((item) => ({ ...item }))
+			});
+			mutationError = null;
+		} catch (error) {
+			mutationError = error instanceof Error ? error.message : 'Could not duplicate your routine';
+		} finally {
+			duplicatingId = null;
 		}
 	}
 
@@ -343,6 +365,16 @@
 						<div class="routine-head">
 							<span class="dot" style="background:{routine.color}"></span>
 							<span class="routine-name">{routine.name}</span>
+							<button
+								type="button"
+								class="icon-action"
+								aria-label="Duplicate {routine.name}"
+								title="Duplicate"
+								disabled={duplicatingId !== null}
+								onclick={() => void duplicateRoutine(routine)}
+							>
+								<Icon name="copy" size={16} />
+							</button>
 							<button class="icon-action" aria-label="Edit" onclick={() => startEdit(routine.id)}>
 								<Icon name="pencil" size={16} />
 							</button>
@@ -736,5 +768,9 @@
 	.icon-action:active {
 		transform: scale(0.92);
 		color: var(--color-accent-bright);
+	}
+	.icon-action:disabled {
+		opacity: 0.45;
+		cursor: wait;
 	}
 </style>

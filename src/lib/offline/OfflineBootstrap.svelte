@@ -1,8 +1,10 @@
 <script lang="ts">
+	import { version } from '$app/environment';
 	import { preloadData } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import { currentOfflineSnapshot, initializeOffline, synchronize } from './store';
+	import { initializeOffline, synchronize } from './store';
 	import type { OfflineSnapshot } from './types';
+	import { CORE_OFFLINE_ROUTES, markRoutesWarm, routesAreWarm } from './warm';
 
 	interface Props {
 		userId: string;
@@ -11,19 +13,18 @@
 	let { userId, seed }: Props = $props();
 
 	async function warmOfflineRoutes() {
-		const snapshot = currentOfflineSnapshot();
-		const routes = new Set([
-			'/',
-			'/routines',
-			'/log',
-			'/progress',
-			'/exercises',
-			...snapshot.sessions.slice(0, 24).map((session) => `/log/${session.id}`),
-			...snapshot.exercises.map((exercise) => `/progress/${exercise.id}`)
-		]);
-		await Promise.allSettled(
-			[...routes].flatMap((route) => [fetch(route), preloadData(route)])
-		);
+		if (routesAreWarm(localStorage, userId, version)) return;
+
+		// Warm only the five app shells. Their content comes from the IndexedDB snapshot;
+		// preloading every session/exercise creates a request storm and can exhaust the API limit.
+		for (const route of CORE_OFFLINE_ROUTES) {
+			const response = await fetch(route);
+			if (!response.ok) return;
+			const result = await preloadData(route);
+			if (result.type !== 'loaded' || result.status >= 400) return;
+		}
+
+		markRoutesWarm(localStorage, userId, version);
 	}
 
 	onMount(() => {

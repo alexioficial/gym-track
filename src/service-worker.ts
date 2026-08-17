@@ -1,21 +1,33 @@
 /// <reference lib="webworker" />
 
 import { build, files, version } from '$service-worker';
+import { shouldUseCachedNavigation } from '$lib/offline/navigation';
 
 declare const self: ServiceWorkerGlobalScope;
 
 const CACHE = `gym-tracker-${version}`;
 const STATIC = [...build, ...files];
 
+async function cachedNavigation(request: Request): Promise<Response | undefined> {
+	return (await caches.match(request)) ?? (await caches.match('/')) ?? undefined;
+}
+
 self.addEventListener('install', (event) => {
-	event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(STATIC)).then(() => self.skipWaiting()));
+	event.waitUntil(
+		caches
+			.open(CACHE)
+			.then((cache) => cache.addAll(STATIC))
+			.then(() => self.skipWaiting())
+	);
 });
 
 self.addEventListener('activate', (event) => {
 	event.waitUntil(
 		caches
 			.keys()
-			.then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))
+			.then((keys) =>
+				Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))
+			)
 			.then(() => self.clients.claim())
 	);
 });
@@ -31,10 +43,16 @@ self.addEventListener('fetch', (event) => {
 		event.respondWith(
 			fetch(request)
 				.then(async (response) => {
-					if (response.ok) (await caches.open(CACHE)).put(request, response.clone());
+					if (response.ok) {
+						(await caches.open(CACHE)).put(request, response.clone());
+						return response;
+					}
+					if (shouldUseCachedNavigation(response.status)) {
+						return (await cachedNavigation(request)) ?? response;
+					}
 					return response;
 				})
-				.catch(async () => (await caches.match(request)) ?? (await caches.match('/')) ?? Response.error())
+				.catch(async () => (await cachedNavigation(request)) ?? Response.error())
 		);
 		return;
 	}

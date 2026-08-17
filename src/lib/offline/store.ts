@@ -1,9 +1,8 @@
 import { browser } from '$app/environment';
-import { get, writable } from 'svelte/store';
-import type { Exercise, Routine, Schedule, Session, Weekday } from '$lib/types';
+import { writable } from 'svelte/store';
+import type { Exercise, Routine, Session, Weekday } from '$lib/types';
 import { newestSessionFirst } from '$lib/utils/progression';
 import {
-	emptySchedule,
 	isWeekday,
 	type OfflineEntity,
 	type OfflineMutation,
@@ -12,6 +11,7 @@ import {
 	type OfflineSyncResponse,
 	type SyncStatus
 } from './types';
+import { clearRoutesWarm } from './warm';
 
 const DB_NAME = 'gym-tracker-offline';
 const DB_VERSION = 1;
@@ -350,6 +350,7 @@ export async function clearOfflineData(userId?: string): Promise<void> {
 	offlineData.set(null);
 	syncStatus.set({ phase: 'idle', pending: 0, message: null });
 	if (!targetUserId) return;
+	clearRoutesWarm(localStorage, targetUserId);
 	const db = await database();
 	const tx = db.transaction([SNAPSHOTS, MUTATIONS], 'readwrite');
 	tx.objectStore(SNAPSHOTS).delete(targetUserId);
@@ -357,15 +358,4 @@ export async function clearOfflineData(userId?: string): Promise<void> {
 	const keys = await request(store.index('by-user').getAllKeys(targetUserId));
 	for (const key of keys) store.delete(key);
 	await completed(tx);
-}
-
-export function currentOfflineSnapshot(): OfflineSnapshot {
-	return (
-		get(offlineData) ?? {
-			exercises: [],
-			routines: [],
-			sessions: [],
-			schedule: emptySchedule()
-		}
-	);
 }
