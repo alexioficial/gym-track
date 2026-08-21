@@ -33,7 +33,7 @@
 	function message(d: Delta): string {
 		switch (d.verdict) {
 			case 'both':
-				return 'You lifted more weight and more reps than last week. 🔥';
+				return 'You lifted more weight and more reps than last week.';
 			case 'weight':
 				return 'You lifted more weight than last week.';
 			case 'reps':
@@ -50,10 +50,9 @@
 	}
 
 	function badgeClass(d: Delta): string {
-		if (d.verdict === 'new') return 'badge';
-		if (IMPROVEMENT_VERDICTS.includes(d.verdict)) return 'badge badge-accent';
-		if (d.verdict === 'down') return 'badge badge-bad';
-		return 'badge';
+		if (IMPROVEMENT_VERDICTS.includes(d.verdict)) return 'week-status positive';
+		if (d.verdict === 'down') return 'week-status negative';
+		return 'week-status neutral';
 	}
 </script>
 
@@ -64,7 +63,7 @@
 <header class="head">
 	<h1 class="head-title">{view.exercise.name}</h1>
 	<div class="head-meta">
-		{#if view.exercise.muscleGroup}<span class="badge">{view.exercise.muscleGroup}</span>{/if}
+		{#if view.exercise.muscleGroup}<span class="muscle-group">{view.exercise.muscleGroup}</span>{/if}
 		<span class="muted small">{view.weeks.length} {view.weeks.length === 1 ? 'week' : 'weeks'}</span
 		>
 	</div>
@@ -79,11 +78,10 @@
 {:else}
 	<!-- Verdict of the week -->
 	<div
-		class="verdict card"
+		class="verdict"
 		class:good={IMPROVEMENT_VERDICTS.includes(view.delta.verdict)}
 		class:bad={view.delta.verdict === 'down'}
 	>
-		<div class="verdict-icon"><Icon name="flame" size={20} /></div>
 		<div>
 			<span class="verdict-tag">{VERDICT_LABEL[view.delta.verdict]}</span>
 			<p class="verdict-msg">{message(view.delta)}</p>
@@ -92,19 +90,19 @@
 
 	<!-- Stats actuales -->
 	<div class="stats">
-		<div class="stat card">
+		<div class="stat">
 			<span class="stat-label muted">e1RM</span>
 			<span class="stat-value stat-num accent">{view.latest.bestE1rm}<small>{UNIT}</small></span>
 			{#if view.previous}<StatDelta value={view.delta.e1rm} unit=" {UNIT}" />{/if}
 		</div>
-		<div class="stat card">
+		<div class="stat">
 			<span class="stat-label muted">Top set</span>
 			<span class="stat-value stat-num"
 				>{view.latest.topWeight}<small>×{view.latest.topReps}</small></span
 			>
 			{#if view.previous}<StatDelta value={view.delta.weight} unit=" {UNIT}" />{/if}
 		</div>
-		<div class="stat card">
+		<div class="stat">
 			<span class="stat-label muted">Volume</span>
 			<span class="stat-value stat-num">{view.latest.totalVolume}<small>{UNIT}</small></span>
 			{#if view.previous}<StatDelta value={view.delta.volume} unit="" />{/if}
@@ -116,7 +114,7 @@
 
 	<!-- Weekly table -->
 	<h2 class="sub">Week by week</h2>
-	<div class="table-wrap card">
+	<div class="table-wrap">
 		<table class="tbl">
 			<thead>
 				<tr>
@@ -162,8 +160,10 @@
 		margin-bottom: 1.25rem;
 	}
 	.head-title {
-		font-size: 1.7rem;
-		font-weight: 800;
+		margin: 0;
+		font-size: clamp(1.8rem, 5vw, 2.4rem);
+		font-weight: 700;
+		line-height: 1;
 	}
 	.head-meta {
 		display: flex;
@@ -174,41 +174,26 @@
 	.small {
 		font-size: 0.8rem;
 	}
+	.muscle-group { color: var(--color-subtle); font-size: 0.8rem; font-weight: 600; }
 
 	.verdict {
-		display: flex;
-		align-items: center;
-		gap: 0.85rem;
-		padding: 1rem 1.1rem;
-		margin-bottom: 1rem;
+		padding: 1rem;
+		margin-bottom: 1.5rem;
+		border-left: 3px solid var(--color-border);
+		background: var(--color-surface);
 	}
 	.verdict.good {
-		border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
-		background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
+		border-left-color: var(--color-good);
 	}
 	.verdict.bad {
-		border-color: color-mix(in srgb, var(--color-bad) 35%, var(--color-border));
-	}
-	.verdict-icon {
-		display: grid;
-		place-items: center;
-		width: 2.6rem;
-		height: 2.6rem;
-		border-radius: 999px;
-		background: color-mix(in srgb, var(--color-accent) 16%, transparent);
-		color: var(--color-accent-bright);
-		flex-shrink: 0;
-	}
-	.verdict.bad .verdict-icon {
-		background: color-mix(in srgb, var(--color-bad) 14%, transparent);
-		color: var(--color-bad);
+		border-left-color: var(--color-bad);
 	}
 	.verdict-tag {
 		font-size: 0.72rem;
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
-		color: var(--color-accent-bright);
+		color: var(--color-good);
 	}
 	.verdict.bad .verdict-tag {
 		color: var(--color-bad);
@@ -222,15 +207,17 @@
 	.stats {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
-		gap: 0.6rem;
-		margin-bottom: 1rem;
+		margin-bottom: 1.5rem;
+		border-block: 1px solid var(--color-border);
 	}
 	.stat {
 		display: flex;
 		flex-direction: column;
 		gap: 0.3rem;
-		padding: 0.85rem 0.75rem;
+		padding: 1rem;
+		border-right: 1px solid var(--color-border);
 	}
+	.stat:last-child { border-right: 0; }
 	.stat-label {
 		font-size: 0.72rem;
 		font-weight: 600;
@@ -238,8 +225,9 @@
 		letter-spacing: 0.03em;
 	}
 	.stat-value {
-		font-size: 1.35rem;
-		font-weight: 800;
+		font-family: var(--font-display);
+		font-size: 1.6rem;
+		font-weight: 700;
 		line-height: 1;
 	}
 	.stat-value small {
@@ -259,7 +247,7 @@
 	}
 	.table-wrap {
 		overflow-x: auto;
-		padding: 0.25rem 0.25rem;
+		border-block: 1px solid var(--color-border);
 	}
 	.tbl {
 		width: 100%;
@@ -285,5 +273,14 @@
 	}
 	.w-verdict {
 		text-align: right;
+	}
+	.week-status { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+	.positive { color: var(--color-good); }
+	.negative { color: var(--color-bad); }
+	.neutral { color: var(--color-muted); }
+	@media (max-width: 560px) {
+		.stat { padding-inline: 0.625rem; }
+		.stat-value { font-size: 1.35rem; }
+		.tbl th, .tbl td { padding-inline: 0.5rem; }
 	}
 </style>

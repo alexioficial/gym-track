@@ -54,7 +54,7 @@
 </script>
 
 {#if geo}
-	<div class="chart card">
+	<div class="chart">
 		<div class="legend">
 			<span class="lg lg-line">e1RM</span>
 			<span class="lg lg-bar">Volume</span>
@@ -67,7 +67,7 @@
 					y={p.barY}
 					width={p.barW}
 					height={Math.max(0, p.barH)}
-					rx="3"
+					rx="1"
 					class="bar"
 				/>
 			{/each}
@@ -93,7 +93,8 @@
 
 <style>
 	.chart {
-		padding: 1rem 0.85rem 0.6rem;
+		padding: 1rem 0 0.5rem;
+		border-block: 1px solid var(--color-border);
 	}
 	.legend {
 		display: flex;
@@ -112,11 +113,11 @@
 		content: '';
 		width: 0.7rem;
 		height: 0.7rem;
-		border-radius: 2px;
+		border-radius: 1px;
 	}
 	.lg-line::before {
 		background: var(--color-accent-bright);
-		border-radius: 999px;
+		border-radius: 0;
 	}
 	.lg-bar::before {
 		background: color-mix(in srgb, var(--color-accent) 28%, transparent);

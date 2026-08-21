@@ -28,9 +28,9 @@
 	});
 
 	function verdictClass(verdict: Verdict): string {
-		if (IMPROVEMENT_VERDICTS.includes(verdict)) return 'badge-accent';
-		if (verdict === 'down') return 'badge-bad';
-		return '';
+		if (IMPROVEMENT_VERDICTS.includes(verdict)) return 'positive';
+		if (verdict === 'down') return 'negative';
+		return 'neutral';
 	}
 </script>
 
@@ -52,35 +52,17 @@
 	<!-- Weekly recap: latest populated week vs the previous one -->
 	{#if view.recap}
 		{@const r = view.recap}
-		<section class="recap card">
+		<section class="recap">
 			<div class="recap-head">
 				<div class="recap-headings">
-					<h2 class="recap-title"><Icon name="flame" size={17} /> {r.label}</h2>
+					<h2 class="recap-title">{r.label}</h2>
 					<p class="recap-sub muted">{r.rangeLabel} · {r.prevLabel}</p>
 				</div>
-				<div class="dots" aria-hidden="true">
-					{#each r.items as it (it.exerciseId)}
-						<span
-							class="dot"
-							class:good={IMPROVEMENT_VERDICTS.includes(it.verdict)}
-							class:bad={it.verdict === 'down'}
-						></span>
-					{/each}
+				<div class="recap-counts">
+					{#if r.improved > 0}<span class="good">{r.improved} improved</span>{/if}
+					{#if r.same > 0}<span>{r.same} same</span>{/if}
+					{#if r.down > 0}<span class="bad">{r.down} down</span>{/if}
 				</div>
-			</div>
-
-			<div class="recap-counts">
-				{#if r.improved > 0}
-					<span class="rc good"
-						><Icon name="up" size={13} stroke={2.5} /> {r.improved} improved</span
-					>
-				{/if}
-				{#if r.same > 0}
-					<span class="rc">{r.same} same</span>
-				{/if}
-				{#if r.down > 0}
-					<span class="rc bad"><Icon name="down" size={13} stroke={2.5} /> {r.down} down</span>
-				{/if}
 			</div>
 
 			<div class="recap-list">
@@ -88,7 +70,7 @@
 					<a href={resolve('/progress/[exerciseId]', { exerciseId: it.exerciseId })} class="rl">
 						<div class="rl-head">
 							<span class="rl-name">{it.name}</span>
-							<span class="badge {verdictClass(it.verdict)}">{VERDICT_LABEL[it.verdict]}</span>
+							<span class="recap-status {verdictClass(it.verdict)}">{VERDICT_LABEL[it.verdict]}</span>
 						</div>
 						<div class="rl-change stat-num">
 							<span class="rl-set"
@@ -118,7 +100,7 @@
 
 	<!-- Exercises grouped by routine -->
 	{#each view.groups as g (g.routine?.id ?? 'other')}
-		<section class="group">
+		<section class="group" style={g.routine ? `--group-color:${g.routine.color}` : undefined}>
 			<div class="group-head">
 				{#if g.routine}
 					<span class="group-dot" style="background:{g.routine.color}"></span>
@@ -128,7 +110,7 @@
 				{/if}
 				<span class="group-count">{g.items.length}</span>
 			</div>
-			<div class="stack">
+			<div class="group-list">
 				{#each g.items as p (p.exercise.id)}
 					{@render exerciseCard(p)}
 				{/each}
@@ -138,9 +120,9 @@
 
 	{#if view.untracked.length > 0}
 		<h2 class="sub">No data yet</h2>
-		<div class="stack">
+		<div class="untracked-list">
 			{#each view.untracked as ex (ex.id)}
-				<div class="card untracked">
+				<div class="untracked">
 					<span class="ex-name">{ex.name}</span>
 					<span class="muted small">Log it to start tracking</span>
 				</div>
@@ -152,7 +134,7 @@
 {#snippet exerciseCard(p: ExerciseProgress)}
 	<a
 		href={resolve('/progress/[exerciseId]', { exerciseId: p.exercise.id })}
-		class="card card-hover ex"
+		class="ex"
 	>
 		<div class="ex-main">
 			<div class="ex-title">
@@ -172,18 +154,18 @@
 			{/if}
 			<div class="ex-delta">
 				{#if p.delta && p.delta.verdict === 'new'}
-					<span class="badge">First week</span>
+					<span class="status-text neutral">First week</span>
 				{:else if p.delta && IMPROVEMENT_VERDICTS.includes(p.delta.verdict)}
-					<span class="badge badge-accent">{VERDICT_LABEL[p.delta.verdict]}</span>
+					<span class="status-text positive">{VERDICT_LABEL[p.delta.verdict]}</span>
 					{#if p.delta.weight !== 0}<StatDelta value={p.delta.weight} unit=" {UNIT}" />{/if}
 					{#if p.delta.reps !== 0}<StatDelta value={p.delta.reps} unit=" reps" />{/if}
 					{#if p.delta.weight === 0 && p.delta.reps === 0 && p.delta.volume !== 0}
 						<StatDelta value={p.delta.volume} unit=" vol" />
 					{/if}
 				{:else if p.delta && p.delta.verdict === 'down'}
-					<span class="badge badge-bad">Down</span>
+					<span class="status-text negative">Down</span>
 				{:else}
-					<span class="badge">Same</span>
+					<span class="status-text neutral">Same</span>
 				{/if}
 			</div>
 		</div>
@@ -195,92 +177,38 @@
 {/snippet}
 
 <style>
-	/* ---- Weekly recap ---- */
 	.recap {
-		padding: 1.1rem 1rem 1rem;
-		margin-bottom: 1.75rem;
-		background:
-			radial-gradient(120% 120% at 100% 0%, rgba(234, 179, 8, 0.1), transparent 55%),
-			var(--color-surface);
-	}
-	@media (max-width: 600px) {
-		.recap {
-			/* Keep the glow circular when the recap becomes tall on narrow screens. */
-			background:
-				radial-gradient(
-					circle 15rem at calc(100% - 2rem) 7rem,
-					rgba(234, 179, 8, 0.09),
-					transparent 72%
-				),
-				var(--color-surface);
-		}
+		margin-bottom: 2rem;
+		border-top: 3px solid var(--color-accent);
+		border-bottom: 1px solid var(--color-border);
 	}
 	.recap-head {
 		display: flex;
-		align-items: flex-start;
+		align-items: flex-end;
 		justify-content: space-between;
 		gap: 1rem;
+		padding: 1rem 0;
+		border-bottom: 1px solid var(--color-border);
 	}
 	.recap-title {
-		display: flex;
-		align-items: center;
-		gap: 0.4rem;
-		font-size: 1.1rem;
-		font-weight: 800;
-		color: var(--color-accent-bright);
+		margin: 0;
+		font-size: 1.35rem;
+		font-weight: 600;
 	}
 	.recap-sub {
 		font-size: 0.78rem;
-		margin-top: 0.2rem;
-	}
-	.dots {
-		display: flex;
-		align-items: center;
-		gap: 0.3rem;
-		flex-wrap: wrap;
-		justify-content: flex-end;
-		max-width: 40%;
-		padding-top: 0.35rem;
-	}
-	.dot {
-		width: 0.5rem;
-		height: 0.5rem;
-		border-radius: 999px;
-		background: var(--color-muted);
-		flex-shrink: 0;
-	}
-	.dot.good {
-		background: var(--color-good);
-	}
-	.dot.bad {
-		background: var(--color-bad);
+		margin: 0.25rem 0 0;
 	}
 
 	.recap-counts {
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
+		gap: 0.75rem;
 		flex-wrap: wrap;
-		margin: 0.85rem 0 0.35rem;
-	}
-	.rc {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.2rem;
-		font-size: 0.78rem;
-		font-weight: 700;
-		padding: 0.25rem 0.55rem;
-		border-radius: 999px;
-		background: var(--color-surface-2);
+		justify-content: flex-end;
 		color: var(--color-muted);
-	}
-	.rc.good {
-		color: var(--color-good);
-		background: color-mix(in srgb, var(--color-good) 14%, transparent);
-	}
-	.rc.bad {
-		color: var(--color-bad);
-		background: color-mix(in srgb, var(--color-bad) 14%, transparent);
+		font-family: var(--font-mono);
+		font-size: 0.72rem;
 	}
 
 	.recap-list {
@@ -288,14 +216,18 @@
 		flex-direction: column;
 	}
 	.rl {
-		display: flex;
-		flex-direction: column;
-		gap: 0.35rem;
-		padding: 0.7rem 0;
+		display: grid;
+		grid-template-columns: minmax(12rem, 1fr) minmax(18rem, 1.4fr);
+		align-items: center;
+		gap: 1rem;
+		min-height: 4rem;
+		padding: 0.75rem 0;
 		text-decoration: none;
 		color: var(--color-text);
-		border-top: 1px solid var(--color-border);
+		border-bottom: 1px solid var(--color-border-soft);
 	}
+	.rl:last-child { border-bottom: 0; }
+	@media (hover: hover) { .rl:hover { background: var(--color-surface); } }
 	.rl-head {
 		display: flex;
 		align-items: center;
@@ -303,12 +235,16 @@
 		gap: 0.5rem;
 	}
 	.rl-name {
-		font-weight: 700;
+		font-weight: 600;
 		font-size: 0.98rem;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
+	.recap-status, .status-text { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
+	.positive { color: var(--color-good); }
+	.negative { color: var(--color-bad); }
+	.neutral { color: var(--color-muted); }
 	.rl-change {
 		display: flex;
 		align-items: center;
@@ -346,15 +282,16 @@
 		margin-left: auto;
 	}
 
-	/* ---- Routine groups ---- */
 	.group {
-		margin-bottom: 1.6rem;
+		margin-bottom: 1.75rem;
+		border-left: 3px solid var(--group-color, var(--color-border));
 	}
 	.group-head {
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		margin-bottom: 0.7rem;
+		padding: 0 0 0.625rem 0.75rem;
+		border-bottom: 1px solid var(--color-border);
 	}
 	.group-dot {
 		width: 0.7rem;
@@ -363,8 +300,8 @@
 		flex-shrink: 0;
 	}
 	.group-title {
-		font-size: 1rem;
-		font-weight: 800;
+		font-size: 1.25rem;
+		font-weight: 600;
 	}
 	.muted-title {
 		color: var(--color-muted);
@@ -374,27 +311,25 @@
 		font-size: 0.75rem;
 		font-weight: 700;
 		color: var(--color-muted);
-		background: var(--color-surface-2);
-		border-radius: 999px;
 		padding: 0.1rem 0.5rem;
 		min-width: 1.4rem;
 		text-align: center;
 	}
 
-	.stack {
-		display: flex;
-		flex-direction: column;
-		gap: 0.6rem;
-	}
+	.group-list { padding-left: 0.75rem; }
 	.ex {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		gap: 1rem;
-		padding: 0.95rem 1rem;
+		min-height: 4.5rem;
+		padding: 0.75rem 0;
+		border-bottom: 1px solid var(--color-border-soft);
 		text-decoration: none;
 		color: var(--color-text);
 	}
+	.ex:last-child { border-bottom: 0; }
+	@media (hover: hover) { .ex:hover { background: var(--color-surface); } }
 	.ex-main {
 		min-width: 0;
 		flex: 1;
@@ -405,7 +340,7 @@
 		gap: 0.5rem;
 	}
 	.ex-name {
-		font-weight: 700;
+		font-weight: 600;
 		font-size: 1.02rem;
 	}
 	.ex-mg {
@@ -449,10 +384,22 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: 1rem;
-		padding: 0.85rem 1rem;
+		padding: 0.75rem 0;
+		border-bottom: 1px solid var(--color-border-soft);
 		opacity: 0.75;
 	}
+	.untracked-list { border-block: 1px solid var(--color-border); }
 	.small {
 		font-size: 0.78rem;
+	}
+
+	@media (max-width: 680px) {
+		.recap-head { align-items: flex-start; flex-direction: column; }
+		.recap-counts { justify-content: flex-start; }
+		.rl { grid-template-columns: 1fr; gap: 0.375rem; }
+		.rl-change { display: grid; grid-template-columns: auto auto auto minmax(0, 1fr); }
+		.rl-deltas { justify-content: flex-end; }
+		.ex { align-items: flex-start; }
+		.ex-right { align-items: flex-end; flex-direction: column; }
 	}
 </style>
