@@ -11,14 +11,16 @@
 	let { icon = 'zap', title, message = '', children }: Props = $props();
 </script>
 
-<div class="empty card">
-	<div class="empty-icon">
-		<Icon name={icon} size={26} />
+<div class="empty">
+	<div class="empty-copy">
+		<Icon name={icon} size={18} />
+		<div>
+			<h3 class="empty-title">{title}</h3>
+			{#if message}
+				<p class="empty-msg">{message}</p>
+			{/if}
+		</div>
 	</div>
-	<h3 class="empty-title">{title}</h3>
-	{#if message}
-		<p class="empty-msg muted">{message}</p>
-	{/if}
 	{#if children}
 		<div class="empty-action">{@render children()}</div>
 	{/if}
@@ -27,31 +29,32 @@
 <style>
 	.empty {
 		display: flex;
-		flex-direction: column;
 		align-items: center;
-		text-align: center;
-		gap: 0.5rem;
-		padding: 2.5rem 1.5rem;
+		justify-content: space-between;
+		gap: 1rem;
+		padding: 1.25rem 0;
+		border-block: 1px solid var(--color-border);
 	}
-	.empty-icon {
-		display: grid;
-		place-items: center;
-		width: 3.25rem;
-		height: 3.25rem;
-		border-radius: 999px;
-		background: color-mix(in srgb, var(--color-accent) 12%, transparent);
-		color: var(--color-accent-bright);
-		margin-bottom: 0.25rem;
+	.empty-copy {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.75rem;
+		color: var(--color-accent);
 	}
 	.empty-title {
-		font-size: 1.05rem;
-		font-weight: 700;
+		margin: 0;
+		color: var(--color-text);
+		font-size: 1.125rem;
+		font-weight: 600;
 	}
 	.empty-msg {
-		font-size: 0.9rem;
+		margin: 0.25rem 0 0;
+		color: var(--color-muted);
+		font-size: 0.875rem;
 		max-width: 24rem;
 	}
-	.empty-action {
-		margin-top: 0.75rem;
+	.empty-action { flex: 0 0 auto; }
+	@media (max-width: 520px) {
+		.empty { align-items: flex-start; flex-direction: column; }
 	}
 </style>
