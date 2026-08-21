@@ -74,7 +74,7 @@
 			: 'There are no sessions to modify'}
 />
 
-<div class="log-mode card" role="group" aria-label="Choose logging action">
+<div class="log-mode" role="group" aria-label="Choose logging action">
 	<button
 		type="button"
 		class="mode-option"
@@ -124,10 +124,10 @@
 
 {#if history.length > 0}
 	<section class="block">
-		<h2 class="block-title"><Icon name="clipboard" size={16} /> History</h2>
-		<div class="stack">
+		<h2 class="block-title">History</h2>
+		<div class="history-ledger">
 			{#each history as s (s.id)}
-				<a href={resolve('/log/[id]', { id: s.id })} class="sess card card-hover">
+				<a href={resolve('/log/[id]', { id: s.id })} class="sess">
 					<span class="dot" style="background:{s.routineColor ?? 'var(--color-muted)'}"></span>
 					<div class="sess-info">
 						<span class="sess-routine">{s.routineName ?? 'Free session'}</span>
@@ -145,30 +145,29 @@
 	.log-mode {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 0.35rem;
-		padding: 0.35rem;
-		margin-bottom: 1rem;
+		margin-bottom: 1.5rem;
+		border-bottom: 1px solid var(--color-border);
 	}
 	.mode-option {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
 		gap: 0.45rem;
-		min-height: 2.7rem;
+		min-height: 2.875rem;
 		padding: 0.55rem 0.75rem;
-		border-radius: 0.8rem;
+		border: 0;
+		border-bottom: 2px solid transparent;
+		background: transparent;
 		color: var(--color-muted);
 		font-size: 0.85rem;
 		font-weight: 700;
 		cursor: pointer;
-		transition:
-			background-color 0.15s ease,
-			color 0.15s ease;
 	}
 	.mode-option.active {
-		background: var(--color-accent);
-		color: var(--color-bg);
+		border-bottom-color: var(--color-accent);
+		color: var(--color-accent-bright);
 	}
+	@media (hover: hover) { .mode-option:hover:not(:disabled) { background: var(--color-surface); color: var(--color-text); } }
 	.mode-option:disabled {
 		opacity: 0.4;
 		cursor: not-allowed;
@@ -177,27 +176,29 @@
 		margin-top: 2rem;
 	}
 	.block-title {
-		display: flex;
-		align-items: center;
-		gap: 0.45rem;
-		font-size: 1rem;
-		font-weight: 700;
+		margin: 0;
+		padding-bottom: 0.625rem;
+		border-bottom: 1px solid var(--color-border);
+		font-family: var(--font-sans);
+		font-size: 0.78rem;
+		font-weight: 600;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
 		color: var(--color-subtle);
-		margin-bottom: 0.75rem;
 	}
-	.stack {
-		display: flex;
-		flex-direction: column;
-		gap: 0.6rem;
-	}
+	.history-ledger { border-bottom: 1px solid var(--color-border); }
 	.sess {
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
-		padding: 0.85rem 1rem;
+		min-height: 3.75rem;
+		padding: 0.75rem 0;
+		border-bottom: 1px solid var(--color-border-soft);
 		text-decoration: none;
 		color: var(--color-text);
 	}
+	.sess:last-child { border-bottom: 0; }
+	@media (hover: hover) { .sess:hover { background: var(--color-surface); } }
 	.dot {
 		width: 0.7rem;
 		height: 0.7rem;

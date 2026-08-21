@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { offlineData, queueOfflineMutation } from '$lib/offline/store';
+	import PageHeader from '$lib/components/PageHeader.svelte';
 	import SessionForm from '$lib/components/SessionForm.svelte';
 	import { formatDate, lastPerformanceByExercise } from '$lib/utils/progression';
 	import type { PageData } from './$types';
@@ -44,10 +45,7 @@
 	<Icon name="back" size={16} /> Back
 </a>
 
-<header class="head">
-	<h1 class="head-title">Edit session</h1>
-	<p class="muted head-sub">{formatDate(session.date)}</p>
-</header>
+<PageHeader title="Edit session" subtitle={formatDate(session.date)} />
 
 {#key session.id}
 	<SessionForm
@@ -70,21 +68,9 @@
 		font-weight: 600;
 		color: var(--color-muted);
 		text-decoration: none;
-		margin-bottom: 1rem;
+		margin-bottom: 1.5rem;
 	}
 	.back:hover {
 		color: var(--color-accent-bright);
-	}
-	.head {
-		margin-bottom: 1.25rem;
-	}
-	.head-title {
-		font-size: 1.6rem;
-		font-weight: 800;
-	}
-	.head-sub {
-		font-size: 0.9rem;
-		margin-top: 0.2rem;
-		text-transform: capitalize;
 	}
 </style>

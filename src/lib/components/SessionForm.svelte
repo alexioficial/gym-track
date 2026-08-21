@@ -3,6 +3,7 @@
 	import { browser } from '$app/environment';
 	import { resolve } from '$app/paths';
 	import Icon from './Icon.svelte';
+	import ConfirmDialog from './ConfirmDialog.svelte';
 	import {
 		UNIT,
 		type Exercise,
@@ -109,6 +110,8 @@
 	const canSave = $derived(payload.length > 0 && !!date);
 	let mutationError = $state<string | null>(null);
 	let saving = $state(false);
+	let deletePending = $state(false);
+	let deleting = $state(false);
 
 	// ---- Draft autosave (create mode only) ----
 	// The gym is used on a phone: if the screen is left mid-log (navigate away,
@@ -266,12 +269,16 @@
 	}
 
 	async function remove() {
-		if (!onDelete || !confirm('Delete this session?')) return;
+		if (!onDelete || deleting) return;
+		deleting = true;
 		try {
 			await onDelete();
 			mutationError = null;
 		} catch (error) {
 			mutationError = error instanceof Error ? error.message : 'Could not delete your session';
+		} finally {
+			deletePending = false;
+			deleting = false;
 		}
 	}
 </script>
@@ -284,9 +291,9 @@
 			<button type="button" class="draft-discard" onclick={discardDraft}>Discard</button>
 		</div>
 	{/if}
-	{#if mutationError}<p class="form-error">{mutationError}</p>{/if}
+	{#if mutationError}<p class="form-error" aria-live="polite">{mutationError}</p>{/if}
 
-	<div class="top card">
+	<div class="top">
 		<div class="field">
 			<label class="label" for="date">Date</label>
 			<input id="date" name="date" type="date" class="input" bind:value={date} required />
@@ -318,7 +325,7 @@
 	<!-- Exercises -->
 	<div class="entries">
 		{#each entries as entry (entry.id)}
-			<div class="entry card">
+			<div class="entry">
 				<div class="entry-head">
 					<div class="entry-title">
 						<span class="entry-name">{exerciseName.get(entry.exerciseId) ?? 'Exercise'}</span>
@@ -400,7 +407,7 @@
 
 	<!-- Add exercise -->
 	{#if exercises.length > 0}
-		<div class="add-ex card">
+		<div class="add-ex">
 			<select class="input" bind:value={pick}>
 				<option value="">Add exercise…</option>
 				{#each exercises as ex (ex.id)}
@@ -438,33 +445,45 @@
 	<div class="submit-row">
 		{#if mode === 'edit'}
 			{#if onDelete}
-				<button type="button" class="btn btn-danger" onclick={() => void remove()}>
+				<button type="button" class="btn btn-danger" onclick={() => (deletePending = true)}>
 					<Icon name="trash" size={15} /> Delete
 				</button>
 			{/if}
 		{/if}
 		<div class="spacer"></div>
 		<button type="submit" class="btn btn-primary save-btn" disabled={!canSave || saving}>
-			<Icon name="check" size={17} stroke={2.5} /> Save session
+			<Icon name="check" size={17} stroke={2.5} /> {saving ? 'Saving…' : 'Save session'}
 		</button>
 	</div>
 </form>
 
+<ConfirmDialog
+	open={deletePending}
+	title="Delete session?"
+	message="This workout and all of its logged sets will be permanently deleted. This cannot be undone."
+	confirmLabel="Delete session"
+	busy={deleting}
+	onCancel={() => (deletePending = false)}
+	onConfirm={() => void remove()}
+/>
+
 <style>
 	.form-error {
-		margin-bottom: 1rem;
+		margin: 0 0 1rem;
+		padding: 0.75rem 1rem;
+		border-left: 3px solid var(--color-bad);
+		background: color-mix(in srgb, var(--color-bad) 8%, transparent);
 		color: var(--color-bad);
-		font-size: 0.85rem;
+		font-size: 0.875rem;
 	}
 	.draft-banner {
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		padding: 0.7rem 0.85rem;
+		padding: 0.75rem 1rem;
 		margin-bottom: 1rem;
-		border-radius: 0.75rem;
-		background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface));
-		border: 1px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
+		border-left: 3px solid var(--color-accent);
+		background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
 		color: var(--color-accent-bright);
 	}
 	.draft-text {
@@ -474,57 +493,52 @@
 	}
 	.draft-discard {
 		flex-shrink: 0;
+		min-height: 2.5rem;
 		padding: 0.35rem 0.7rem;
-		border-radius: 0.5rem;
+		border-radius: var(--radius-control);
 		background: transparent;
 		border: 1px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
 		color: var(--color-accent-bright);
 		font-size: 0.8rem;
 		font-weight: 600;
 		cursor: pointer;
-		transition:
-			background 0.15s ease,
-			transform 0.1s ease;
 	}
 	@media (hover: hover) {
 		.draft-discard:hover {
 			background: color-mix(in srgb, var(--color-accent) 20%, transparent);
 		}
 	}
-	.draft-discard:active {
-		transform: scale(0.94);
-	}
+	.draft-discard:active { transform: translateY(1px); }
 
 	.top {
+		display: grid;
+		grid-template-columns: minmax(10rem, 0.65fr) minmax(14rem, 1fr);
+		gap: 1rem;
+		margin-bottom: 1.5rem;
 		padding: 1rem;
-		display: flex;
-		flex-direction: column;
-		gap: 0.85rem;
-		margin-bottom: 1rem;
+		border: 1px solid var(--color-border);
+		border-top: 3px solid var(--color-accent);
+		border-radius: var(--radius-overlay);
+		background: var(--color-surface-2);
 	}
-	.field {
-		display: flex;
-		flex-direction: column;
-	}
+	.field { display: flex; flex-direction: column; }
 	.load-btn {
+		grid-column: 1 / -1;
 		justify-content: flex-start;
 		font-size: 0.85rem;
 	}
 
-	.entries {
-		display: flex;
-		flex-direction: column;
-		gap: 0.8rem;
-	}
+	.entries { border-top: 1px solid var(--color-border); }
 	.entry {
-		padding: 0.9rem 1rem 1rem;
+		padding: 1.25rem 0;
+		border-bottom: 1px solid var(--color-border);
 	}
 	.entry-head {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		gap: 0.5rem;
-		margin-bottom: 0.75rem;
+		margin-bottom: 0.875rem;
 	}
 	.entry-title {
 		display: flex;
@@ -533,8 +547,9 @@
 		min-width: 0;
 	}
 	.entry-name {
-		font-weight: 700;
-		font-size: 1.02rem;
+		font-family: var(--font-display);
+		font-weight: 600;
+		font-size: 1.3rem;
 	}
 	.entry-mg {
 		font-size: 0.75rem;
@@ -545,11 +560,9 @@
 		align-items: center;
 		gap: 0.45rem;
 		flex-wrap: wrap;
-		margin: -0.15rem 0 0.75rem;
-		padding: 0.4rem 0.6rem;
-		border-radius: 0.6rem;
-		background: color-mix(in srgb, var(--color-accent) 7%, var(--color-surface-2));
-		border: 1px solid color-mix(in srgb, var(--color-accent) 14%, transparent);
+		margin: 0 0 0.75rem;
+		padding: 0.5rem 0;
+		border-block: 1px solid var(--color-border-soft);
 	}
 	.last-ref :global(svg) {
 		color: var(--color-accent);
@@ -582,12 +595,12 @@
 	.sets {
 		display: flex;
 		flex-direction: column;
-		gap: 0.4rem;
+		gap: 0;
 	}
 	.set-head,
 	.set-row {
 		display: grid;
-		grid-template-columns: 1.6rem 1fr 1fr 2.75rem;
+		grid-template-columns: 2rem minmax(7rem, 1fr) minmax(7rem, 1fr) 2.75rem;
 		align-items: center;
 		gap: 0.5rem;
 	}
@@ -596,8 +609,11 @@
 		font-weight: 600;
 		text-transform: uppercase;
 		letter-spacing: 0.03em;
-		padding: 0 0.1rem;
+		padding: 0.375rem 0;
+		border-bottom: 1px solid var(--color-border-soft);
 	}
+	.set-row { min-height: 3.5rem; padding: 0.375rem 0; border-bottom: 1px solid var(--color-border-soft); }
+	.set-row:last-child { border-bottom: 0; }
 	.set-n {
 		text-align: center;
 		font-weight: 700;
@@ -605,7 +621,7 @@
 	}
 	.set-input {
 		text-align: center;
-		padding: 0.7rem 0.4rem;
+		padding: 0.625rem 0.4rem;
 		font-size: 1rem;
 		font-variant-numeric: tabular-nums;
 	}
@@ -613,15 +629,11 @@
 		display: grid;
 		place-items: center;
 		height: 2.75rem;
-		border-radius: 0.55rem;
+		border-radius: var(--radius-control);
 		background: transparent;
 		border: 1px solid var(--color-border);
 		color: var(--color-muted);
 		cursor: pointer;
-		transition:
-			color 0.15s ease,
-			border-color 0.15s ease,
-			transform 0.1s ease;
 	}
 	@media (hover: hover) {
 		.set-del:hover {
@@ -629,21 +641,19 @@
 			border-color: color-mix(in srgb, var(--color-bad) 40%, transparent);
 		}
 	}
-	.set-del:active {
-		transform: scale(0.9);
-		color: var(--color-bad);
-	}
+	.set-del:active { transform: translateY(1px); color: var(--color-bad); }
 	.add-set {
 		margin-top: 0.75rem;
-		width: 100%;
+		width: auto;
 		font-size: 0.85rem;
 	}
 
 	.add-ex {
 		display: flex;
 		gap: 0.5rem;
-		padding: 0.75rem;
-		margin-top: 0.8rem;
+		padding: 1rem 0;
+		margin-top: 0.5rem;
+		border-bottom: 1px solid var(--color-border);
 	}
 	.add-ex .input {
 		flex: 1;
@@ -653,15 +663,15 @@
 		font-size: 0.9rem;
 	}
 
-	.field {
-		margin-top: 1rem;
-	}
+	form > .field { margin-top: 1.5rem; }
 
 	.submit-row {
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		margin-top: 1.25rem;
+		margin-top: 1.5rem;
+		padding-top: 1rem;
+		border-top: 1px solid var(--color-border);
 	}
 	.spacer {
 		flex: 1;
@@ -675,25 +685,33 @@
 		place-items: center;
 		width: 2.5rem;
 		height: 2.5rem;
-		border-radius: 0.55rem;
-		background: var(--color-surface-2);
-		border: 1px solid var(--color-border);
+		border-radius: var(--radius-control);
+		background: transparent;
+		border: 1px solid transparent;
 		color: var(--color-muted);
 		cursor: pointer;
 		flex-shrink: 0;
-		transition:
-			color 0.15s ease,
-			border-color 0.15s ease,
-			transform 0.1s ease;
 	}
 	@media (hover: hover) {
 		.icon-action:hover {
+			background: var(--color-surface-2);
 			color: var(--color-bad);
-			border-color: color-mix(in srgb, var(--color-bad) 40%, transparent);
 		}
 	}
 	.icon-action:active {
-		transform: scale(0.9);
+		transform: translateY(1px);
 		color: var(--color-bad);
+	}
+
+	@media (max-width: 640px) {
+		.top { grid-template-columns: 1fr; }
+		.load-btn { grid-column: auto; text-align: left; white-space: normal; }
+		.entry-title { align-items: flex-start; flex-direction: column; gap: 0; }
+		.set-head, .set-row { grid-template-columns: 1.5rem minmax(0, 1fr) minmax(0, 1fr) 2.75rem; gap: 0.375rem; }
+		.set-head { font-size: 0.64rem; }
+		.add-ex { align-items: stretch; flex-direction: column; }
+		.add-set { width: 100%; }
+		.submit-row { flex-wrap: wrap; }
+		.save-btn { flex: 1 1 11rem; }
 	}
 </style>
