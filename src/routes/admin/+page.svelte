@@ -1,23 +1,23 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { jsonRequest, ClientApiError } from '$lib/client/json';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import Icon from '$lib/components/Icon.svelte';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
 	let creating = $state(false);
 	let deletingId = $state<string | null>(null);
+	let pendingDelete = $state<{ id: string; username: string } | null>(null);
 	let resettingId = $state<string | null>(null);
 	let notice = $state<{ kind: 'good' | 'bad'; text: string } | null>(null);
 	const usernamePattern = '[a-z0-9._]{3,30}';
 	// Which user row has its reset-password field open.
 	let resetOpen = $state<string | null>(null);
 
-	function initials(username: string): string {
-		return username.replace(/[._]/g, ' ').trim().slice(0, 2).toUpperCase();
-	}
 	function fmtDate(iso: string): string {
 		return new Date(iso).toLocaleDateString(undefined, {
 			year: 'numeric',
@@ -53,18 +53,20 @@
 		}
 	}
 
-	async function deleteUser(id: string, username: string) {
-		if (deletingId || !confirm(`Delete user "${username}"? This cannot be undone.`)) return;
-		deletingId = id;
+	async function deleteUser() {
+		if (deletingId || !pendingDelete) return;
+		const target = pendingDelete;
+		deletingId = target.id;
 		notice = null;
 		try {
-			await jsonRequest(`/api/admin/users/${id}`, 'DELETE');
+			await jsonRequest(`/api/admin/users/${target.id}`, 'DELETE');
 			notice = { kind: 'good', text: 'User deleted.' };
 			await invalidateAll();
 		} catch (error) {
 			notice = { kind: 'bad', text: message(error) };
 		} finally {
 			deletingId = null;
+			pendingDelete = null;
 		}
 	}
 
@@ -94,7 +96,8 @@
 
 <PageHeader title="Users" subtitle="Create and manage who can sign in">
 	{#snippet action()}
-		<a href="/admin/audit" class="btn btn-subtle btn-sm"><Icon name="trending" size={15} /> Audit</a
+		<a href={resolve('/admin/audit')} class="btn btn-subtle btn-sm"
+			><Icon name="trending" size={15} /> Audit</a
 		>
 	{/snippet}
 </PageHeader>
@@ -109,8 +112,8 @@
 	</p>
 {/if}
 
-<section class="card create-card">
-	<h2 class="block-title"><Icon name="plus" size={16} /> New user</h2>
+<section class="create-card">
+	<h2 class="block-title">New user</h2>
 	<form onsubmit={createUser}>
 		<div class="create-grid">
 			<div>
@@ -151,19 +154,26 @@
 </section>
 
 <section class="block">
-	<h2 class="block-title"><Icon name="users" size={16} /> All users ({data.users.length})</h2>
-	<div class="stack">
+	<div class="section-heading">
+		<h2 class="block-title">All users</h2>
+		<span class="user-count data-value">{data.users.length}</span>
+	</div>
+	<div class="user-table" role="table" aria-label="Users">
+		<div class="table-head" role="row">
+			<span role="columnheader">Username</span><span role="columnheader">Access</span><span
+				role="columnheader">Added</span
+			><span role="columnheader">Actions</span>
+		</div>
 		{#each data.users as u (u.id)}
-			<div class="user card">
+			<div class="user" role="row">
 				<div class="user-main">
-					<span class="avatar" class:avatar-admin={u.isAdmin}>{initials(u.username)}</span>
 					<div class="user-info">
-						<span class="user-name">
-							{u.username}
-							{#if u.isAdmin}<span class="badge badge-accent admin-badge">admin</span>{/if}
-						</span>
-						<span class="muted user-date">Added {fmtDate(u.createdAt)}</span>
+						<span class="user-name">{u.username}</span>
 					</div>
+					<span class="access" class:access-admin={u.isAdmin}
+						>{u.isAdmin ? 'Administrator' : 'Member'}</span
+					>
+					<span class="muted user-date">{fmtDate(u.createdAt)}</span>
 
 					{#if !u.isAdmin}
 						<div class="user-actions">
@@ -172,14 +182,14 @@
 								class="btn btn-subtle btn-sm"
 								onclick={() => (resetOpen = resetOpen === u.id ? null : u.id)}
 							>
-								<Icon name="lock" size={14} /> Reset
+								<Icon name="lock" size={14} /> Reset password
 							</button>
 							<button
 								type="button"
 								class="btn btn-danger btn-sm"
 								aria-label="Delete user"
 								disabled={deletingId === u.id}
-								onclick={() => void deleteUser(u.id, u.username)}
+								onclick={() => (pendingDelete = { id: u.id, username: u.username })}
 							>
 								<Icon name="trash" size={14} />
 							</button>
@@ -207,6 +217,18 @@
 		{/each}
 	</div>
 </section>
+
+<ConfirmDialog
+	open={pendingDelete !== null}
+	title="Delete user?"
+	message={pendingDelete
+		? `“${pendingDelete.username}” and all of their gym data will be permanently deleted. This cannot be undone.`
+		: ''}
+	confirmLabel="Delete user"
+	busy={deletingId !== null}
+	onCancel={() => (pendingDelete = null)}
+	onConfirm={() => void deleteUser()}
+/>
 
 <style>
 	.banner {
@@ -255,11 +277,6 @@
 	.block {
 		margin-top: 0.5rem;
 	}
-	.stack {
-		display: flex;
-		flex-direction: column;
-		gap: 0.6rem;
-	}
 	.user {
 		padding: 0.75rem 0.9rem;
 	}
@@ -267,24 +284,6 @@
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
-	}
-	.avatar {
-		display: grid;
-		place-items: center;
-		width: 2.4rem;
-		height: 2.4rem;
-		border-radius: 999px;
-		flex-shrink: 0;
-		font-size: 0.78rem;
-		font-weight: 700;
-		background: var(--color-surface-2);
-		color: var(--color-subtle);
-		border: 1px solid var(--color-border);
-	}
-	.avatar-admin {
-		background: color-mix(in srgb, var(--color-accent) 18%, var(--color-surface-2));
-		color: var(--color-accent-bright);
-		border-color: color-mix(in srgb, var(--color-accent) 40%, transparent);
 	}
 	.user-info {
 		display: flex;
@@ -298,11 +297,6 @@
 		gap: 0.5rem;
 		font-weight: 600;
 		word-break: break-all;
-	}
-	.admin-badge {
-		text-transform: uppercase;
-		letter-spacing: 0.03em;
-		font-size: 0.62rem;
 	}
 	.user-date {
 		font-size: 0.78rem;
@@ -328,5 +322,103 @@
 	}
 	.reset-row .input {
 		flex: 1;
+	}
+
+	/* Training Ledger: structured records, not floating profile cards. */
+	.banner {
+		border-radius: var(--radius-control);
+	}
+	.create-card {
+		padding: 1.25rem 0;
+		margin-bottom: 2rem;
+		border-top: 1px solid var(--color-border);
+		border-bottom: 1px solid var(--color-border);
+	}
+	.block-title {
+		gap: 0;
+	}
+	.section-heading {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+	}
+	.user-count {
+		color: var(--color-muted);
+	}
+	.user-table {
+		border-top: 1px solid var(--color-border);
+		border-bottom: 1px solid var(--color-border);
+	}
+	.user {
+		padding: 0;
+		border-bottom: 1px solid var(--color-border-soft);
+	}
+	.user:last-child {
+		border-bottom: 0;
+	}
+	.table-head,
+	.user-main {
+		display: grid;
+		grid-template-columns: minmax(9rem, 1.5fr) minmax(7rem, 0.8fr) minmax(8rem, 0.8fr) auto;
+		align-items: center;
+		gap: 1rem;
+		padding: 0.75rem 0;
+	}
+	.table-head {
+		color: var(--color-muted);
+		font-size: 0.7rem;
+		font-weight: 600;
+		letter-spacing: 0.09em;
+		text-transform: uppercase;
+		border-bottom: 1px solid var(--color-border);
+	}
+	.access {
+		color: var(--color-subtle);
+		font-size: 0.82rem;
+	}
+	.access-admin {
+		color: var(--color-accent-bright);
+	}
+	.btn-sm {
+		border-radius: var(--radius-control);
+	}
+	.reset-row {
+		padding-bottom: 0.75rem;
+	}
+	@media (max-width: 719px) {
+		.table-head {
+			display: none;
+		}
+		.user-main {
+			grid-template-columns: 1fr auto;
+			gap: 0.25rem 0.75rem;
+		}
+		.user-info {
+			grid-column: 1;
+		}
+		.access {
+			grid-column: 1;
+			grid-row: 2;
+		}
+		.user-date {
+			grid-column: 1;
+			grid-row: 3;
+		}
+		.user-actions {
+			grid-column: 2;
+			grid-row: 1 / span 3;
+		}
+		.user-actions .btn-subtle {
+			width: 2.75rem;
+			padding: 0;
+			font-size: 0;
+		}
+		.user-actions .btn-subtle :global(svg) {
+			width: 1rem;
+			height: 1rem;
+		}
+		.reset-row {
+			flex-direction: column;
+		}
 	}
 </style>

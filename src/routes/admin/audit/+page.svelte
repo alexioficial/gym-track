@@ -34,12 +34,13 @@
 			><Icon name="users" size={15} /> Users</a
 		>{/snippet}
 </PageHeader>
+
 <p class="notice">
 	Only an authenticated administrator can request decryption. Raw headers, cookies and bodies are
 	never stored in readable form in MongoDB.
 </p>
 
-<form class="filters card" onsubmit={applyFilters}>
+<form class="filters" onsubmit={applyFilters}>
 	<div class="filter-grid">
 		<label
 			><span>From</span><input
@@ -89,49 +90,47 @@
 		>
 	</div>
 	<div class="filter-actions">
-		<button type="button" class="btn btn-subtle" onclick={clearFilters}>Clear</button><button
-			type="submit"
-			class="btn btn-primary"><Icon name="trending" size={15} /> Apply filters</button
-		>
+		<button type="button" class="btn btn-subtle" onclick={clearFilters}>Clear</button>
+		<button type="submit" class="btn btn-primary">Apply filters</button>
 	</div>
 </form>
+
 <p class="count muted">Showing {data.items.length} most recent matching requests (up to 100).</p>
 {#if data.items.length}
-	<div class="stack">
-		{#each data.items as item (item.id)}
-			<a class="record card" href={`/admin/audit/${item.id}`}
-				><div class="record-top">
-					<code class:bad={item.status >= 400}>{item.method} {item.path}</code><strong
-						class:bad={item.status >= 400}>{item.status}</strong
-					>
-				</div>
-				<div class="meta">
-					<span>{dateTime(item.createdAt)}</span><span>{item.clientKind}</span><span
-						>{item.reportedClientIp ?? 'IP unavailable'}</span
-					><span>{item.durationMs} ms</span>
-				</div></a
+	<div class="record-table" role="table" aria-label="Request audit records">
+		<div class="record-head" role="row">
+			<span>Request</span><span>Client</span><span>IP address</span><span>Time</span><span
+				>Status</span
 			>
+		</div>
+		{#each data.items as item (item.id)}
+			<a class="record" href={`/admin/audit/${item.id}`} role="row">
+				<code class:bad={item.status >= 400}>{item.method} {item.path}</code>
+				<span>{item.clientKind}</span>
+				<span>{item.reportedClientIp ?? 'IP unavailable'}</span>
+				<span class="request-time"
+					>{dateTime(item.createdAt)} <small>{item.durationMs} ms</small></span
+				>
+				<strong class:bad={item.status >= 400}>{item.status}</strong>
+			</a>
 		{/each}
 	</div>
 {:else}
-	<section class="card empty">
-		<Icon name="trending" size={24} />
-		<p>No requests match these filters.</p>
-	</section>
+	<section class="empty"><p>No requests match these filters.</p></section>
 {/if}
 
 <style>
 	.notice {
-		border: 1px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
-		background: color-mix(in srgb, var(--color-accent) 8%, transparent);
-		border-radius: 0.7rem;
-		padding: 0.8rem 0.9rem;
+		border-left: 0.25rem solid var(--color-accent);
+		padding: 0.6rem 0 0.6rem 0.85rem;
 		color: var(--color-subtle);
 		font-size: 0.84rem;
 		margin-bottom: 1rem;
 	}
 	.filters {
-		padding: 1rem;
+		padding: 1rem 0;
+		border-top: 1px solid var(--color-border);
+		border-bottom: 1px solid var(--color-border);
 	}
 	.filter-grid {
 		display: grid;
@@ -161,30 +160,39 @@
 		font-size: 0.8rem;
 		margin: 1rem 0 0.6rem;
 	}
-	.stack {
+	.record-table {
+		border-top: 1px solid var(--color-border);
+		border-bottom: 1px solid var(--color-border);
+	}
+	.record-head,
+	.record {
 		display: grid;
-		gap: 0.55rem;
+		grid-template-columns: minmax(15rem, 2fr) minmax(6rem, 0.6fr) minmax(8rem, 0.8fr) minmax(
+				12rem,
+				1fr
+			) 3rem;
+		align-items: center;
+		gap: 1rem;
+		padding: 0.75rem 0;
+	}
+	.record-head {
+		color: var(--color-muted);
+		font-size: 0.7rem;
+		font-weight: 600;
+		letter-spacing: 0.09em;
+		text-transform: uppercase;
+		border-bottom: 1px solid var(--color-border);
 	}
 	.record {
-		display: block;
-		padding: 0.75rem 0.85rem;
 		text-decoration: none;
 		color: var(--color-text);
-		transition:
-			border-color 0.15s ease,
-			transform 0.1s ease;
+		border-bottom: 1px solid var(--color-border-soft);
+	}
+	.record:last-child {
+		border-bottom: 0;
 	}
 	.record:hover {
-		border-color: var(--color-accent);
-	}
-	.record:active {
-		transform: scale(0.99);
-	}
-	.record-top {
-		display: flex;
-		justify-content: space-between;
-		gap: 0.7rem;
-		align-items: center;
+		background: var(--color-surface);
 	}
 	.record code {
 		overflow: hidden;
@@ -193,32 +201,74 @@
 		color: var(--color-subtle);
 		font-size: 0.82rem;
 	}
-	.record-top strong {
+	.record strong {
 		color: var(--color-good);
 		font-size: 0.82rem;
+		text-align: right;
 	}
 	.bad {
 		color: var(--color-bad) !important;
 	}
-	.meta {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.2rem 0.7rem;
+	.record > span {
 		color: var(--color-muted);
-		font-size: 0.72rem;
-		margin-top: 0.45rem;
+		font-size: 0.78rem;
+	}
+	.request-time small {
+		display: block;
+		color: var(--color-muted);
 	}
 	.empty {
 		padding: 2rem;
 		text-align: center;
 		color: var(--color-muted);
-	}
-	.empty :global(svg) {
-		color: var(--color-accent);
+		border-top: 1px solid var(--color-border);
+		border-bottom: 1px solid var(--color-border);
 	}
 	@media (min-width: 640px) {
 		.filter-grid {
 			grid-template-columns: repeat(3, minmax(0, 1fr));
+		}
+	}
+	@media (max-width: 859px) {
+		.record-head {
+			display: none;
+		}
+		.record {
+			grid-template-columns: 1fr auto;
+			gap: 0.25rem 0.75rem;
+		}
+		.record code {
+			grid-column: 1;
+		}
+		.record strong {
+			grid-column: 2;
+			grid-row: 1;
+		}
+		.record > span {
+			font-size: 0.72rem;
+		}
+		.record > span:nth-of-type(1),
+		.record > span:nth-of-type(2) {
+			grid-row: 2;
+		}
+		.record > span:nth-of-type(2) {
+			text-align: right;
+		}
+		.request-time {
+			grid-column: 1 / -1;
+			grid-row: 3;
+		}
+		.request-time small {
+			display: inline;
+			margin-left: 0.5rem;
+		}
+	}
+	@media (max-width: 479px) {
+		.filter-grid {
+			grid-template-columns: 1fr;
+		}
+		.filter-actions .btn {
+			flex: 1;
 		}
 	}
 </style>
