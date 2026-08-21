@@ -49,10 +49,9 @@
 
 <svelte:head><title>Home - Gym Tracker</title></svelte:head>
 
-<!-- Today -->
-<section class="hero card">
+<section class="hero">
 	<div class="hero-top">
-		<span class="muted hero-day">Today · {view.today.label}</span>
+		<span class="section-label">Today · {view.today.label}</span>
 		{#if view.today.routine}
 			<span class="dot" style="background:{view.today.routine.color}"></span>
 		{/if}
@@ -68,47 +67,48 @@
 		<p class="muted hero-sub">No routine assigned for today</p>
 	{/if}
 
-	<!-- The URL is base-aware; the query is appended after resolving the route. -->
-	<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-	<a href={logHref} class="btn btn-primary hero-btn">
-		<Icon name="plus" size={18} stroke={2.5} /> Log session
-	</a>
+	<div class="hero-footer">
+		<span class="hero-prompt">Ready when you are</span>
+		<!-- The URL is base-aware; the query is appended after resolving the route. -->
+		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+		<a href={logHref} class="btn btn-primary hero-btn">
+			<Icon name="plus" size={18} stroke={2.5} /> Log session
+		</a>
+	</div>
 </section>
 
-<!-- Counters -->
 <section class="counters">
-	<a href={resolve('/exercises')} class="counter card card-hover">
+	<a href={resolve('/exercises')} class="counter">
 		<span class="counter-num stat-num">{view.counts.exercises}</span>
-		<span class="counter-label muted">Exercises</span>
+		<span class="counter-label">Exercises</span>
 	</a>
-	<a href={resolve('/routines')} class="counter card card-hover">
+	<a href={resolve('/routines')} class="counter">
 		<span class="counter-num stat-num">{view.counts.routines}</span>
-		<span class="counter-label muted">Routines</span>
+		<span class="counter-label">Routines</span>
 	</a>
-	<a href={resolve('/log')} class="counter card card-hover">
+	<a href={resolve('/log')} class="counter">
 		<span class="counter-num stat-num">{view.counts.sessions}</span>
-		<span class="counter-label muted">Sessions</span>
+		<span class="counter-label">Sessions</span>
 	</a>
 </section>
 
-<!-- Progress -->
 <section class="block">
 	<div class="block-head">
-		<h2 class="block-title"><Icon name="flame" size={17} /> Your progress</h2>
+		<h2 class="block-title">Your progress</h2>
 		<a href={resolve('/progress')} class="block-link">See all <Icon name="chevron" size={14} /></a>
 	</div>
 
 	{#if view.improvements.length > 0}
-		<div class="stack">
+		<div class="ledger-list">
 			{#each view.improvements.slice(0, 4) as p (p.exercise.id)}
 				{#if p.delta}
 					<a
 						href={resolve('/progress/[exerciseId]', { exerciseId: p.exercise.id })}
-						class="imp card card-hover"
+						class="imp"
 					>
 						<div class="imp-info">
 							<span class="imp-name">{p.exercise.name}</span>
-							<span class="badge badge-accent">{VERDICT_LABEL[p.delta.verdict]}</span>
+							<span class="imp-verdict">{VERDICT_LABEL[p.delta.verdict]}</span>
 						</div>
 						<div class="imp-metrics">
 							{#if p.delta.weight !== 0}
@@ -126,8 +126,7 @@
 			{/each}
 		</div>
 	{:else}
-		<div class="card note">
-			<Icon name="trending" size={18} />
+		<div class="note">
 			<p class="muted">
 				Log your sessions for at least <strong class="subtle">2 weeks</strong> to see where you're improving
 				on each exercise.
@@ -136,15 +135,14 @@
 	{/if}
 </section>
 
-<!-- Recent sessions -->
 {#if view.recent.length > 0}
 	<section class="block">
 		<div class="block-head">
-			<h2 class="block-title"><Icon name="clipboard" size={17} /> Recent sessions</h2>
+			<h2 class="block-title">Recent sessions</h2>
 		</div>
-		<div class="stack">
+		<div class="ledger-list">
 			{#each view.recent as s (s.id)}
-				<a href={resolve('/log/[id]', { id: s.id })} class="sess card card-hover">
+				<a href={resolve('/log/[id]', { id: s.id })} class="sess">
 					<span class="dot" style="background:{s.routineColor ?? 'var(--color-muted)'}"></span>
 					<div class="sess-info">
 						<span class="sess-routine">{s.routineName ?? 'Free session'}</span>
@@ -161,33 +159,30 @@
 <style>
 	.hero {
 		padding: 1.5rem;
-		background:
-			radial-gradient(120% 120% at 100% 0%, rgba(234, 179, 8, 0.1), transparent 55%),
-			var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-top: 3px solid var(--color-accent);
+		border-radius: var(--radius-overlay);
+		background: var(--color-surface-2);
 	}
 	.hero-top {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 	}
-	.hero-day {
-		font-size: 0.85rem;
-		font-weight: 600;
-		text-transform: capitalize;
-	}
 	.hero-title {
-		font-size: 1.9rem;
-		font-weight: 800;
-		margin-top: 0.5rem;
+		margin: 1rem 0 0;
+		font-size: clamp(2rem, 6vw, 2.75rem);
+		font-weight: 700;
+		line-height: 0.95;
 	}
 	.hero-sub {
+		margin: 0.5rem 0 0;
 		font-size: 0.9rem;
-		margin-top: 0.25rem;
 	}
+	.hero-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--color-border); }
+	.hero-prompt { color: var(--color-muted); font-size: 0.8rem; letter-spacing: 0.04em; text-transform: uppercase; }
 	.hero-btn {
-		margin-top: 1.25rem;
-		width: 100%;
-		padding: 0.85rem;
+		min-width: 10rem;
 		font-size: 0.95rem;
 	}
 
@@ -201,44 +196,49 @@
 	.counters {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
-		gap: 0.75rem;
-		margin-top: 1rem;
+		margin-top: 1.5rem;
+		border-block: 1px solid var(--color-border);
 	}
 	.counter {
 		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 0.15rem;
-		padding: 1rem 0.5rem;
+		align-items: baseline;
+		justify-content: center;
+		gap: 0.5rem;
+		padding: 1rem;
+		border-right: 1px solid var(--color-border);
 		text-decoration: none;
 		color: var(--color-text);
 	}
+	.counter:last-child { border-right: 0; }
+	@media (hover: hover) { .counter:hover { background: var(--color-surface); } }
 	.counter-num {
-		font-size: 1.5rem;
-		font-weight: 800;
+		font-family: var(--font-display);
+		font-size: 1.75rem;
+		font-weight: 700;
 		color: var(--color-accent-bright);
 	}
 	.counter-label {
-		font-size: 0.75rem;
+		color: var(--color-muted);
+		font-size: 0.78rem;
 		font-weight: 600;
 	}
 
-	.block {
-		margin-top: 1.75rem;
-	}
+	.block { margin-top: 2rem; }
 	.block-head {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		margin-bottom: 0.75rem;
+		margin-bottom: 0.5rem;
+		padding-bottom: 0.625rem;
+		border-bottom: 1px solid var(--color-border);
 	}
 	.block-title {
-		display: flex;
-		align-items: center;
-		gap: 0.45rem;
-		font-size: 1.05rem;
-		font-weight: 700;
-		color: var(--color-accent-bright);
+		margin: 0;
+		font-family: var(--font-sans);
+		font-size: 0.78rem;
+		font-weight: 600;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
 	}
 	.block-link {
 		display: inline-flex;
@@ -253,21 +253,21 @@
 		color: var(--color-accent-bright);
 	}
 
-	.stack {
-		display: flex;
-		flex-direction: column;
-		gap: 0.6rem;
-	}
+	.ledger-list { border-bottom: 1px solid var(--color-border); }
 
 	.imp {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		gap: 1rem;
-		padding: 0.9rem 1rem;
+		min-height: 3.5rem;
+		padding: 0.75rem 0;
+		border-bottom: 1px solid var(--color-border-soft);
 		text-decoration: none;
 		color: var(--color-text);
 	}
+	.imp:last-child { border-bottom: 0; }
+	@media (hover: hover) { .imp:hover { background: var(--color-surface); } }
 	.imp-info {
 		display: flex;
 		align-items: center;
@@ -280,6 +280,7 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
+	.imp-verdict { color: var(--color-muted); font-size: 0.75rem; white-space: nowrap; }
 	.imp-metrics {
 		display: flex;
 		align-items: center;
@@ -288,11 +289,8 @@
 	}
 
 	.note {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 1.1rem;
-		color: var(--color-accent-bright);
+		padding: 1rem 0;
+		border-bottom: 1px solid var(--color-border);
 	}
 	.note p {
 		font-size: 0.88rem;
@@ -303,10 +301,14 @@
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
-		padding: 0.85rem 1rem;
+		min-height: 3.75rem;
+		padding: 0.75rem 0;
+		border-bottom: 1px solid var(--color-border-soft);
 		text-decoration: none;
 		color: var(--color-text);
 	}
+	.sess:last-child { border-bottom: 0; }
+	@media (hover: hover) { .sess:hover { background: var(--color-surface); } }
 	.sess-info {
 		display: flex;
 		flex-direction: column;
@@ -326,5 +328,16 @@
 	.sess-meta {
 		font-size: 0.8rem;
 		white-space: nowrap;
+	}
+
+	@media (max-width: 560px) {
+		.hero { padding: 1.25rem; }
+		.hero-footer { align-items: stretch; flex-direction: column; }
+		.hero-prompt { display: none; }
+		.hero-btn { width: 100%; }
+		.counter { flex-direction: column; align-items: center; gap: 0; padding-inline: 0.5rem; }
+		.imp { align-items: flex-start; }
+		.imp-info { align-items: flex-start; flex-direction: column; gap: 0.125rem; }
+		.imp-metrics { gap: 0.5rem; }
 	}
 </style>
