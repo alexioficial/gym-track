@@ -102,10 +102,7 @@
 		<div class="ledger-list">
 			{#each view.improvements.slice(0, 4) as p (p.exercise.id)}
 				{#if p.delta}
-					<a
-						href={resolve('/progress/[exerciseId]', { exerciseId: p.exercise.id })}
-						class="imp"
-					>
+					<a href={resolve('/progress/[exerciseId]', { exerciseId: p.exercise.id })} class="imp">
 						<div class="imp-info">
 							<span class="imp-name">{p.exercise.name}</span>
 							<span class="imp-verdict">{VERDICT_LABEL[p.delta.verdict]}</span>
@@ -179,8 +176,21 @@
 		margin: 0.5rem 0 0;
 		font-size: 0.9rem;
 	}
-	.hero-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--color-border); }
-	.hero-prompt { color: var(--color-muted); font-size: 0.8rem; letter-spacing: 0.04em; text-transform: uppercase; }
+	.hero-footer {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		margin-top: 1.5rem;
+		padding-top: 1rem;
+		border-top: 1px solid var(--color-border);
+	}
+	.hero-prompt {
+		color: var(--color-muted);
+		font-size: 0.8rem;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+	}
 	.hero-btn {
 		min-width: 10rem;
 		font-size: 0.95rem;
@@ -209,8 +219,14 @@
 		text-decoration: none;
 		color: var(--color-text);
 	}
-	.counter:last-child { border-right: 0; }
-	@media (hover: hover) { .counter:hover { background: var(--color-surface); } }
+	.counter:last-child {
+		border-right: 0;
+	}
+	@media (hover: hover) {
+		.counter:hover {
+			background: var(--color-surface);
+		}
+	}
 	.counter-num {
 		font-family: var(--font-display);
 		font-size: 1.75rem;
@@ -223,7 +239,9 @@
 		font-weight: 600;
 	}
 
-	.block { margin-top: 2rem; }
+	.block {
+		margin-top: 2rem;
+	}
 	.block-head {
 		display: flex;
 		align-items: center;
@@ -253,7 +271,9 @@
 		color: var(--color-accent-bright);
 	}
 
-	.ledger-list { border-bottom: 1px solid var(--color-border); }
+	.ledger-list {
+		border-bottom: 1px solid var(--color-border);
+	}
 
 	.imp {
 		display: flex;
@@ -266,8 +286,14 @@
 		text-decoration: none;
 		color: var(--color-text);
 	}
-	.imp:last-child { border-bottom: 0; }
-	@media (hover: hover) { .imp:hover { background: var(--color-surface); } }
+	.imp:last-child {
+		border-bottom: 0;
+	}
+	@media (hover: hover) {
+		.imp:hover {
+			background: var(--color-surface);
+		}
+	}
 	.imp-info {
 		display: flex;
 		align-items: center;
@@ -280,7 +306,11 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
-	.imp-verdict { color: var(--color-muted); font-size: 0.75rem; white-space: nowrap; }
+	.imp-verdict {
+		color: var(--color-muted);
+		font-size: 0.75rem;
+		white-space: nowrap;
+	}
 	.imp-metrics {
 		display: flex;
 		align-items: center;
@@ -307,8 +337,14 @@
 		text-decoration: none;
 		color: var(--color-text);
 	}
-	.sess:last-child { border-bottom: 0; }
-	@media (hover: hover) { .sess:hover { background: var(--color-surface); } }
+	.sess:last-child {
+		border-bottom: 0;
+	}
+	@media (hover: hover) {
+		.sess:hover {
+			background: var(--color-surface);
+		}
+	}
 	.sess-info {
 		display: flex;
 		flex-direction: column;
@@ -331,13 +367,35 @@
 	}
 
 	@media (max-width: 560px) {
-		.hero { padding: 1.25rem; }
-		.hero-footer { align-items: stretch; flex-direction: column; }
-		.hero-prompt { display: none; }
-		.hero-btn { width: 100%; }
-		.counter { flex-direction: column; align-items: center; gap: 0; padding-inline: 0.5rem; }
-		.imp { align-items: flex-start; }
-		.imp-info { align-items: flex-start; flex-direction: column; gap: 0.125rem; }
-		.imp-metrics { gap: 0.5rem; }
+		.hero {
+			padding: 1.25rem;
+		}
+		.hero-footer {
+			align-items: stretch;
+			flex-direction: column;
+		}
+		.hero-prompt {
+			display: none;
+		}
+		.hero-btn {
+			width: 100%;
+		}
+		.counter {
+			flex-direction: column;
+			align-items: center;
+			gap: 0;
+			padding-inline: 0.5rem;
+		}
+		.imp {
+			align-items: flex-start;
+		}
+		.imp-info {
+			align-items: flex-start;
+			flex-direction: column;
+			gap: 0.125rem;
+		}
+		.imp-metrics {
+			gap: 0.5rem;
+		}
 	}
 </style>

@@ -452,7 +452,8 @@
 		{/if}
 		<div class="spacer"></div>
 		<button type="submit" class="btn btn-primary save-btn" disabled={!canSave || saving}>
-			<Icon name="check" size={17} stroke={2.5} /> {saving ? 'Saving…' : 'Save session'}
+			<Icon name="check" size={17} stroke={2.5} />
+			{saving ? 'Saving…' : 'Save session'}
 		</button>
 	</div>
 </form>
@@ -508,7 +509,9 @@
 			background: color-mix(in srgb, var(--color-accent) 20%, transparent);
 		}
 	}
-	.draft-discard:active { transform: translateY(1px); }
+	.draft-discard:active {
+		transform: translateY(1px);
+	}
 
 	.top {
 		display: grid;
@@ -521,14 +524,19 @@
 		border-radius: var(--radius-overlay);
 		background: var(--color-surface-2);
 	}
-	.field { display: flex; flex-direction: column; }
+	.field {
+		display: flex;
+		flex-direction: column;
+	}
 	.load-btn {
 		grid-column: 1 / -1;
 		justify-content: flex-start;
 		font-size: 0.85rem;
 	}
 
-	.entries { border-top: 1px solid var(--color-border); }
+	.entries {
+		border-top: 1px solid var(--color-border);
+	}
 	.entry {
 		padding: 1.25rem 0;
 		border-bottom: 1px solid var(--color-border);
@@ -612,8 +620,14 @@
 		padding: 0.375rem 0;
 		border-bottom: 1px solid var(--color-border-soft);
 	}
-	.set-row { min-height: 3.5rem; padding: 0.375rem 0; border-bottom: 1px solid var(--color-border-soft); }
-	.set-row:last-child { border-bottom: 0; }
+	.set-row {
+		min-height: 3.5rem;
+		padding: 0.375rem 0;
+		border-bottom: 1px solid var(--color-border-soft);
+	}
+	.set-row:last-child {
+		border-bottom: 0;
+	}
 	.set-n {
 		text-align: center;
 		font-weight: 700;
@@ -641,7 +655,10 @@
 			border-color: color-mix(in srgb, var(--color-bad) 40%, transparent);
 		}
 	}
-	.set-del:active { transform: translateY(1px); color: var(--color-bad); }
+	.set-del:active {
+		transform: translateY(1px);
+		color: var(--color-bad);
+	}
 	.add-set {
 		margin-top: 0.75rem;
 		width: auto;
@@ -663,7 +680,9 @@
 		font-size: 0.9rem;
 	}
 
-	form > .field { margin-top: 1.5rem; }
+	form > .field {
+		margin-top: 1.5rem;
+	}
 
 	.submit-row {
 		display: flex;
@@ -704,14 +723,39 @@
 	}
 
 	@media (max-width: 640px) {
-		.top { grid-template-columns: 1fr; }
-		.load-btn { grid-column: auto; text-align: left; white-space: normal; }
-		.entry-title { align-items: flex-start; flex-direction: column; gap: 0; }
-		.set-head, .set-row { grid-template-columns: 1.5rem minmax(0, 1fr) minmax(0, 1fr) 2.75rem; gap: 0.375rem; }
-		.set-head { font-size: 0.64rem; }
-		.add-ex { align-items: stretch; flex-direction: column; }
-		.add-set { width: 100%; }
-		.submit-row { flex-wrap: wrap; }
-		.save-btn { flex: 1 1 11rem; }
+		.top {
+			grid-template-columns: 1fr;
+		}
+		.load-btn {
+			grid-column: auto;
+			text-align: left;
+			white-space: normal;
+		}
+		.entry-title {
+			align-items: flex-start;
+			flex-direction: column;
+			gap: 0;
+		}
+		.set-head,
+		.set-row {
+			grid-template-columns: 1.5rem minmax(0, 1fr) minmax(0, 1fr) 2.75rem;
+			gap: 0.375rem;
+		}
+		.set-head {
+			font-size: 0.64rem;
+		}
+		.add-ex {
+			align-items: stretch;
+			flex-direction: column;
+		}
+		.add-set {
+			width: 100%;
+		}
+		.submit-row {
+			flex-wrap: wrap;
+		}
+		.save-btn {
+			flex: 1 1 11rem;
+		}
 	}
 </style>

@@ -167,10 +167,9 @@
 	.record-head,
 	.record {
 		display: grid;
-		grid-template-columns: minmax(15rem, 2fr) minmax(6rem, 0.6fr) minmax(8rem, 0.8fr) minmax(
-				12rem,
-				1fr
-			) 3rem;
+		grid-template-columns:
+			minmax(15rem, 2fr) minmax(6rem, 0.6fr) minmax(8rem, 0.8fr) minmax(12rem, 1fr)
+			3rem;
 		align-items: center;
 		gap: 1rem;
 		padding: 0.75rem 0;

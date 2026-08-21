@@ -24,7 +24,10 @@
 	}
 </script>
 
-<nav class="nav {variant}" aria-label={variant === 'rail' ? 'Primary navigation' : 'Mobile navigation'}>
+<nav
+	class="nav {variant}"
+	aria-label={variant === 'rail' ? 'Primary navigation' : 'Mobile navigation'}
+>
 	{#each items as item (item.href)}
 		<a
 			href={item.href}
@@ -32,7 +35,9 @@
 			class:active={isActive(item.href)}
 			aria-current={isActive(item.href) ? 'page' : undefined}
 		>
-			<span class="nav-icon"><Icon name={item.icon} size={20} stroke={item.icon === 'plus' ? 2.5 : 2} /></span>
+			<span class="nav-icon"
+				><Icon name={item.icon} size={20} stroke={item.icon === 'plus' ? 2.5 : 2} /></span
+			>
 			<span class="nav-label">{item.label}</span>
 		</a>
 	{/each}
@@ -78,7 +83,9 @@
 			color: var(--color-text);
 		}
 	}
-	.nav-item:active { background: var(--color-surface-2); }
+	.nav-item:active {
+		background: var(--color-surface-2);
+	}
 	.nav-item.active {
 		border-left-color: var(--color-accent);
 		background: var(--color-surface);
@@ -113,13 +120,19 @@
 		background: transparent;
 	}
 
-	.bottom .nav-label { font-size: 0.68rem; }
+	.bottom .nav-label {
+		font-size: 0.68rem;
+	}
 
 	@media (min-width: 960px) {
-		.bottom { display: none; }
+		.bottom {
+			display: none;
+		}
 	}
 
 	@media (max-width: 959px) {
-		.rail { display: none; }
+		.rail {
+			display: none;
+		}
 	}
 </style>

@@ -251,8 +251,11 @@
 	.spacer {
 		flex: 1;
 	}
-	.exercise-ledger { border-block: 1px solid var(--color-border); }
-	.exercise-head, .row {
+	.exercise-ledger {
+		border-block: 1px solid var(--color-border);
+	}
+	.exercise-head,
+	.row {
 		display: grid;
 		grid-template-columns: minmax(12rem, 1.4fr) minmax(8rem, 0.7fr) minmax(10rem, 1fr) 2.75rem;
 		align-items: center;
@@ -273,8 +276,14 @@
 		padding: 0.625rem 0;
 		border-bottom: 1px solid var(--color-border-soft);
 	}
-	.row:last-child { border-bottom: 0; }
-	@media (hover: hover) { .row:hover { background: var(--color-surface); } }
+	.row:last-child {
+		border-bottom: 0;
+	}
+	@media (hover: hover) {
+		.row:hover {
+			background: var(--color-surface);
+		}
+	}
 	.inline-editor {
 		margin: 0;
 		border-top-width: 1px;
@@ -287,7 +296,10 @@
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
-	.row-muscle { color: var(--color-subtle); font-size: 0.82rem; }
+	.row-muscle {
+		color: var(--color-subtle);
+		font-size: 0.82rem;
+	}
 	.row-notes {
 		color: var(--color-muted);
 		font-size: 0.82rem;
@@ -322,17 +334,44 @@
 		color: var(--color-accent-bright);
 	}
 	@media (max-width: 760px) {
-		.exercise-head { display: none; }
-		.row { grid-template-columns: minmax(0, 1fr) auto 2.75rem; gap: 0.75rem; }
-		.row-name { grid-column: 1; }
-		.row-muscle { grid-column: 2; text-align: right; }
-		.row-notes { grid-column: 1 / 3; grid-row: 2; }
-		.icon-action { grid-column: 3; grid-row: 1 / 3; }
+		.exercise-head {
+			display: none;
+		}
+		.row {
+			grid-template-columns: minmax(0, 1fr) auto 2.75rem;
+			gap: 0.75rem;
+		}
+		.row-name {
+			grid-column: 1;
+		}
+		.row-muscle {
+			grid-column: 2;
+			text-align: right;
+		}
+		.row-notes {
+			grid-column: 1 / 3;
+			grid-row: 2;
+		}
+		.icon-action {
+			grid-column: 3;
+			grid-row: 1 / 3;
+		}
 	}
 	@media (max-width: 460px) {
-		.form-actions { flex-wrap: wrap; }
-		.form-actions .spacer { display: none; }
-		.form-actions .btn-primary { margin-left: auto; }
-		.row-muscle { max-width: 7rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+		.form-actions {
+			flex-wrap: wrap;
+		}
+		.form-actions .spacer {
+			display: none;
+		}
+		.form-actions .btn-primary {
+			margin-left: auto;
+		}
+		.row-muscle {
+			max-width: 7rem;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
 	}
 </style>

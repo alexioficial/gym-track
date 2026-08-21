@@ -50,10 +50,10 @@
 {#key session.id}
 	<SessionForm
 		mode="edit"
-		session={session}
-		exercises={exercises}
-		routines={routines}
-		lastByExercise={lastByExercise}
+		{session}
+		{exercises}
+		{routines}
+		{lastByExercise}
 		onSave={saveSession}
 		onDelete={deleteSession}
 	/>

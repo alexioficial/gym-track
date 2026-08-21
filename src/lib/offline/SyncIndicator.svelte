@@ -5,7 +5,8 @@
 		if ($syncStatus.phase === 'syncing') return 'Syncing changes…';
 		if ($syncStatus.phase === 'offline') return 'Offline';
 		if ($syncStatus.phase === 'error') return 'Sync paused';
-		if ($syncStatus.pending > 0) return `${$syncStatus.pending} change${$syncStatus.pending === 1 ? '' : 's'} pending`;
+		if ($syncStatus.pending > 0)
+			return `${$syncStatus.pending} change${$syncStatus.pending === 1 ? '' : 's'} pending`;
 		return 'Synced';
 	});
 	const tone = $derived($syncStatus.phase);

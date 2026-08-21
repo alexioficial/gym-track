@@ -45,7 +45,13 @@
 		flex-shrink: 0;
 	}
 	@media (max-width: 480px) {
-		.page-header { align-items: flex-end; gap: 0.75rem; margin-bottom: 1.5rem; }
-		.page-header-text { min-width: 0; }
+		.page-header {
+			align-items: flex-end;
+			gap: 0.75rem;
+			margin-bottom: 1.5rem;
+		}
+		.page-header-text {
+			min-width: 0;
+		}
 	}
 </style>

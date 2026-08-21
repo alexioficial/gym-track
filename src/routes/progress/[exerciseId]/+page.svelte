@@ -18,11 +18,18 @@
 
 	const view = $derived.by(() => {
 		if (!$offlineData) return data;
-		const exercise = $offlineData.exercises.find((item) => item.id === data.exercise.id) ?? data.exercise;
+		const exercise =
+			$offlineData.exercises.find((item) => item.id === data.exercise.id) ?? data.exercise;
 		const weeks = weeklyStatsForExercise($offlineData.sessions, exercise.id);
 		const latest = weeks.length > 0 ? weeks[weeks.length - 1] : null;
 		const previous = weeks.length >= 2 ? weeks[weeks.length - 2] : null;
-		return { exercise, weeks, latest, previous, delta: latest ? weekOverWeekDelta(previous, latest) : null };
+		return {
+			exercise,
+			weeks,
+			latest,
+			previous,
+			delta: latest ? weekOverWeekDelta(previous, latest) : null
+		};
 	});
 	const rows = $derived(
 		view.weeks
@@ -63,7 +70,8 @@
 <header class="head">
 	<h1 class="head-title">{view.exercise.name}</h1>
 	<div class="head-meta">
-		{#if view.exercise.muscleGroup}<span class="muscle-group">{view.exercise.muscleGroup}</span>{/if}
+		{#if view.exercise.muscleGroup}<span class="muscle-group">{view.exercise.muscleGroup}</span
+			>{/if}
 		<span class="muted small">{view.weeks.length} {view.weeks.length === 1 ? 'week' : 'weeks'}</span
 		>
 	</div>
@@ -174,7 +182,11 @@
 	.small {
 		font-size: 0.8rem;
 	}
-	.muscle-group { color: var(--color-subtle); font-size: 0.8rem; font-weight: 600; }
+	.muscle-group {
+		color: var(--color-subtle);
+		font-size: 0.8rem;
+		font-weight: 600;
+	}
 
 	.verdict {
 		padding: 1rem;
@@ -217,7 +229,9 @@
 		padding: 1rem;
 		border-right: 1px solid var(--color-border);
 	}
-	.stat:last-child { border-right: 0; }
+	.stat:last-child {
+		border-right: 0;
+	}
 	.stat-label {
 		font-size: 0.72rem;
 		font-weight: 600;
@@ -274,13 +288,31 @@
 	.w-verdict {
 		text-align: right;
 	}
-	.week-status { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
-	.positive { color: var(--color-good); }
-	.negative { color: var(--color-bad); }
-	.neutral { color: var(--color-muted); }
+	.week-status {
+		font-size: 0.7rem;
+		font-weight: 600;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+	}
+	.positive {
+		color: var(--color-good);
+	}
+	.negative {
+		color: var(--color-bad);
+	}
+	.neutral {
+		color: var(--color-muted);
+	}
 	@media (max-width: 560px) {
-		.stat { padding-inline: 0.625rem; }
-		.stat-value { font-size: 1.35rem; }
-		.tbl th, .tbl td { padding-inline: 0.5rem; }
+		.stat {
+			padding-inline: 0.625rem;
+		}
+		.stat-value {
+			font-size: 1.35rem;
+		}
+		.tbl th,
+		.tbl td {
+			padding-inline: 0.5rem;
+		}
 	}
 </style>

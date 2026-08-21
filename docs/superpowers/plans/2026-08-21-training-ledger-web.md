@@ -26,6 +26,7 @@
 ### Task 1: Design Tokens and Responsive Application Shell
 
 **Files:**
+
 - Create: `static/fonts/barlow/Barlow-Regular.woff2`
 - Create: `static/fonts/barlow/Barlow-Medium.woff2`
 - Create: `static/fonts/barlow/Barlow-SemiBold.woff2`
@@ -39,6 +40,7 @@
 - Modify: `src/lib/components/ConfirmDialog.svelte`
 
 **Interfaces:**
+
 - Consumes: existing route state, `data.user`, `SyncIndicator`, logout handler, and `Icon` names.
 - Produces: global `.ledger-section`, `.ledger-row`, `.data-value`, `.section-label`, `.field-grid`, `.app-shell`, and responsive navigation styles used by later tasks.
 
@@ -73,12 +75,14 @@ Commit only token, font, shell, and shared primitive files with message `feat: e
 ### Task 2: Home, Routines, and Exercises Ledgers
 
 **Files:**
+
 - Modify: `src/routes/+page.svelte`
 - Modify: `src/routes/routines/+page.svelte`
 - Modify: `src/routes/exercises/+page.svelte`
 - Modify: `src/lib/components/Sparkline.svelte`
 
 **Interfaces:**
+
 - Consumes: Task 1 global ledger classes and unchanged route data/handlers.
 - Produces: compact KPI strip, schedule strip, routine color rail, and exercise ledger patterns.
 
@@ -105,11 +109,13 @@ Commit the three routes and any shared sparkline styling with message `feat: red
 ### Task 3: Session Logging Flows
 
 **Files:**
+
 - Modify: `src/lib/components/SessionForm.svelte`
 - Modify: `src/routes/log/+page.svelte`
 - Modify: `src/routes/log/[id]/+page.svelte`
 
 **Interfaces:**
+
 - Consumes: existing JSON client, offline queue, exercise/routine data, validation and edit/delete callbacks.
 - Produces: compact logging editor, consistent weight/repetition columns, reachable save action, and dense history rows.
 
@@ -136,6 +142,7 @@ Commit the three files with message `feat: redesign session logging workflow`.
 ### Task 4: Progress Ledgers and Charts
 
 **Files:**
+
 - Modify: `src/routes/progress/+page.svelte`
 - Modify: `src/routes/progress/[exerciseId]/+page.svelte`
 - Modify: `src/lib/components/ProgressChart.svelte`
@@ -143,6 +150,7 @@ Commit the three files with message `feat: redesign session logging workflow`.
 - Modify: `src/lib/components/StatDelta.svelte`
 
 **Interfaces:**
+
 - Consumes: unchanged progression data and chart props.
 - Produces: aligned previous/current comparison rows, integrated charts, concise recommendations, and semantic positive/negative values.
 
@@ -165,12 +173,14 @@ Commit route and chart files with message `feat: redesign progress as performanc
 ### Task 5: Login and Administration
 
 **Files:**
+
 - Modify: `src/routes/login/+page.svelte`
 - Modify: `src/routes/admin/+page.svelte`
 - Modify: `src/routes/admin/audit/+page.svelte`
 - Modify: `src/routes/admin/audit/[id]/+page.svelte`
 
 **Interfaces:**
+
 - Consumes: existing authentication, user mutation, filter, decryption, pagination/detail, and confirmation behavior.
 - Produces: compact login composition, admin user table/disclosure rows, audit filter toolbar, dense audit table, and semantic detail sections.
 
@@ -197,10 +207,12 @@ Commit route files with message `feat: redesign authentication and admin ledgers
 ### Task 6: Full Visual Iteration and Anti-AI-Slop Pass
 
 **Files:**
+
 - Modify: presentation files identified by browser findings only.
 - Create: `docs/superpowers/reports/2026-08-21-training-ledger-web-audit.md`
 
 **Interfaces:**
+
 - Consumes: Tasks 1-5 complete web presentation.
 - Produces: verified responsive application and evidence-backed audit report.
 

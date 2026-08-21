@@ -420,7 +420,9 @@
 />
 
 <style>
-	.block { margin-top: 2rem; }
+	.block {
+		margin-top: 2rem;
+	}
 	.form-error {
 		margin: 0 0 0.8rem;
 		color: var(--color-bad);
@@ -450,7 +452,9 @@
 		padding: 0.5rem 0;
 		border-bottom: 1px solid var(--color-border-soft);
 	}
-	.day-row:last-child { border-bottom: 0; }
+	.day-row:last-child {
+		border-bottom: 0;
+	}
 	.day-color {
 		width: 0.25rem;
 		height: 2rem;
@@ -459,14 +463,18 @@
 		font-weight: 600;
 		font-size: 0.9rem;
 	}
-	.day-form { min-width: 0; }
+	.day-form {
+		min-width: 0;
+	}
 	.day-select {
 		min-height: 2.5rem;
 		padding: 0.4rem 0.6rem;
 		font-size: 0.88rem;
 	}
 
-	.routine-list { border-bottom: 1px solid var(--color-border); }
+	.routine-list {
+		border-bottom: 1px solid var(--color-border);
+	}
 	.form-card {
 		padding: 1.25rem;
 		display: flex;
@@ -721,7 +729,9 @@
 		border-bottom: 1px solid var(--color-border-soft);
 		border-left: 3px solid var(--routine-color);
 	}
-	.routine:last-child { border-bottom: 0; }
+	.routine:last-child {
+		border-bottom: 0;
+	}
 	.routine-head {
 		display: flex;
 		align-items: center;
@@ -733,11 +743,39 @@
 		font-size: 1.35rem;
 		flex: 1;
 	}
-	.exercise-lines { display: grid; gap: 0; margin: 0.75rem 0 0; padding: 0; list-style: none; }
-	.exercise-lines li { display: grid; grid-template-columns: 2rem minmax(0, 1fr) auto; align-items: baseline; gap: 0.5rem; min-height: 2rem; padding: 0.35rem 0; border-top: 1px solid var(--color-border-soft); }
-	.exercise-order { color: var(--color-muted); font-family: var(--font-mono); font-size: 0.72rem; }
-	.exercise-name { min-width: 0; overflow: hidden; font-size: 0.875rem; text-overflow: ellipsis; white-space: nowrap; }
-	.exercise-sets { color: var(--color-subtle); font-family: var(--font-mono); font-size: 0.75rem; }
+	.exercise-lines {
+		display: grid;
+		gap: 0;
+		margin: 0.75rem 0 0;
+		padding: 0;
+		list-style: none;
+	}
+	.exercise-lines li {
+		display: grid;
+		grid-template-columns: 2rem minmax(0, 1fr) auto;
+		align-items: baseline;
+		gap: 0.5rem;
+		min-height: 2rem;
+		padding: 0.35rem 0;
+		border-top: 1px solid var(--color-border-soft);
+	}
+	.exercise-order {
+		color: var(--color-muted);
+		font-family: var(--font-mono);
+		font-size: 0.72rem;
+	}
+	.exercise-name {
+		min-width: 0;
+		overflow: hidden;
+		font-size: 0.875rem;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.exercise-sets {
+		color: var(--color-subtle);
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+	}
 
 	.icon-action {
 		display: grid;
@@ -771,19 +809,49 @@
 	}
 
 	@media (min-width: 760px) {
-		.week { grid-template-columns: repeat(7, minmax(0, 1fr)); border-top: 1px solid var(--color-border); }
-		.day-row { grid-template-columns: 0.25rem minmax(0, 1fr); align-content: start; min-width: 0; padding: 0.75rem; border-right: 1px solid var(--color-border-soft); border-bottom: 0; }
-		.day-row:last-child { border-right: 0; }
-		.day-color { grid-row: 1 / 3; height: 100%; min-height: 4.5rem; }
-		.day-form { grid-column: 2; }
-		.day-select { padding-inline: 0.4rem; }
+		.week {
+			grid-template-columns: repeat(7, minmax(0, 1fr));
+			border-top: 1px solid var(--color-border);
+		}
+		.day-row {
+			grid-template-columns: 0.25rem minmax(0, 1fr);
+			align-content: start;
+			min-width: 0;
+			padding: 0.75rem;
+			border-right: 1px solid var(--color-border-soft);
+			border-bottom: 0;
+		}
+		.day-row:last-child {
+			border-right: 0;
+		}
+		.day-color {
+			grid-row: 1 / 3;
+			height: 100%;
+			min-height: 4.5rem;
+		}
+		.day-form {
+			grid-column: 2;
+		}
+		.day-select {
+			padding-inline: 0.4rem;
+		}
 	}
 
 	@media (max-width: 520px) {
-		.form-actions { flex-wrap: wrap; }
-		.form-actions .spacer { display: none; }
-		.form-actions .btn-primary { margin-left: auto; }
-		.routine { padding-left: 0.75rem; }
-		.add-mg { display: none; }
+		.form-actions {
+			flex-wrap: wrap;
+		}
+		.form-actions .spacer {
+			display: none;
+		}
+		.form-actions .btn-primary {
+			margin-left: auto;
+		}
+		.routine {
+			padding-left: 0.75rem;
+		}
+		.add-mg {
+			display: none;
+		}
 	}
 </style>

@@ -54,12 +54,12 @@
 							<span>Administration</span>
 						</a>
 					{/if}
-			{/if}
-			<button class="rail-action" onclick={logout}>
-				<Icon name="logout" size={18} />
-				<span>Log out</span>
-			</button>
-			{#if data.user}<SyncIndicator />{/if}
+				{/if}
+				<button class="rail-action" onclick={logout}>
+					<Icon name="logout" size={18} />
+					<span>Log out</span>
+				</button>
+				{#if data.user}<SyncIndicator />{/if}
 			</div>
 		</aside>
 
@@ -73,7 +73,12 @@
 						{#if data.user}
 							<span class="user-name" title={data.user.username}>{data.user.username}</span>
 							{#if data.user.isAdmin}
-								<a class="icon-btn" href={resolve('/admin')} title="Manage users" aria-label="Manage users">
+								<a
+									class="icon-btn"
+									href={resolve('/admin')}
+									title="Manage users"
+									aria-label="Manage users"
+								>
 									<Icon name="users" size={18} />
 								</a>
 							{/if}
@@ -96,8 +101,12 @@
 {/if}
 
 <style>
-	.app-shell { min-height: 100dvh; }
-	.desktop-rail { display: none; }
+	.app-shell {
+		min-height: 100dvh;
+	}
+	.desktop-rail {
+		display: none;
+	}
 	.topbar {
 		position: sticky;
 		top: 0;
@@ -128,7 +137,12 @@
 		background: var(--color-accent);
 		color: var(--color-bg);
 	}
-	.brand-word { font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; letter-spacing: 0.08em; }
+	.brand-word {
+		font-family: var(--font-display);
+		font-size: 1.15rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+	}
 	.account {
 		display: flex;
 		align-items: center;
@@ -156,18 +170,30 @@
 		cursor: pointer;
 	}
 	@media (hover: hover) {
-		.icon-btn:hover { background: var(--color-surface); color: var(--color-text); }
+		.icon-btn:hover {
+			background: var(--color-surface);
+			color: var(--color-text);
+		}
 	}
-	.icon-btn:active { background: var(--color-surface-2); }
+	.icon-btn:active {
+		background: var(--color-surface-2);
+	}
 	.content {
 		width: min(100%, 70rem);
 		margin-inline: auto;
 		padding: 1.5rem 1rem calc(5.75rem + env(safe-area-inset-bottom));
 	}
-	@media (max-width: 400px) { .user-name { display: none; } }
+	@media (max-width: 400px) {
+		.user-name {
+			display: none;
+		}
+	}
 
 	@media (min-width: 960px) {
-		.app-shell { display: grid; grid-template-columns: 13rem minmax(0, 1fr); }
+		.app-shell {
+			display: grid;
+			grid-template-columns: 13rem minmax(0, 1fr);
+		}
 		.desktop-rail {
 			position: sticky;
 			top: 0;
@@ -179,11 +205,34 @@
 			border-right: 1px solid var(--color-border);
 			background: var(--color-bg);
 		}
-		.rail-brand { padding-inline: 0.75rem; }
-		.rail-account { display: grid; gap: 0.25rem; padding-top: 1rem; border-top: 1px solid var(--color-border); }
-		.rail-user { display: grid; gap: 0.125rem; min-width: 0; padding: 0.5rem 0.75rem 0.75rem; }
-		.rail-user-label { color: var(--color-muted); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; }
-		.rail-user strong { overflow: hidden; color: var(--color-subtle); font-size: 0.9rem; text-overflow: ellipsis; white-space: nowrap; }
+		.rail-brand {
+			padding-inline: 0.75rem;
+		}
+		.rail-account {
+			display: grid;
+			gap: 0.25rem;
+			padding-top: 1rem;
+			border-top: 1px solid var(--color-border);
+		}
+		.rail-user {
+			display: grid;
+			gap: 0.125rem;
+			min-width: 0;
+			padding: 0.5rem 0.75rem 0.75rem;
+		}
+		.rail-user-label {
+			color: var(--color-muted);
+			font-size: 0.7rem;
+			letter-spacing: 0.08em;
+			text-transform: uppercase;
+		}
+		.rail-user strong {
+			overflow: hidden;
+			color: var(--color-subtle);
+			font-size: 0.9rem;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
 		.rail-action {
 			display: flex;
 			min-height: 2.75rem;
@@ -198,9 +247,20 @@
 			text-decoration: none;
 			cursor: pointer;
 		}
-		@media (hover: hover) { .rail-action:hover { background: var(--color-surface); color: var(--color-text); } }
-		.app-main { min-width: 0; }
-		.topbar { display: none; }
-		.content { padding: 2.5rem clamp(2rem, 5vw, 4rem) 4rem; }
+		@media (hover: hover) {
+			.rail-action:hover {
+				background: var(--color-surface);
+				color: var(--color-text);
+			}
+		}
+		.app-main {
+			min-width: 0;
+		}
+		.topbar {
+			display: none;
+		}
+		.content {
+			padding: 2.5rem clamp(2rem, 5vw, 4rem) 4rem;
+		}
 	}
 </style>

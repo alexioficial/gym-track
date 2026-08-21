@@ -53,8 +53,13 @@
 		font-size: 0.875rem;
 		max-width: 24rem;
 	}
-	.empty-action { flex: 0 0 auto; }
+	.empty-action {
+		flex: 0 0 auto;
+	}
 	@media (max-width: 520px) {
-		.empty { align-items: flex-start; flex-direction: column; }
+		.empty {
+			align-items: flex-start;
+			flex-direction: column;
+		}
 	}
 </style>

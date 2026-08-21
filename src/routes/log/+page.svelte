@@ -167,7 +167,12 @@
 		border-bottom-color: var(--color-accent);
 		color: var(--color-accent-bright);
 	}
-	@media (hover: hover) { .mode-option:hover:not(:disabled) { background: var(--color-surface); color: var(--color-text); } }
+	@media (hover: hover) {
+		.mode-option:hover:not(:disabled) {
+			background: var(--color-surface);
+			color: var(--color-text);
+		}
+	}
 	.mode-option:disabled {
 		opacity: 0.4;
 		cursor: not-allowed;
@@ -186,7 +191,9 @@
 		text-transform: uppercase;
 		color: var(--color-subtle);
 	}
-	.history-ledger { border-bottom: 1px solid var(--color-border); }
+	.history-ledger {
+		border-bottom: 1px solid var(--color-border);
+	}
 	.sess {
 		display: flex;
 		align-items: center;
@@ -197,8 +204,14 @@
 		text-decoration: none;
 		color: var(--color-text);
 	}
-	.sess:last-child { border-bottom: 0; }
-	@media (hover: hover) { .sess:hover { background: var(--color-surface); } }
+	.sess:last-child {
+		border-bottom: 0;
+	}
+	@media (hover: hover) {
+		.sess:hover {
+			background: var(--color-surface);
+		}
+	}
 	.dot {
 		width: 0.7rem;
 		height: 0.7rem;

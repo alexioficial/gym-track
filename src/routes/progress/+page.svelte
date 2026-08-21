@@ -70,7 +70,9 @@
 					<a href={resolve('/progress/[exerciseId]', { exerciseId: it.exerciseId })} class="rl">
 						<div class="rl-head">
 							<span class="rl-name">{it.name}</span>
-							<span class="recap-status {verdictClass(it.verdict)}">{VERDICT_LABEL[it.verdict]}</span>
+							<span class="recap-status {verdictClass(it.verdict)}"
+								>{VERDICT_LABEL[it.verdict]}</span
+							>
 						</div>
 						<div class="rl-change stat-num">
 							<span class="rl-set"
@@ -132,10 +134,7 @@
 {/if}
 
 {#snippet exerciseCard(p: ExerciseProgress)}
-	<a
-		href={resolve('/progress/[exerciseId]', { exerciseId: p.exercise.id })}
-		class="ex"
-	>
+	<a href={resolve('/progress/[exerciseId]', { exerciseId: p.exercise.id })} class="ex">
 		<div class="ex-main">
 			<div class="ex-title">
 				<span class="ex-name">{p.exercise.name}</span>
@@ -226,8 +225,14 @@
 		color: var(--color-text);
 		border-bottom: 1px solid var(--color-border-soft);
 	}
-	.rl:last-child { border-bottom: 0; }
-	@media (hover: hover) { .rl:hover { background: var(--color-surface); } }
+	.rl:last-child {
+		border-bottom: 0;
+	}
+	@media (hover: hover) {
+		.rl:hover {
+			background: var(--color-surface);
+		}
+	}
 	.rl-head {
 		display: flex;
 		align-items: center;
@@ -241,10 +246,22 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
-	.recap-status, .status-text { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
-	.positive { color: var(--color-good); }
-	.negative { color: var(--color-bad); }
-	.neutral { color: var(--color-muted); }
+	.recap-status,
+	.status-text {
+		font-size: 0.72rem;
+		font-weight: 600;
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+	}
+	.positive {
+		color: var(--color-good);
+	}
+	.negative {
+		color: var(--color-bad);
+	}
+	.neutral {
+		color: var(--color-muted);
+	}
 	.rl-change {
 		display: flex;
 		align-items: center;
@@ -316,7 +333,9 @@
 		text-align: center;
 	}
 
-	.group-list { padding-left: 0.75rem; }
+	.group-list {
+		padding-left: 0.75rem;
+	}
 	.ex {
 		display: flex;
 		align-items: center;
@@ -328,8 +347,14 @@
 		text-decoration: none;
 		color: var(--color-text);
 	}
-	.ex:last-child { border-bottom: 0; }
-	@media (hover: hover) { .ex:hover { background: var(--color-surface); } }
+	.ex:last-child {
+		border-bottom: 0;
+	}
+	@media (hover: hover) {
+		.ex:hover {
+			background: var(--color-surface);
+		}
+	}
 	.ex-main {
 		min-width: 0;
 		flex: 1;
@@ -388,18 +413,38 @@
 		border-bottom: 1px solid var(--color-border-soft);
 		opacity: 0.75;
 	}
-	.untracked-list { border-block: 1px solid var(--color-border); }
+	.untracked-list {
+		border-block: 1px solid var(--color-border);
+	}
 	.small {
 		font-size: 0.78rem;
 	}
 
 	@media (max-width: 680px) {
-		.recap-head { align-items: flex-start; flex-direction: column; }
-		.recap-counts { justify-content: flex-start; }
-		.rl { grid-template-columns: 1fr; gap: 0.375rem; }
-		.rl-change { display: grid; grid-template-columns: auto auto auto minmax(0, 1fr); }
-		.rl-deltas { justify-content: flex-end; }
-		.ex { align-items: flex-start; }
-		.ex-right { align-items: flex-end; flex-direction: column; }
+		.recap-head {
+			align-items: flex-start;
+			flex-direction: column;
+		}
+		.recap-counts {
+			justify-content: flex-start;
+		}
+		.rl {
+			grid-template-columns: 1fr;
+			gap: 0.375rem;
+		}
+		.rl-change {
+			display: grid;
+			grid-template-columns: auto auto auto minmax(0, 1fr);
+		}
+		.rl-deltas {
+			justify-content: flex-end;
+		}
+		.ex {
+			align-items: flex-start;
+		}
+		.ex-right {
+			align-items: flex-end;
+			flex-direction: column;
+		}
 	}
 </style>
