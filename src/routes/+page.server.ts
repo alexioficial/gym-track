@@ -1,5 +1,5 @@
 import type { PageServerLoad } from './$types';
-import { api } from '$lib/server/api';
+import { pageApi } from '$lib/server/api';
 import { buildExerciseProgress, IMPROVEMENT_VERDICTS } from '$lib/utils/progression';
 import {
 	WEEKDAYS,
@@ -12,10 +12,10 @@ import {
 
 export const load: PageServerLoad = async ({ cookies }) => {
 	const [schedule, routines, exercises, sessions] = await Promise.all([
-		api<Schedule>(cookies, '/api/schedule'),
-		api<Routine[]>(cookies, '/api/routines'),
-		api<Exercise[]>(cookies, '/api/exercises'),
-		api<Session[]>(cookies, '/api/sessions')
+		pageApi<Schedule>(cookies, '/api/schedule'),
+		pageApi<Routine[]>(cookies, '/api/routines'),
+		pageApi<Exercise[]>(cookies, '/api/exercises'),
+		pageApi<Session[]>(cookies, '/api/sessions')
 	]);
 
 	const todayIdx = (new Date().getDay() + 6) % 7; // Monday = 0
