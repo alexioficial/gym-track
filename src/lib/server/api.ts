@@ -1,6 +1,6 @@
 import { dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
-import type { Cookies } from '@sveltejs/kit';
+import { error, redirect, type Cookies } from '@sveltejs/kit';
 
 export const SESSION_COOKIE = 'gym_session';
 
@@ -42,6 +42,31 @@ export async function api<T>(cookies: Cookies, path: string, init: RequestInit =
 	const response = await request(cookies, path, init);
 	if (response.status === 204) return undefined as T;
 	return (await response.json()) as T;
+}
+
+/**
+ * For page `load` functions only. An invalid/expired session redirects
+ * straight to the login page instead of surfacing a blank error, and any
+ * other API failure becomes a real SvelteKit error with the actual status
+ * and message instead of a generic "Internal Error".
+ *
+ * hooks.server.ts and the /api/* server routes relay errors to their own
+ * caller themselves, so they use `api()` directly instead of this.
+ */
+export async function pageApi<T>(
+	cookies: Cookies,
+	path: string,
+	init: RequestInit = {}
+): Promise<T> {
+	try {
+		return await api<T>(cookies, path, init);
+	} catch (err) {
+		if (err instanceof ApiError) {
+			if (err.status === 401) throw redirect(303, '/login');
+			throw error(err.status, err.message);
+		}
+		throw err;
+	}
 }
 
 function sessionToken(response: Response): string | null {

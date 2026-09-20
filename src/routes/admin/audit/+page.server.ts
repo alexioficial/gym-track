@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { api } from '$lib/server/api';
+import { pageApi } from '$lib/server/api';
 
 interface AuditItem {
 	id: string;
@@ -28,7 +28,7 @@ export const load: PageServerLoad = async ({ locals, cookies, url }) => {
 	filters.set('limit', '100');
 	const query = filters.toString();
 	return {
-		items: await api<AuditItem[]>(cookies, `/api/admin/audit?${query}`),
+		items: await pageApi<AuditItem[]>(cookies, `/api/admin/audit?${query}`),
 		filters: Object.fromEntries(filters.entries())
 	};
 };

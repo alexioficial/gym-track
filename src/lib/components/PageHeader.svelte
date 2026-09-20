@@ -26,19 +26,32 @@
 		display: flex;
 		align-items: flex-start;
 		justify-content: space-between;
-		gap: 1rem;
-		margin-bottom: 1.25rem;
+		gap: 1.5rem;
+		margin-bottom: 2rem;
 	}
 	.page-title {
-		font-size: 1.6rem;
-		font-weight: 800;
-		line-height: 1.1;
+		margin: 0;
+		font-size: clamp(1.75rem, 4vw, 2rem);
+		font-weight: 700;
+		line-height: 0.95;
+		letter-spacing: 0.025em;
 	}
 	.page-subtitle {
-		font-size: 0.9rem;
-		margin-top: 0.25rem;
+		margin: 0.5rem 0 0;
+		font-size: 0.925rem;
+		line-height: 1.4;
 	}
 	.page-header-action {
 		flex-shrink: 0;
+	}
+	@media (max-width: 480px) {
+		.page-header {
+			align-items: flex-end;
+			gap: 0.75rem;
+			margin-bottom: 1.5rem;
+		}
+		.page-header-text {
+			min-width: 0;
+		}
 	}
 </style>

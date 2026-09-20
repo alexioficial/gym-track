@@ -1,13 +1,13 @@
 import type { PageServerLoad } from './$types';
-import { api } from '$lib/server/api';
+import { pageApi } from '$lib/server/api';
 import { lastPerformanceByExercise } from '$lib/utils/progression';
 import type { Exercise, Routine, Session } from '$lib/types';
 
 export const load: PageServerLoad = async ({ url, cookies }) => {
 	const [exercises, routines, sessions] = await Promise.all([
-		api<Exercise[]>(cookies, '/api/exercises'),
-		api<Routine[]>(cookies, '/api/routines'),
-		api<Session[]>(cookies, '/api/sessions')
+		pageApi<Exercise[]>(cookies, '/api/exercises'),
+		pageApi<Routine[]>(cookies, '/api/routines'),
+		pageApi<Session[]>(cookies, '/api/sessions')
 	]);
 	const routineById = new Map(routines.map((routine) => [routine.id, routine]));
 	const history = sessions.slice(0, 12).map((session) => {

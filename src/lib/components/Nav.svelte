@@ -3,6 +3,12 @@
 	import { resolve } from '$app/paths';
 	import Icon from './Icon.svelte';
 
+	interface Props {
+		variant?: 'rail' | 'bottom';
+	}
+
+	let { variant = 'bottom' }: Props = $props();
+
 	const items = [
 		{ href: resolve('/'), label: 'Home', icon: 'home' },
 		{ href: resolve('/routines'), label: 'Routines', icon: 'calendar' },
@@ -18,14 +24,20 @@
 	}
 </script>
 
-<nav class="nav">
+<nav
+	class="nav {variant}"
+	aria-label={variant === 'rail' ? 'Primary navigation' : 'Mobile navigation'}
+>
 	{#each items as item (item.href)}
-		<a href={item.href} class="nav-item" class:active={isActive(item.href)}>
-			{#if item.icon === 'plus'}
-				<span class="nav-fab"><Icon name="plus" size={22} stroke={2.5} /></span>
-			{:else}
-				<Icon name={item.icon} size={21} />
-			{/if}
+		<a
+			href={item.href}
+			class="nav-item"
+			class:active={isActive(item.href)}
+			aria-current={isActive(item.href) ? 'page' : undefined}
+		>
+			<span class="nav-icon"
+				><Icon name={item.icon} size={20} stroke={item.icon === 'plus' ? 2.5 : 2} /></span
+			>
 			<span class="nav-label">{item.label}</span>
 		</a>
 	{/each}
@@ -33,87 +45,94 @@
 
 <style>
 	.nav {
-		position: fixed;
-		bottom: 0;
-		left: 0;
-		right: 0;
-		z-index: 40;
 		display: grid;
-		grid-template-columns: repeat(5, 1fr);
-		align-items: end;
 		gap: 0.25rem;
-		padding: 0.5rem 0.5rem calc(0.5rem + env(safe-area-inset-bottom));
-		background: color-mix(in srgb, var(--color-bg) 80%, transparent);
-		backdrop-filter: blur(14px);
-		border-top: 1px solid var(--color-border-soft);
+	}
+
+	.bottom {
+		position: fixed;
+		inset: auto 0 0;
+		z-index: 40;
+		grid-template-columns: repeat(5, 1fr);
+		padding: 0.375rem 0.5rem calc(0.375rem + env(safe-area-inset-bottom));
+		border-top: 1px solid var(--color-border);
+		background: color-mix(in srgb, var(--color-bg) 94%, transparent);
+		backdrop-filter: blur(12px);
+	}
+
+	.rail {
+		grid-template-columns: 1fr;
+		align-content: start;
+		gap: 0.25rem;
 	}
 
 	.nav-item {
 		display: flex;
-		flex-direction: column;
 		align-items: center;
-		justify-content: flex-end;
-		gap: 0.2rem;
-		min-height: 3.2rem;
-		padding: 0.4rem 0;
-		border-radius: 0.85rem;
+		gap: 0.75rem;
+		min-height: 2.875rem;
+		padding: 0.5rem 0.75rem;
+		border-left: 3px solid transparent;
+		border-radius: 0;
 		color: var(--color-muted);
 		text-decoration: none;
-		transition:
-			color 0.15s ease,
-			transform 0.1s ease;
 	}
 	@media (hover: hover) {
 		.nav-item:hover {
-			color: var(--color-subtle);
+			background: var(--color-surface);
+			color: var(--color-text);
 		}
 	}
 	.nav-item:active {
-		transform: scale(0.92);
+		background: var(--color-surface-2);
 	}
 	.nav-item.active {
+		border-left-color: var(--color-accent);
+		background: var(--color-surface);
 		color: var(--color-accent-bright);
 	}
 
 	.nav-label {
-		font-size: 0.68rem;
+		font-size: 0.9rem;
 		font-weight: 600;
-		letter-spacing: 0.01em;
 	}
 
-	.nav-fab {
+	.nav-icon {
 		display: grid;
 		place-items: center;
-		width: 3rem;
-		height: 3rem;
-		margin-top: -1.4rem;
-		border-radius: 999px;
-		background: var(--color-accent);
-		color: #0a0a0a;
-		box-shadow: 0 6px 20px rgba(234, 179, 8, 0.35);
-		transition:
-			background 0.15s ease,
-			transform 0.15s ease;
-	}
-	@media (hover: hover) {
-		.nav-item:hover .nav-fab {
-			background: var(--color-accent-bright);
-		}
-	}
-	.nav-item.active .nav-fab {
-		transform: translateY(-2px);
-	}
-	.nav-item:active .nav-fab {
-		transform: scale(0.9);
+		width: 1.5rem;
+		height: 1.5rem;
+		flex: 0 0 1.5rem;
 	}
 
-	@media (min-width: 768px) {
-		.nav {
-			max-width: 30rem;
-			margin: 0 auto;
-			border-radius: 1.25rem;
-			border: 1px solid var(--color-border);
-			bottom: 1rem;
+	.bottom .nav-item {
+		flex-direction: column;
+		justify-content: center;
+		gap: 0.125rem;
+		min-height: 3.5rem;
+		padding: 0.375rem 0.25rem;
+		border-top: 2px solid transparent;
+		border-left: 0;
+	}
+
+	.bottom .nav-item.active {
+		border-top-color: var(--color-accent);
+		background: transparent;
+	}
+
+	.bottom .nav-label {
+		font-size: 0.68rem;
+	}
+
+	@media (min-width: 960px) {
+		.bottom {
+			display: none;
+		}
+	}
+
+	@media (max-width: 959px) {
+		.rail {
+			display: none;
 		}
 	}
 </style>

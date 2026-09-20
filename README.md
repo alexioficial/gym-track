@@ -35,7 +35,7 @@ Consulta el README de la API para `MONGODB_URI`, `ADMIN_PASSWORD`, cookies, CORS
 
 ## Uso sin conexión
 
-La web es una PWA *offline-first*. Tras iniciar sesión una vez con conexión, guarda en IndexedDB los ejercicios, rutinas, calendario y sesiones del usuario; el service worker conserva las pantallas visitadas y los recursos de la aplicación. Los cambios hechos sin red se aplican al instante en el dispositivo y quedan en una cola local.
+La web es una PWA _offline-first_. Tras iniciar sesión una vez con conexión, guarda en IndexedDB los ejercicios, rutinas, calendario y sesiones del usuario; el service worker conserva las pantallas visitadas y los recursos de la aplicación. Los cambios hechos sin red se aplican al instante en el dispositivo y quedan en una cola local.
 
 Al volver la conexión (o al abrir de nuevo la app), la cola se sincroniza de forma idempotente contra la API. El indicador junto a la cuenta muestra si está sincronizada, sin conexión o si existen cambios pendientes. Cerrar sesión borra tanto los datos locales como las páginas personalizadas cacheadas en ese navegador.
 

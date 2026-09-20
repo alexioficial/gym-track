@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import Icon from '$lib/components/Icon.svelte';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { newEntityId, offlineData, queueOfflineMutation } from '$lib/offline/store';
@@ -22,6 +23,8 @@
 	let editingId = $state<string | null>(null);
 	let duplicatingId = $state<string | null>(null);
 	let mutationError = $state<string | null>(null);
+	let pendingDelete = $state<{ id: string; name: string } | null>(null);
+	let deleting = $state(false);
 	const exercises = $derived($offlineData?.exercises ?? data.exercises);
 	const routines = $derived($offlineData?.routines ?? data.routines);
 	const schedule = $derived($offlineData?.schedule ?? data.schedule);
@@ -113,14 +116,19 @@
 		}
 	}
 
-	async function deleteRoutine(id: string, name: string) {
-		if (!confirm(`Delete the routine "${name}"?`)) return;
+	async function deleteRoutine() {
+		if (!pendingDelete || deleting) return;
+		const target = pendingDelete;
+		deleting = true;
 		try {
-			await queueOfflineMutation('routine', 'delete', id);
+			await queueOfflineMutation('routine', 'delete', target.id);
 			mutationError = null;
 			close();
 		} catch (error) {
 			mutationError = error instanceof Error ? error.message : 'Could not delete your routine';
+		} finally {
+			pendingDelete = null;
+			deleting = false;
 		}
 	}
 
@@ -168,8 +176,8 @@
 
 <!-- Weekly calendar -->
 <section class="block">
-	<h2 class="block-title"><Icon name="calendar" size={17} /> Week</h2>
-	<div class="card week">
+	<h2 class="block-title">Week schedule</h2>
+	<div class="week">
 		{#each WEEKDAYS as day (day)}
 			{@const assigned = schedule[day] ? routineById.get(schedule[day]!) : null}
 			<div class="day-row">
@@ -313,7 +321,7 @@
 {/snippet}
 
 {#if showNew}
-	<form class="card form-card" onsubmit={createRoutine}>
+	<form class="form-card" onsubmit={createRoutine}>
 		{@render routineFields(null)}
 		<div class="form-actions">
 			<button type="button" class="btn btn-subtle" onclick={close}>Cancel</button>
@@ -326,7 +334,7 @@
 
 <!-- Routine list -->
 <section class="block">
-	<h2 class="block-title"><Icon name="clipboard" size={17} /> Your routines</h2>
+	<h2 class="block-title">Your routines</h2>
 
 	{#if routines.length === 0 && !showNew}
 		<EmptyState
@@ -339,16 +347,16 @@
 			</button>
 		</EmptyState>
 	{:else}
-		<div class="stack">
+		<div class="routine-list">
 			{#each routines as routine (routine.id)}
 				{#if editingId === routine.id}
-					<form class="card form-card" onsubmit={(event) => updateRoutine(event, routine.id)}>
+					<form class="form-card" onsubmit={(event) => updateRoutine(event, routine.id)}>
 						{@render routineFields(routine)}
 						<div class="form-actions">
 							<button
 								type="button"
 								class="btn btn-danger"
-								onclick={() => void deleteRoutine(routine.id, routine.name)}
+								onclick={() => (pendingDelete = { id: routine.id, name: routine.name })}
 							>
 								<Icon name="trash" size={15} /> Delete
 							</button>
@@ -360,9 +368,8 @@
 						</div>
 					</form>
 				{:else}
-					<div class="card routine">
+					<div class="routine" style="--routine-color:{routine.color}">
 						<div class="routine-head">
-							<span class="dot" style="background:{routine.color}"></span>
 							<span class="routine-name">{routine.name}</span>
 							<button
 								type="button"
@@ -379,16 +386,17 @@
 							</button>
 						</div>
 						{#if routine.exercises.length > 0}
-							<div class="chips">
+							<ol class="exercise-lines">
 								{#each routine.exercises as re, i (`${re.exerciseId}-${i}`)}
 									{#if exerciseName.has(re.exerciseId)}
-										<span class="chip">
-											{exerciseName.get(re.exerciseId)}
-											<span class="chip-sets">{re.sets}×</span>
-										</span>
+										<li>
+											<span class="exercise-order stat-num">{String(i + 1).padStart(2, '0')}</span>
+											<span class="exercise-name">{exerciseName.get(re.exerciseId)}</span>
+											<span class="exercise-sets stat-num">{re.sets} sets</span>
+										</li>
 									{/if}
 								{/each}
-							</div>
+							</ol>
 						{:else}
 							<p class="muted hint">No exercises assigned</p>
 						{/if}
@@ -399,9 +407,21 @@
 	{/if}
 </section>
 
+<ConfirmDialog
+	open={pendingDelete !== null}
+	title="Delete routine?"
+	message={pendingDelete
+		? `“${pendingDelete.name}” and its weekly assignments will be removed. Your workout history will remain intact.`
+		: ''}
+	confirmLabel="Delete routine"
+	busy={deleting}
+	onCancel={() => (pendingDelete = null)}
+	onConfirm={() => void deleteRoutine()}
+/>
+
 <style>
 	.block {
-		margin-top: 1.5rem;
+		margin-top: 2rem;
 	}
 	.form-error {
 		margin: 0 0 0.8rem;
@@ -409,59 +429,62 @@
 		font-size: 0.85rem;
 	}
 	.block-title {
-		display: flex;
-		align-items: center;
-		gap: 0.45rem;
-		font-size: 1.05rem;
-		font-weight: 700;
-		color: var(--color-accent-bright);
-		margin-bottom: 0.75rem;
+		margin: 0 0 0.625rem;
+		padding-bottom: 0.625rem;
+		border-bottom: 1px solid var(--color-border);
+		font-family: var(--font-sans);
+		font-size: 0.78rem;
+		font-weight: 600;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
 	}
 
 	.week {
-		overflow: hidden;
+		display: grid;
+		border-bottom: 1px solid var(--color-border);
 	}
 	.day-row {
-		display: flex;
+		display: grid;
+		grid-template-columns: 0.25rem 5.5rem minmax(0, 1fr);
 		align-items: center;
-		gap: 0.75rem;
-		padding: 0.6rem 0.85rem;
+		gap: 0.625rem;
+		min-height: 3.5rem;
+		padding: 0.5rem 0;
 		border-bottom: 1px solid var(--color-border-soft);
 	}
 	.day-row:last-child {
-		border-bottom: none;
+		border-bottom: 0;
 	}
 	.day-color {
-		width: 0.35rem;
-		height: 1.6rem;
-		border-radius: 999px;
-		flex-shrink: 0;
+		width: 0.25rem;
+		height: 2rem;
 	}
 	.day-name {
 		font-weight: 600;
 		font-size: 0.9rem;
-		width: 5.5rem;
-		flex-shrink: 0;
 	}
 	.day-form {
-		flex: 1;
+		min-width: 0;
 	}
 	.day-select {
-		padding: 0.45rem 0.6rem;
+		min-height: 2.5rem;
+		padding: 0.4rem 0.6rem;
 		font-size: 0.88rem;
 	}
 
-	.stack {
-		display: flex;
-		flex-direction: column;
-		gap: 0.6rem;
+	.routine-list {
+		border-bottom: 1px solid var(--color-border);
 	}
 	.form-card {
-		padding: 1.1rem;
+		padding: 1.25rem;
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
-		margin-bottom: 0.6rem;
+		margin-bottom: 1rem;
+		border: 1px solid var(--color-border);
+		border-top: 3px solid var(--color-accent);
+		border-radius: var(--radius-overlay);
+		background: var(--color-surface-2);
 	}
 	.field {
 		display: flex;
@@ -494,10 +517,10 @@
 		width: 100%;
 		max-width: 1.7rem;
 		aspect-ratio: 1;
-		border-radius: 999px;
+		border-radius: 0.25rem;
 		background: var(--c);
 		border: 2px solid transparent;
-		box-shadow: 0 0 0 2px var(--color-surface);
+		box-shadow: 0 0 0 2px var(--color-surface-2);
 		transition: transform 0.12s ease;
 	}
 	.swatch input:checked + .swatch-dot {
@@ -521,9 +544,8 @@
 		align-items: center;
 		gap: 0.4rem;
 		padding: 0.35rem 0.4rem;
-		border-radius: 0.6rem;
-		background: var(--color-surface-2);
-		border: 1px solid var(--color-border);
+		border-bottom: 1px solid var(--color-border);
+		background: var(--color-surface);
 	}
 	.reorder {
 		display: flex;
@@ -536,7 +558,7 @@
 		place-items: center;
 		width: 1.6rem;
 		height: 1.15rem;
-		border-radius: 0.35rem;
+		border-radius: var(--radius-control);
 		background: var(--color-bg);
 		border: 1px solid var(--color-border);
 		color: var(--color-subtle);
@@ -576,7 +598,7 @@
 		place-items: center;
 		width: 2rem;
 		height: 2rem;
-		border-radius: 0.5rem;
+		border-radius: var(--radius-control);
 		background: transparent;
 		border: 1px solid transparent;
 		color: var(--color-muted);
@@ -607,7 +629,7 @@
 		align-items: center;
 		gap: 0.55rem;
 		padding: 0.55rem 0.6rem;
-		border-radius: 0.6rem;
+		border-radius: var(--radius-control);
 		background: transparent;
 		border: 1px dashed var(--color-border);
 		color: var(--color-text);
@@ -632,7 +654,7 @@
 		place-items: center;
 		width: 1.25rem;
 		height: 1.25rem;
-		border-radius: 0.4rem;
+		border-radius: var(--radius-control);
 		background: var(--color-surface-2);
 		border: 1px solid var(--color-border);
 		color: var(--color-accent-bright);
@@ -663,7 +685,7 @@
 		place-items: center;
 		width: 2rem;
 		height: 2rem;
-		border-radius: 0.5rem;
+		border-radius: var(--radius-control);
 		background: var(--color-bg);
 		border: 1px solid var(--color-border);
 		color: var(--color-subtle);
@@ -703,43 +725,56 @@
 	}
 
 	.routine {
-		padding: 1rem;
+		padding: 1.125rem 0 1.125rem 1rem;
+		border-bottom: 1px solid var(--color-border-soft);
+		border-left: 3px solid var(--routine-color);
+	}
+	.routine:last-child {
+		border-bottom: 0;
 	}
 	.routine-head {
 		display: flex;
 		align-items: center;
 		gap: 0.6rem;
 	}
-	.dot {
-		width: 0.7rem;
-		height: 0.7rem;
-		border-radius: 999px;
-		flex-shrink: 0;
-	}
 	.routine-name {
-		font-weight: 700;
-		font-size: 1.05rem;
+		font-family: var(--font-display);
+		font-weight: 600;
+		font-size: 1.35rem;
 		flex: 1;
 	}
-	.chips {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.4rem;
-		margin-top: 0.75rem;
+	.exercise-lines {
+		display: grid;
+		gap: 0;
+		margin: 0.75rem 0 0;
+		padding: 0;
+		list-style: none;
 	}
-	.chip {
-		font-size: 0.78rem;
-		font-weight: 500;
-		padding: 0.25rem 0.6rem;
-		border-radius: 999px;
-		background: var(--color-surface-2);
-		border: 1px solid var(--color-border);
+	.exercise-lines li {
+		display: grid;
+		grid-template-columns: 2rem minmax(0, 1fr) auto;
+		align-items: baseline;
+		gap: 0.5rem;
+		min-height: 2rem;
+		padding: 0.35rem 0;
+		border-top: 1px solid var(--color-border-soft);
+	}
+	.exercise-order {
+		color: var(--color-muted);
+		font-family: var(--font-mono);
+		font-size: 0.72rem;
+	}
+	.exercise-name {
+		min-width: 0;
+		overflow: hidden;
+		font-size: 0.875rem;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.exercise-sets {
 		color: var(--color-subtle);
-	}
-	.chip-sets {
-		font-weight: 700;
-		color: var(--color-accent-bright);
-		font-variant-numeric: tabular-nums;
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
 	}
 
 	.icon-action {
@@ -747,9 +782,9 @@
 		place-items: center;
 		width: 2.5rem;
 		height: 2.5rem;
-		border-radius: 0.6rem;
-		background: var(--color-surface-2);
-		border: 1px solid var(--color-border);
+		border-radius: var(--radius-control);
+		background: transparent;
+		border: 1px solid transparent;
 		color: var(--color-subtle);
 		cursor: pointer;
 		flex-shrink: 0;
@@ -760,8 +795,8 @@
 	}
 	@media (hover: hover) {
 		.icon-action:hover {
+			background: var(--color-surface);
 			color: var(--color-accent-bright);
-			border-color: var(--color-accent);
 		}
 	}
 	.icon-action:active {
@@ -771,5 +806,52 @@
 	.icon-action:disabled {
 		opacity: 0.45;
 		cursor: wait;
+	}
+
+	@media (min-width: 760px) {
+		.week {
+			grid-template-columns: repeat(7, minmax(0, 1fr));
+			border-top: 1px solid var(--color-border);
+		}
+		.day-row {
+			grid-template-columns: 0.25rem minmax(0, 1fr);
+			align-content: start;
+			min-width: 0;
+			padding: 0.75rem;
+			border-right: 1px solid var(--color-border-soft);
+			border-bottom: 0;
+		}
+		.day-row:last-child {
+			border-right: 0;
+		}
+		.day-color {
+			grid-row: 1 / 3;
+			height: 100%;
+			min-height: 4.5rem;
+		}
+		.day-form {
+			grid-column: 2;
+		}
+		.day-select {
+			padding-inline: 0.4rem;
+		}
+	}
+
+	@media (max-width: 520px) {
+		.form-actions {
+			flex-wrap: wrap;
+		}
+		.form-actions .spacer {
+			display: none;
+		}
+		.form-actions .btn-primary {
+			margin-left: auto;
+		}
+		.routine {
+			padding-left: 0.75rem;
+		}
+		.add-mg {
+			display: none;
+		}
 	}
 </style>

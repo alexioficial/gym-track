@@ -2,66 +2,102 @@
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
 
-/* ---- Tokens (single dark theme, yellow accent) ---- */
-@theme {
-	--color-bg: #0a0a0a;
-	--color-surface: #141414;
-	--color-surface-2: #1b1b1b;
-	--color-elevated: #212121;
-	--color-border: #2a2a2a;
-	--color-border-soft: #1f1f1f;
-	--color-muted: #7d7d7d;
-	--color-subtle: #a8a8a8;
-	--color-text: #f4f4f5;
-	--color-accent: #eab308;
-	--color-accent-bright: #facc15;
-	--color-accent-dim: #7a5c06;
-	--color-good: #34d399;
-	--color-bad: #f87171;
-
-	--font-sans:
-		'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-	--font-mono: 'SF Mono', ui-monospace, 'Cascadia Code', 'Roboto Mono', Menlo, Consolas, monospace;
-
-	--radius-2xl: 1.1rem;
+@font-face {
+	font-family: 'Barlow';
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url('/fonts/barlow/Barlow-Regular.woff2') format('woff2');
 }
 
-/* ---- Base ---- */
+@font-face {
+	font-family: 'Barlow';
+	font-style: normal;
+	font-weight: 500;
+	font-display: swap;
+	src: url('/fonts/barlow/Barlow-Medium.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Barlow';
+	font-style: normal;
+	font-weight: 600;
+	font-display: swap;
+	src: url('/fonts/barlow/Barlow-SemiBold.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Barlow Condensed';
+	font-style: normal;
+	font-weight: 600;
+	font-display: swap;
+	src: url('/fonts/barlow-condensed/BarlowCondensed-SemiBold.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Barlow Condensed';
+	font-style: normal;
+	font-weight: 700;
+	font-display: swap;
+	src: url('/fonts/barlow-condensed/BarlowCondensed-Bold.woff2') format('woff2');
+}
+
+@theme {
+	--color-bg: #0b0c0b;
+	--color-surface: #121412;
+	--color-surface-2: #181a18;
+	--color-elevated: #1d201d;
+	--color-border: #2a2d29;
+	--color-border-soft: #1e211e;
+	--color-muted: #777a74;
+	--color-subtle: #a6a79f;
+	--color-text: #f3f1e8;
+	--color-accent: #f0c400;
+	--color-accent-bright: #ffd329;
+	--color-accent-dim: #756100;
+	--color-good: #38d997;
+	--color-bad: #ff6969;
+	--font-sans: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+	--font-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+	--font-mono: 'SF Mono', ui-monospace, 'Cascadia Code', 'Roboto Mono', Menlo, Consolas, monospace;
+	--radius-control: 0.25rem;
+	--radius-overlay: 0.5rem;
+	--radius-2xl: 0.5rem;
+}
+
 @layer base {
 	:root {
 		color-scheme: dark;
 	}
-
 	html {
-		background-color: var(--color-bg);
+		min-width: 20rem;
+		background: var(--color-bg);
 		color: var(--color-text);
 		-webkit-text-size-adjust: 100%;
 		text-size-adjust: 100%;
+		scroll-padding-bottom: 5.5rem;
 	}
-
 	body {
 		min-height: 100dvh;
+		margin: 0;
+		background: var(--color-bg);
 		font-family: var(--font-sans);
+		font-size: 1rem;
+		line-height: 1.45;
 		-webkit-font-smoothing: antialiased;
 		text-rendering: optimizeLegibility;
 		overflow-x: hidden;
 		overscroll-behavior-y: none;
-		background:
-			radial-gradient(1200px 600px at 50% -10%, rgba(234, 179, 8, 0.06), transparent 70%),
-			var(--color-bg);
 	}
-
 	::selection {
 		background: var(--color-accent);
-		color: #0a0a0a;
+		color: var(--color-bg);
 	}
-
 	* {
+		box-sizing: border-box;
 		scrollbar-width: thin;
 		scrollbar-color: var(--color-border) transparent;
 	}
-
-	/* Mobile: no gray/blue flash on tap, and no 300ms delay */
 	a,
 	button,
 	select,
@@ -77,183 +113,225 @@
 	[role='button'] {
 		touch-action: manipulation;
 	}
-
+	h1,
+	h2,
+	h3,
+	p {
+		margin-block-start: 0;
+	}
 	h1,
 	h2,
 	h3 {
-		letter-spacing: -0.02em;
+		font-family: var(--font-display);
+		letter-spacing: 0.01em;
 	}
-
-	:focus-visible {
-		outline: 2px solid var(--color-accent);
-		outline-offset: 2px;
-	}
-
+	button,
 	input,
 	select,
-	textarea,
-	button {
-		font-family: inherit;
+	textarea {
+		font: inherit;
+	}
+	button,
+	a,
+	input,
+	select,
+	textarea {
+		transition-duration: 150ms;
+		transition-property: background-color, border-color, color, opacity, transform;
+		transition-timing-function: ease-out;
+	}
+	:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 3px;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		*,
+		*::before,
+		*::after {
+			scroll-behavior: auto !important;
+			animation-duration: 0.01ms !important;
+			animation-iteration-count: 1 !important;
+			transition-duration: 0.01ms !important;
+		}
+	}
+	@media (min-width: 960px) {
+		html {
+			scroll-padding-bottom: 2rem;
+		}
 	}
 }
 
-/* ---- Components ---- */
 @layer components {
 	.card {
-		background-color: var(--color-surface);
+		background: var(--color-surface);
 		border: 1px solid var(--color-border);
-		border-radius: var(--radius-2xl);
+		border-radius: var(--radius-overlay);
 	}
-
 	.card-hover {
 		transition:
-			border-color 0.15s ease,
-			background-color 0.15s ease,
-			transform 0.12s ease;
+			border-color 150ms ease-out,
+			background-color 150ms ease-out;
 	}
 	@media (hover: hover) {
 		.card-hover:hover {
-			border-color: color-mix(in srgb, var(--color-accent) 40%, var(--color-border));
-			background-color: var(--color-surface-2);
+			border-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-border));
+			background: var(--color-surface-2);
 		}
 	}
-	.card-hover:active {
-		transform: scale(0.99);
-	}
-
 	.btn {
 		display: inline-flex;
+		min-height: 2.75rem;
 		align-items: center;
 		justify-content: center;
 		gap: 0.5rem;
-		border-radius: 0.75rem;
-		padding: 0.65rem 1.1rem;
-		min-height: 2.75rem;
+		padding: 0.625rem 1rem;
+		border: 1px solid transparent;
+		border-radius: var(--radius-control);
 		font-size: 0.9rem;
 		font-weight: 600;
 		line-height: 1;
-		cursor: pointer;
-		border: 1px solid transparent;
-		transition:
-			background-color 0.15s ease,
-			border-color 0.15s ease,
-			color 0.15s ease,
-			transform 0.1s ease,
-			opacity 0.15s ease;
 		white-space: nowrap;
+		cursor: pointer;
 		user-select: none;
 	}
 	.btn:disabled {
-		opacity: 0.5;
+		opacity: 0.45;
 		cursor: not-allowed;
 	}
 	.btn:active:not(:disabled) {
-		transform: scale(0.97);
+		transform: translateY(1px);
 	}
-
 	.btn-primary {
-		background-color: var(--color-accent);
-		color: #0a0a0a;
+		background: var(--color-accent);
+		color: var(--color-bg);
 	}
-
 	.btn-ghost {
-		background-color: transparent;
+		background: transparent;
 		border-color: var(--color-border);
 		color: var(--color-text);
 	}
-
 	.btn-subtle {
-		background-color: var(--color-surface-2);
+		background: var(--color-surface-2);
+		border-color: var(--color-border-soft);
 		color: var(--color-subtle);
 	}
-
 	.btn-danger {
-		background-color: transparent;
-		border-color: color-mix(in srgb, var(--color-bad) 35%, transparent);
+		background: transparent;
+		border-color: color-mix(in srgb, var(--color-bad) 45%, var(--color-border));
 		color: var(--color-bad);
 	}
-
 	@media (hover: hover) {
 		.btn-primary:hover {
-			background-color: var(--color-accent-bright);
+			background: var(--color-accent-bright);
 		}
 		.btn-ghost:hover {
 			border-color: var(--color-accent);
 			color: var(--color-accent-bright);
 		}
 		.btn-subtle:hover {
-			background-color: var(--color-elevated);
+			background: var(--color-elevated);
 			color: var(--color-text);
 		}
 		.btn-danger:hover {
-			background-color: color-mix(in srgb, var(--color-bad) 12%, transparent);
+			background: color-mix(in srgb, var(--color-bad) 10%, transparent);
 		}
 	}
-
 	.input {
 		width: 100%;
-		background-color: var(--color-surface-2);
+		min-height: 2.75rem;
+		padding: 0.625rem 0.75rem;
 		border: 1px solid var(--color-border);
-		border-radius: 0.7rem;
-		padding: 0.65rem 0.8rem;
-		/* 16px prevents iOS auto-zoom on focus */
-		font-size: 1rem;
+		border-radius: var(--radius-control);
+		background: var(--color-surface-2);
 		color: var(--color-text);
-		transition:
-			border-color 0.15s ease,
-			background-color 0.15s ease;
+		font-size: 1rem;
 	}
 	.input::placeholder {
 		color: var(--color-muted);
 	}
 	.input:focus {
-		outline: none;
 		border-color: var(--color-accent);
-		background-color: var(--color-surface);
+		outline: none;
+		background: var(--color-surface);
 	}
-
+	.input:disabled {
+		opacity: 0.55;
+		cursor: not-allowed;
+	}
 	.label {
 		display: block;
+		margin-bottom: 0.375rem;
+		color: var(--color-subtle);
 		font-size: 0.75rem;
 		font-weight: 600;
-		letter-spacing: 0.04em;
+		letter-spacing: 0.08em;
+		line-height: 1.2;
 		text-transform: uppercase;
-		color: var(--color-muted);
-		margin-bottom: 0.4rem;
 	}
-
 	.badge {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.3rem;
-		border-radius: 999px;
-		padding: 0.22rem 0.6rem;
+		gap: 0.25rem;
+		padding: 0.1875rem 0.5rem;
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-control);
+		color: var(--color-subtle);
 		font-size: 0.72rem;
 		font-weight: 600;
-		border: 1px solid var(--color-border);
-		color: var(--color-subtle);
+		line-height: 1.25;
 	}
 	.badge-accent {
-		background-color: color-mix(in srgb, var(--color-accent) 14%, transparent);
-		border-color: color-mix(in srgb, var(--color-accent) 40%, transparent);
+		border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
 		color: var(--color-accent-bright);
 	}
 	.badge-good {
-		background-color: color-mix(in srgb, var(--color-good) 14%, transparent);
-		border-color: color-mix(in srgb, var(--color-good) 40%, transparent);
+		border-color: color-mix(in srgb, var(--color-good) 40%, var(--color-border));
 		color: var(--color-good);
 	}
 	.badge-bad {
-		background-color: color-mix(in srgb, var(--color-bad) 12%, transparent);
-		border-color: color-mix(in srgb, var(--color-bad) 35%, transparent);
+		border-color: color-mix(in srgb, var(--color-bad) 40%, var(--color-border));
 		color: var(--color-bad);
 	}
-
+	.ledger-section {
+		border-top: 1px solid var(--color-border);
+		border-bottom: 1px solid var(--color-border);
+		background: var(--color-surface);
+	}
+	.ledger-row {
+		display: flex;
+		min-height: 3.25rem;
+		align-items: center;
+		gap: 1rem;
+		padding: 0.75rem 0;
+		border-bottom: 1px solid var(--color-border-soft);
+	}
+	.ledger-row:last-child {
+		border-bottom: 0;
+	}
+	.section-label {
+		margin: 0;
+		color: var(--color-subtle);
+		font-family: var(--font-sans);
+		font-size: 0.75rem;
+		font-weight: 600;
+		letter-spacing: 0.11em;
+		line-height: 1.2;
+		text-transform: uppercase;
+	}
+	.data-value,
 	.stat-num {
 		font-variant-numeric: tabular-nums;
 		font-feature-settings: 'tnum';
 	}
-
+	.data-value {
+		font-family: var(--font-mono);
+		font-size: 0.875rem;
+	}
+	.field-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+		gap: 1rem;
+	}
 	.muted {
 		color: var(--color-muted);
 	}
@@ -262,5 +340,11 @@
 	}
 	.accent {
 		color: var(--color-accent-bright);
+	}
+	.good {
+		color: var(--color-good);
+	}
+	.bad {
+		color: var(--color-bad);
 	}
 }

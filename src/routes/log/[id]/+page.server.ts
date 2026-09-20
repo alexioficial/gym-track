@@ -1,16 +1,16 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { api, ApiError } from '$lib/server/api';
+import { ApiError, pageApi } from '$lib/server/api';
 import { lastPerformanceByExercise } from '$lib/utils/progression';
 import type { Exercise, Routine, Session } from '$lib/types';
 
 export const load: PageServerLoad = async ({ params, cookies }) => {
 	try {
 		const [session, exercises, routines, sessions] = await Promise.all([
-			api<Session>(cookies, `/api/sessions/${params.id}`),
-			api<Exercise[]>(cookies, '/api/exercises'),
-			api<Routine[]>(cookies, '/api/routines'),
-			api<Session[]>(cookies, '/api/sessions')
+			pageApi<Session>(cookies, `/api/sessions/${params.id}`),
+			pageApi<Exercise[]>(cookies, '/api/exercises'),
+			pageApi<Routine[]>(cookies, '/api/routines'),
+			pageApi<Session[]>(cookies, '/api/sessions')
 		]);
 		return {
 			session,

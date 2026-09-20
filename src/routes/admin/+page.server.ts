@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { api } from '$lib/server/api';
+import { pageApi } from '$lib/server/api';
 
 interface AdminUser {
 	id: string;
@@ -15,5 +15,5 @@ function requireAdmin(locals: App.Locals) {
 
 export const load: PageServerLoad = async ({ locals, cookies }) => {
 	requireAdmin(locals);
-	return { users: await api<AdminUser[]>(cookies, '/api/admin/users') };
+	return { users: await pageApi<AdminUser[]>(cookies, '/api/admin/users') };
 };

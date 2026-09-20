@@ -1,13 +1,13 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { api } from '$lib/server/api';
+import { pageApi } from '$lib/server/api';
 import { weekOverWeekDelta, weeklyStatsForExercise } from '$lib/utils/progression';
 import type { Exercise, Session } from '$lib/types';
 
 export const load: PageServerLoad = async ({ params, cookies }) => {
 	const [exercises, sessions] = await Promise.all([
-		api<Exercise[]>(cookies, '/api/exercises'),
-		api<Session[]>(cookies, '/api/sessions')
+		pageApi<Exercise[]>(cookies, '/api/exercises'),
+		pageApi<Session[]>(cookies, '/api/sessions')
 	]);
 	const exercise = exercises.find((item) => item.id === params.exerciseId);
 	if (!exercise) throw error(404, 'Exercise not found');

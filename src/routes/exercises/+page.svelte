@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { newEntityId, offlineData, queueOfflineMutation } from '$lib/offline/store';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
@@ -11,6 +12,8 @@
 	let showNew = $state(false);
 	let editingId = $state<string | null>(null);
 	let mutationError = $state<string | null>(null);
+	let pendingDelete = $state<{ id: string; name: string } | null>(null);
+	let deleting = $state(false);
 	const exercises = $derived($offlineData?.exercises ?? data.exercises);
 
 	const MUSCLE_GROUPS = [
@@ -75,14 +78,19 @@
 		}
 	}
 
-	async function deleteExercise(id: string, name: string) {
-		if (!confirm(`Delete "${name}"?`)) return;
+	async function deleteExercise() {
+		if (!pendingDelete || deleting) return;
+		const target = pendingDelete;
+		deleting = true;
 		try {
-			await queueOfflineMutation('exercise', 'delete', id);
+			await queueOfflineMutation('exercise', 'delete', target.id);
 			mutationError = null;
 			closeForms();
 		} catch (error) {
 			mutationError = error instanceof Error ? error.message : 'Could not delete your exercise';
+		} finally {
+			pendingDelete = null;
+			deleting = false;
 		}
 	}
 </script>
@@ -141,7 +149,7 @@
 {/snippet}
 
 {#if showNew}
-	<form class="card form-card" onsubmit={createExercise}>
+	<form class="form-card" onsubmit={createExercise}>
 		{@render fields(null)}
 		<div class="form-actions">
 			<button type="button" class="btn btn-subtle" onclick={closeForms}>Cancel</button>
@@ -161,16 +169,22 @@
 		</button>
 	</EmptyState>
 {:else}
-	<div class="stack">
+	<div class="exercise-ledger">
+		<div class="exercise-head" aria-hidden="true">
+			<span>Exercise</span>
+			<span>Muscle group</span>
+			<span>Notes</span>
+			<span></span>
+		</div>
 		{#each exercises as ex (ex.id)}
 			{#if editingId === ex.id}
-				<form class="card form-card" onsubmit={(event) => updateExercise(event, ex.id)}>
+				<form class="form-card inline-editor" onsubmit={(event) => updateExercise(event, ex.id)}>
 					{@render fields(ex)}
 					<div class="form-actions">
 						<button
 							type="button"
 							class="btn btn-danger"
-							onclick={() => void deleteExercise(ex.id, ex.name)}
+							onclick={() => (pendingDelete = { id: ex.id, name: ex.name })}
 						>
 							<Icon name="trash" size={15} /> Delete
 						</button>
@@ -182,14 +196,10 @@
 					</div>
 				</form>
 			{:else}
-				<div class="row card card-hover">
-					<div class="row-info">
-						<span class="row-name">{ex.name}</span>
-						<div class="row-meta">
-							{#if ex.muscleGroup}<span class="badge">{ex.muscleGroup}</span>{/if}
-							{#if ex.notes}<span class="muted row-notes">{ex.notes}</span>{/if}
-						</div>
-					</div>
+				<div class="row">
+					<span class="row-name">{ex.name}</span>
+					<span class="row-muscle">{ex.muscleGroup || '—'}</span>
+					<span class="row-notes">{ex.notes || '—'}</span>
 					<button class="icon-action" aria-label="Edit" onclick={() => startEdit(ex)}>
 						<Icon name="pencil" size={16} />
 					</button>
@@ -199,18 +209,29 @@
 	</div>
 {/if}
 
+<ConfirmDialog
+	open={pendingDelete !== null}
+	title="Delete exercise?"
+	message={pendingDelete
+		? `“${pendingDelete.name}” will be removed from your exercise catalog. This cannot be undone.`
+		: ''}
+	confirmLabel="Delete exercise"
+	busy={deleting}
+	onCancel={() => (pendingDelete = null)}
+	onConfirm={() => void deleteExercise()}
+/>
+
 <style>
-	.stack {
-		display: flex;
-		flex-direction: column;
-		gap: 0.6rem;
-	}
 	.form-card {
-		padding: 1.1rem;
+		padding: 1.25rem;
 		display: flex;
 		flex-direction: column;
-		gap: 0.9rem;
-		margin-bottom: 0.6rem;
+		gap: 1rem;
+		margin-bottom: 1rem;
+		border: 1px solid var(--color-border);
+		border-top: 3px solid var(--color-accent);
+		border-radius: var(--radius-overlay);
+		background: var(--color-surface-2);
 	}
 	.form-error {
 		margin: 0 0 0.8rem;
@@ -230,26 +251,57 @@
 	.spacer {
 		flex: 1;
 	}
-	.row {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 0.9rem 1rem;
+	.exercise-ledger {
+		border-block: 1px solid var(--color-border);
 	}
-	.row-info {
-		flex: 1;
-		min-width: 0;
+	.exercise-head,
+	.row {
+		display: grid;
+		grid-template-columns: minmax(12rem, 1.4fr) minmax(8rem, 0.7fr) minmax(10rem, 1fr) 2.75rem;
+		align-items: center;
+		gap: 1rem;
+	}
+	.exercise-head {
+		min-height: 2.5rem;
+		padding: 0.5rem 0;
+		border-bottom: 1px solid var(--color-border);
+		color: var(--color-muted);
+		font-size: 0.7rem;
+		font-weight: 600;
+		letter-spacing: 0.09em;
+		text-transform: uppercase;
+	}
+	.row {
+		min-height: 3.5rem;
+		padding: 0.625rem 0;
+		border-bottom: 1px solid var(--color-border-soft);
+	}
+	.row:last-child {
+		border-bottom: 0;
+	}
+	@media (hover: hover) {
+		.row:hover {
+			background: var(--color-surface);
+		}
+	}
+	.inline-editor {
+		margin: 0;
+		border-top-width: 1px;
+		border-radius: 0;
 	}
 	.row-name {
 		font-weight: 600;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
-	.row-meta {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		margin-top: 0.3rem;
+	.row-muscle {
+		color: var(--color-subtle);
+		font-size: 0.82rem;
 	}
 	.row-notes {
+		color: var(--color-muted);
 		font-size: 0.82rem;
 		white-space: nowrap;
 		overflow: hidden;
@@ -260,9 +312,9 @@
 		place-items: center;
 		width: 2.5rem;
 		height: 2.5rem;
-		border-radius: 0.6rem;
-		background: var(--color-surface-2);
-		border: 1px solid var(--color-border);
+		border-radius: var(--radius-control);
+		background: transparent;
+		border: 1px solid transparent;
 		color: var(--color-subtle);
 		cursor: pointer;
 		flex-shrink: 0;
@@ -273,12 +325,53 @@
 	}
 	@media (hover: hover) {
 		.icon-action:hover {
+			background: var(--color-surface-2);
 			color: var(--color-accent-bright);
-			border-color: var(--color-accent);
 		}
 	}
 	.icon-action:active {
 		transform: scale(0.92);
 		color: var(--color-accent-bright);
+	}
+	@media (max-width: 760px) {
+		.exercise-head {
+			display: none;
+		}
+		.row {
+			grid-template-columns: minmax(0, 1fr) auto 2.75rem;
+			gap: 0.75rem;
+		}
+		.row-name {
+			grid-column: 1;
+		}
+		.row-muscle {
+			grid-column: 2;
+			text-align: right;
+		}
+		.row-notes {
+			grid-column: 1 / 3;
+			grid-row: 2;
+		}
+		.icon-action {
+			grid-column: 3;
+			grid-row: 1 / 3;
+		}
+	}
+	@media (max-width: 460px) {
+		.form-actions {
+			flex-wrap: wrap;
+		}
+		.form-actions .spacer {
+			display: none;
+		}
+		.form-actions .btn-primary {
+			margin-left: auto;
+		}
+		.row-muscle {
+			max-width: 7rem;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
 	}
 </style>
