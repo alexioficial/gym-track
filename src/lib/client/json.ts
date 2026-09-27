@@ -14,6 +14,7 @@ export async function jsonRequest<T>(
 ): Promise<T> {
 	const response = await fetch(path, {
 		method,
+		signal: AbortSignal.timeout(15_000),
 		headers: {
 			accept: 'application/json',
 			...(body === undefined ? {} : { 'content-type': 'application/json' })

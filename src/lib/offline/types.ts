@@ -19,9 +19,24 @@ export interface OfflineMutation {
 	createdAt: number;
 }
 
+export interface OfflineSyncResult extends Pick<
+	OfflineMutation,
+	'mutationId' | 'entity' | 'operation' | 'entityId'
+> {
+	status?: 'applied' | 'rejected';
+	error?: string;
+}
+
 export interface OfflineSyncResponse {
 	snapshot: OfflineSnapshot;
-	applied: Array<Pick<OfflineMutation, 'mutationId' | 'entity' | 'operation' | 'entityId'>>;
+	applied: OfflineSyncResult[];
+}
+
+export interface RejectedChange {
+	mutationId: string;
+	entity: OfflineEntity;
+	operation: OfflineOperation;
+	error: string;
 }
 
 export type SyncPhase = 'idle' | 'offline' | 'syncing' | 'synced' | 'error';

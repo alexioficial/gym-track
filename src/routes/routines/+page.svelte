@@ -5,6 +5,7 @@
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { newEntityId, offlineData, queueOfflineMutation } from '$lib/offline/store';
+	import { MAX_ROUTINE_EXERCISES, NAME_MAX } from '$lib/limits';
 	import { duplicatedRoutineName } from '$lib/utils/routines';
 	import {
 		DEFAULT_ROUTINE_SETS,
@@ -61,6 +62,7 @@
 	}
 
 	function addExercise(id: string) {
+		if (assigned.length >= MAX_ROUTINE_EXERCISES) return;
 		assigned = [...assigned, assignedRow(id, DEFAULT_ROUTINE_SETS)];
 	}
 	function removeExercise(rowId: number) {
@@ -210,6 +212,7 @@
 			name="name"
 			class="input"
 			placeholder="e.g. Push, Upper, Leg A…"
+			maxlength={NAME_MAX}
 			value={routine?.name ?? ''}
 			required
 		/>
@@ -308,7 +311,12 @@
 			{#if exercises.length > 0}
 				<div class="add-list">
 					{#each exercises as ex (ex.id)}
-						<button type="button" class="add-row" onclick={() => addExercise(ex.id)}>
+						<button
+							type="button"
+							class="add-row"
+							disabled={assigned.length >= MAX_ROUTINE_EXERCISES}
+							onclick={() => addExercise(ex.id)}
+						>
 							<span class="add-plus"><Icon name="plus" size={14} stroke={2.5} /></span>
 							<span class="add-name">{ex.name}</span>
 							{#if ex.muscleGroup}<span class="muted add-mg">{ex.muscleGroup}</span>{/if}

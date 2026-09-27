@@ -9,14 +9,17 @@ import {
 	type OfflineOperation,
 	type OfflineSnapshot,
 	type OfflineSyncResponse,
+	type RejectedChange,
 	type SyncStatus
 } from './types';
+import { coalesce, createMutex } from './queue';
 import { clearRoutesWarm } from './warm';
 
 const DB_NAME = 'gym-tracker-offline';
 const DB_VERSION = 1;
 const SNAPSHOTS = 'snapshots';
 const MUTATIONS = 'mutations';
+const SYNC_TIMEOUT_MS = 20_000;
 
 type StoredSnapshot = {
 	userId: string;
@@ -27,12 +30,19 @@ type StoredMutation = OfflineMutation & { userId: string };
 
 export const offlineData = writable<OfflineSnapshot | null>(null);
 export const syncStatus = writable<SyncStatus>({ phase: 'idle', pending: 0, message: null });
+/** Changes the server refused. They are already out of the queue; this only tells the user. */
+export const rejectedChanges = writable<RejectedChange[]>([]);
 
 let currentUserId: string | null = null;
 let currentSnapshot: OfflineSnapshot | null = null;
 let initializing: Promise<void> | null = null;
 let syncing: Promise<void> | null = null;
 let onlineListener: (() => void) | null = null;
+// Every read-modify-write of the queue and snapshot goes through this, so two
+// quick saves (or a save during a sync) cannot overwrite each other.
+const exclusive = createMutex();
+// Mutation ids included in the sync request currently in flight.
+const sent = new Set<string>();
 
 function clone<T>(value: T): T {
 	return structuredClone(value);
@@ -201,36 +211,6 @@ function applyMutation(snapshot: OfflineSnapshot, mutation: OfflineMutation): Of
 	return next;
 }
 
-function coalesce(queue: OfflineMutation[], mutation: OfflineMutation): OfflineMutation[] {
-	const sameTarget = (item: OfflineMutation) =>
-		item.entity === mutation.entity && item.entityId === mutation.entityId;
-	if (mutation.entity === 'schedule')
-		return [...queue.filter((item) => !sameTarget(item)), mutation];
-
-	const create = queue.find((item) => sameTarget(item) && item.operation === 'create');
-	if (mutation.operation === 'update' && create) {
-		return queue.map((item) =>
-			item === create ? { ...item, payload: { ...item.payload, ...mutation.payload } } : item
-		);
-	}
-	if (mutation.operation === 'update') {
-		return [
-			...queue.filter((item) => !(sameTarget(item) && item.operation === 'update')),
-			mutation
-		];
-	}
-	if (mutation.operation === 'delete' && create) {
-		return queue.filter((item) => !sameTarget(item));
-	}
-	if (mutation.operation === 'delete') {
-		return [
-			...queue.filter((item) => !(sameTarget(item) && item.operation === 'update')),
-			mutation
-		];
-	}
-	return [...queue, mutation];
-}
-
 async function updateStatus(
 	phase: SyncStatus['phase'],
 	message: string | null = null
@@ -276,36 +256,52 @@ export async function queueOfflineMutation(
 	payload: Record<string, unknown> = {}
 ): Promise<void> {
 	await ensureInitialized();
-	const mutation: OfflineMutation = {
-		mutationId: crypto.randomUUID(),
-		entity,
-		operation,
-		entityId,
-		payload: clone(payload),
-		createdAt: Date.now()
-	};
-	currentSnapshot = applyMutation(currentSnapshot!, mutation);
-	const queue = coalesce(await readMutations(currentUserId!), mutation);
-	await Promise.all([
-		writeSnapshot(currentUserId!, currentSnapshot),
-		replaceMutations(currentUserId!, queue)
-	]);
-	offlineData.set(clone(currentSnapshot));
-	await updateStatus(navigator.onLine ? 'idle' : 'offline');
+	const userId = currentUserId!;
+	await exclusive(async () => {
+		if (currentUserId !== userId || !currentSnapshot) return;
+		const mutation: OfflineMutation = {
+			mutationId: crypto.randomUUID(),
+			entity,
+			operation,
+			entityId,
+			payload: clone(payload),
+			createdAt: Date.now()
+		};
+		currentSnapshot = applyMutation(currentSnapshot, mutation);
+		const queue = coalesce(await readMutations(userId), mutation, sent);
+		await Promise.all([writeSnapshot(userId, currentSnapshot), replaceMutations(userId, queue)]);
+		offlineData.set(clone(currentSnapshot));
+		await updateStatus(navigator.onLine ? 'idle' : 'offline');
+	});
 	if (navigator.onLine) void synchronize();
 }
 
 export async function synchronize(): Promise<void> {
 	if (!browser || !navigator.onLine || !currentUserId || !currentSnapshot) return;
 	if (syncing) return syncing;
+	const userId = currentUserId;
+	let again = false;
 	syncing = (async () => {
 		try {
-			const pending = await readMutations(currentUserId!);
+			const pending = await exclusive(async () => {
+				const queue = await readMutations(userId);
+				for (const item of queue) sent.add(item.mutationId);
+				return queue;
+			});
 			syncStatus.set({ phase: 'syncing', pending: pending.length, message: null });
 			const response = await fetch('/api/offline/sync', {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ mutations: pending })
+				body: JSON.stringify({
+					mutations: pending.map(({ mutationId, entity, operation, entityId, payload }) => ({
+						mutationId,
+						entity,
+						operation,
+						entityId,
+						payload
+					}))
+				}),
+				signal: AbortSignal.timeout(SYNC_TIMEOUT_MS)
 			});
 			if (!response.ok) {
 				const message = await response
@@ -315,29 +311,58 @@ export async function synchronize(): Promise<void> {
 				throw new Error(message);
 			}
 			const body = (await response.json()) as OfflineSyncResponse;
-			const applied = new Set(body.applied.map((item) => item.mutationId));
-			const remaining = (await readMutations(currentUserId!)).filter(
-				(item) => !applied.has(item.mutationId)
-			);
-			let merged = clone(body.snapshot);
-			for (const mutation of remaining) merged = applyMutation(merged, mutation);
-			currentSnapshot = merged;
-			await Promise.all([
-				writeSnapshot(currentUserId!, merged),
-				replaceMutations(currentUserId!, remaining)
-			]);
-			offlineData.set(clone(merged));
-			await updateStatus('synced');
+			await exclusive(async () => {
+				// A logout or account switch may have happened while the request ran.
+				if (currentUserId !== userId) return;
+				// Rejected changes can never succeed, so they leave the queue as well.
+				const done = new Set(body.applied.map((item) => item.mutationId));
+				const rejected = body.applied.filter((item) => item.status === 'rejected');
+				const remaining = (await readMutations(userId)).filter(
+					(item) => !done.has(item.mutationId)
+				);
+				let merged = clone(body.snapshot);
+				for (const mutation of remaining) merged = applyMutation(merged, mutation);
+				currentSnapshot = merged;
+				await Promise.all([writeSnapshot(userId, merged), replaceMutations(userId, remaining)]);
+				offlineData.set(clone(merged));
+				if (rejected.length) {
+					rejectedChanges.update((items) => [
+						...items,
+						...rejected.map((item) => ({
+							mutationId: item.mutationId,
+							entity: item.entity,
+							operation: item.operation,
+							error: item.error ?? 'The server rejected this change'
+						}))
+					]);
+				}
+				// Changes saved while this request ran go out right away.
+				again = remaining.length > 0;
+				await updateStatus('synced');
+			});
 		} catch (error) {
-			await updateStatus(
-				navigator.onLine ? 'error' : 'offline',
-				error instanceof Error ? error.message : null
-			);
+			const message =
+				error instanceof DOMException && error.name === 'TimeoutError'
+					? 'The server took too long to answer'
+					: error instanceof Error
+						? error.message
+						: null;
+			await updateStatus(navigator.onLine ? 'error' : 'offline', message);
 		} finally {
+			sent.clear();
 			syncing = null;
 		}
+		if (again) void synchronize();
 	})();
 	return syncing;
+}
+
+export async function pendingChangeCount(): Promise<number> {
+	return currentUserId ? (await readMutations(currentUserId)).length : 0;
+}
+
+export function dismissRejectedChanges(): void {
+	rejectedChanges.set([]);
 }
 
 export async function clearOfflineData(userId?: string): Promise<void> {
@@ -348,6 +373,7 @@ export async function clearOfflineData(userId?: string): Promise<void> {
 	currentUserId = null;
 	currentSnapshot = null;
 	offlineData.set(null);
+	rejectedChanges.set([]);
 	syncStatus.set({ phase: 'idle', pending: 0, message: null });
 	if (!targetUserId) return;
 	clearRoutesWarm(localStorage, targetUserId);

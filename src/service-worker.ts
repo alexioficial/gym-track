@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 
 import { build, files, version } from '$service-worker';
-import { shouldUseCachedNavigation } from '$lib/offline/navigation';
+import { isPrivateRoute, shouldUseCachedNavigation } from '$lib/offline/navigation';
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -36,8 +36,9 @@ self.addEventListener('fetch', (event) => {
 	const { request } = event;
 	if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) return;
 	const url = new URL(request.url);
-	// API responses are kept in IndexedDB, never in the HTTP cache.
-	if (url.pathname.startsWith('/api/')) return;
+	// API responses are kept in IndexedDB, never in the HTTP cache. Admin pages
+	// hold other people's data and decrypted audit records, so they are never stored.
+	if (url.pathname.startsWith('/api/') || isPrivateRoute(url.pathname)) return;
 
 	if (request.mode === 'navigate') {
 		event.respondWith(
@@ -53,6 +54,20 @@ self.addEventListener('fetch', (event) => {
 					return response;
 				})
 				.catch(async () => (await cachedNavigation(request)) ?? Response.error())
+		);
+		return;
+	}
+
+	// Page data changes on every save, so the network wins whenever it answers.
+	// The cached copy only lets client-side navigation keep working offline.
+	if (url.pathname.endsWith('/__data.json')) {
+		event.respondWith(
+			fetch(request)
+				.then(async (response) => {
+					if (response.ok) (await caches.open(CACHE)).put(request, response.clone());
+					return response;
+				})
+				.catch(async () => (await caches.match(request)) ?? Response.error())
 		);
 		return;
 	}

@@ -2,6 +2,7 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { newEntityId, offlineData, queueOfflineMutation } from '$lib/offline/store';
+	import { MUSCLE_GROUP_MAX, NAME_MAX, NOTES_MAX } from '$lib/limits';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import type { Exercise } from '$lib/types';
@@ -121,6 +122,7 @@
 			name="name"
 			class="input"
 			placeholder="e.g. Bench press"
+			maxlength={NAME_MAX}
 			value={ex?.name ?? ''}
 			required
 		/>
@@ -133,6 +135,7 @@
 			class="input"
 			list="muscle-groups"
 			placeholder="e.g. Chest"
+			maxlength={MUSCLE_GROUP_MAX}
 			value={ex?.muscleGroup ?? ''}
 		/>
 	</div>
@@ -143,6 +146,7 @@
 			name="notes"
 			class="input"
 			placeholder="Grip, machine, tempo…"
+			maxlength={NOTES_MAX}
 			value={ex?.notes ?? ''}
 		/>
 	</div>

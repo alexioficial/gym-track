@@ -7,14 +7,27 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import OfflineBootstrap from '$lib/offline/OfflineBootstrap.svelte';
 	import SyncIndicator from '$lib/offline/SyncIndicator.svelte';
-	import { clearOfflineData } from '$lib/offline/store';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import RejectedChanges from '$lib/offline/RejectedChanges.svelte';
+	import { clearOfflineData, pendingChangeCount, synchronize } from '$lib/offline/store';
 	import type { LayoutData } from './$types';
 
 	let { children, data }: { children: import('svelte').Snippet; data: LayoutData } = $props();
 
 	const bare = $derived(page.url.pathname === '/login');
 
+	let unsyncedChanges = $state(0);
+	let loggingOut = $state(false);
+
+	// Logging out deletes the local copy, so unsynced changes would be lost.
+	async function requestLogout() {
+		if (navigator.onLine) await synchronize();
+		unsyncedChanges = await pendingChangeCount();
+		if (unsyncedChanges === 0) await logout();
+	}
+
 	async function logout() {
+		loggingOut = true;
 		await clearOfflineData(data.user?.id);
 		navigator.serviceWorker?.controller?.postMessage({ type: 'clear-user-data' });
 		if (navigator.onLine) {
@@ -55,7 +68,7 @@
 						</a>
 					{/if}
 				{/if}
-				<button class="rail-action" onclick={logout}>
+				<button class="rail-action" onclick={requestLogout}>
 					<Icon name="logout" size={18} />
 					<span>Log out</span>
 				</button>
@@ -83,7 +96,7 @@
 								</a>
 							{/if}
 						{/if}
-						<button class="icon-btn" title="Log out" aria-label="Log out" onclick={logout}>
+						<button class="icon-btn" title="Log out" aria-label="Log out" onclick={requestLogout}>
 							<Icon name="logout" size={18} />
 						</button>
 						{#if data.user}<SyncIndicator />{/if}
@@ -92,12 +105,24 @@
 			</header>
 
 			<main class="content">
+				{#if data.user}<RejectedChanges />{/if}
 				{@render children()}
 			</main>
 		</div>
 
 		<Nav variant="bottom" />
 	</div>
+
+	<ConfirmDialog
+		open={unsyncedChanges > 0}
+		title="Log out and lose changes?"
+		message={`${unsyncedChanges} change${unsyncedChanges === 1 ? ' has' : 's have'} not reached the server yet. Logging out now deletes ${unsyncedChanges === 1 ? 'it' : 'them'} from this device. Connect to the internet first to keep ${unsyncedChanges === 1 ? 'it' : 'them'}.`}
+		confirmLabel="Log out anyway"
+		busyLabel="Logging out…"
+		busy={loggingOut}
+		onCancel={() => (unsyncedChanges = 0)}
+		onConfirm={() => void logout()}
+	/>
 {/if}
 
 <style>

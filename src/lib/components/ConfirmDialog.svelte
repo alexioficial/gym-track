@@ -6,6 +6,7 @@
 		title: string;
 		message: string;
 		confirmLabel?: string;
+		busyLabel?: string;
 		busy?: boolean;
 		onConfirm: () => void;
 		onCancel: () => void;
@@ -16,6 +17,7 @@
 		title,
 		message,
 		confirmLabel = 'Delete',
+		busyLabel = 'Deleting…',
 		busy = false,
 		onConfirm,
 		onCancel
@@ -64,7 +66,7 @@
 					disabled={busy}
 					onclick={onConfirm}
 				>
-					{#if busy}Deleting…{:else}<Icon name="trash" size={15} /> {confirmLabel}{/if}
+					{#if busy}{busyLabel}{:else}<Icon name="trash" size={15} /> {confirmLabel}{/if}
 				</button>
 			</div>
 		</div>

@@ -6,6 +6,7 @@ export const SESSION_COOKIE = 'gym_session';
 
 const apiUrl = (env.API_URL || 'http://localhost:8080').replace(/\/$/, '');
 const frontendOrigin = (env.ORIGIN || 'http://localhost:3000').replace(/\/$/, '');
+const API_TIMEOUT_MS = 15_000;
 
 export class ApiError extends Error {
 	constructor(
@@ -24,7 +25,18 @@ async function request(cookies: Cookies, path: string, init: RequestInit = {}): 
 	if (init.method && init.method !== 'GET') headers.set('origin', frontendOrigin);
 	if (init.body) headers.set('content-type', 'application/json');
 
-	const response = await fetch(`${apiUrl}${path}`, { ...init, headers });
+	let response: Response;
+	try {
+		response = await fetch(`${apiUrl}${path}`, {
+			...init,
+			headers,
+			signal: AbortSignal.timeout(API_TIMEOUT_MS)
+		});
+	} catch (err) {
+		if (err instanceof DOMException && err.name === 'TimeoutError')
+			throw new ApiError(504, 'The API took too long to answer');
+		throw err;
+	}
 	if (!response.ok) {
 		let message = 'The API request failed';
 		try {

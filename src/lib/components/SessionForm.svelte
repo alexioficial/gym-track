@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import Icon from './Icon.svelte';
 	import ConfirmDialog from './ConfirmDialog.svelte';
 	import {
@@ -13,6 +14,14 @@
 	} from '$lib/types';
 	import { shortLabel, todayYmd } from '$lib/utils/progression';
 	import { missingExerciseOccurrences } from '$lib/utils/routines';
+	import {
+		MAX_REPS,
+		MAX_SESSION_ENTRIES,
+		MAX_SETS_PER_ENTRY,
+		MAX_WEIGHT,
+		NOTES_MAX,
+		sessionProblem
+	} from '$lib/limits';
 
 	interface Props {
 		exercises: Exercise[];
@@ -117,7 +126,8 @@
 	// The gym is used on a phone: if the screen is left mid-log (navigate away,
 	// app backgrounded, tab reloaded) the in-memory state would be lost. We mirror
 	// the working session to localStorage as it changes and restore it on return.
-	const DRAFT_KEY = 'gym:log-draft';
+	// Scoped per user so a shared device never offers one person's draft to another.
+	const DRAFT_KEY = `gym:log-draft:${page.data.user?.id ?? 'anonymous'}`;
 	const DRAFT_MAX_AGE = 1000 * 60 * 60 * 24 * 2; // ignore drafts older than 2 days
 	let loaded = $state(false);
 	let draftRecovered = $state(false);
@@ -246,14 +256,20 @@
 
 	async function save() {
 		if (!canSave || saving) return;
+		const input = {
+			date,
+			routineId: routineId || null,
+			notes: notes.trim() || undefined,
+			entries: payload
+		};
+		const problem = sessionProblem(input);
+		if (problem) {
+			mutationError = problem;
+			return;
+		}
 		saving = true;
 		try {
-			await onSave({
-				date,
-				routineId: routineId || null,
-				notes: notes.trim() || undefined,
-				entries: payload
-			});
+			await onSave(input);
 			if (mode === 'create') clearDraft();
 			mutationError = null;
 		} catch (error) {
@@ -373,6 +389,7 @@
 								inputmode="decimal"
 								step="0.5"
 								min="0"
+								max={MAX_WEIGHT}
 								class="input set-input"
 								placeholder={prev ? fmt(prev.weight) : '0'}
 								bind:value={set.weight}
@@ -382,6 +399,7 @@
 								inputmode="decimal"
 								step="0.5"
 								min="0"
+								max={MAX_REPS}
 								class="input set-input"
 								placeholder={prev ? fmt(prev.reps) : '0'}
 								bind:value={set.reps}
@@ -398,7 +416,12 @@
 					{/each}
 				</div>
 
-				<button type="button" class="btn btn-subtle add-set" onclick={() => addSet(entry)}>
+				<button
+					type="button"
+					class="btn btn-subtle add-set"
+					disabled={entry.sets.length >= MAX_SETS_PER_ENTRY}
+					onclick={() => addSet(entry)}
+				>
 					<Icon name="plus" size={14} stroke={2.5} /> Add set
 				</button>
 			</div>
@@ -417,7 +440,7 @@
 			<button
 				type="button"
 				class="btn btn-primary"
-				disabled={!pick}
+				disabled={!pick || entries.length >= MAX_SESSION_ENTRIES}
 				onclick={() => addExercise(pick)}
 			>
 				<Icon name="plus" size={16} stroke={2.5} /> Add
@@ -437,6 +460,7 @@
 			id="notes"
 			name="notes"
 			class="input"
+			maxlength={NOTES_MAX}
 			placeholder="How you felt, any pain…"
 			bind:value={notes}
 		/>
