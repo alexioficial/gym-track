@@ -36,18 +36,18 @@
 	}
 </script>
 
-<svelte:head><title>Progress - Gym Tracker</title></svelte:head>
+<svelte:head><title>Progreso - Gym Tracker</title></svelte:head>
 
-<PageHeader title="Progress" subtitle="Your progressive overload, week by week" />
+<PageHeader title="Progreso" subtitle="Tu sobrecarga progresiva, semana a semana" />
 
 {#if view.groups.length === 0}
 	<EmptyState
 		icon="trending"
-		title="No data yet"
-		message="Log sessions and you'll see how you progress on each exercise here: more weight, more reps or more volume."
+		title="Todavía no hay datos"
+		message="Registra sesiones y aquí verás cómo progresas en cada ejercicio: más peso, más repeticiones o más volumen."
 	>
 		<a href={resolve('/log')} class="btn btn-primary"
-			><Icon name="plus" size={16} stroke={2.5} /> Log session</a
+			><Icon name="plus" size={16} stroke={2.5} /> Registrar sesión</a
 		>
 	</EmptyState>
 {:else}
@@ -61,9 +61,11 @@
 					<p class="recap-sub muted">{r.rangeLabel} · {r.prevLabel}</p>
 				</div>
 				<div class="recap-counts">
-					{#if r.improved > 0}<span class="good">{r.improved} improved</span>{/if}
-					{#if r.same > 0}<span>{r.same} same</span>{/if}
-					{#if r.down > 0}<span class="bad">{r.down} down</span>{/if}
+					{#if r.improved > 0}<span class="good"
+							>{r.improved} {r.improved === 1 ? 'mejoró' : 'mejoraron'}</span
+						>{/if}
+					{#if r.same > 0}<span>{r.same} {r.same === 1 ? 'igual' : 'iguales'}</span>{/if}
+					{#if r.down > 0}<span class="bad">{r.down} {r.down === 1 ? 'bajó' : 'bajaron'}</span>{/if}
 				</div>
 			</div>
 
@@ -78,7 +80,8 @@
 						</div>
 						<div class="rl-change stat-num">
 							<span class="rl-set"
-								>{it.prevTopWeight}<span class="mul">×</span>{it.prevTopReps}</span
+								>{formatLoad(it.prevTopWeight, unit)}<span class="mul">×</span
+								>{it.prevTopReps}</span
 							>
 							<Icon name="chevron" size={14} />
 							<span
@@ -86,7 +89,7 @@
 								class:good={IMPROVEMENT_VERDICTS.includes(it.verdict)}
 								class:bad={it.verdict === 'down'}
 							>
-								{it.currTopWeight}<span class="mul">×</span>{it.currTopReps}
+								{formatLoad(it.currTopWeight, unit)}<span class="mul">×</span>{it.currTopReps}
 							</span>
 							<span class="rl-deltas">
 								{#if it.weight !== 0}<StatDelta
@@ -113,7 +116,7 @@
 					<span class="group-dot" style="background:{g.routine.color}"></span>
 					<h2 class="group-title">{g.routine.name}</h2>
 				{:else}
-					<h2 class="group-title muted-title">Other exercises</h2>
+					<h2 class="group-title muted-title">Otros ejercicios</h2>
 				{/if}
 				<span class="group-count">{g.items.length}</span>
 			</div>
@@ -126,12 +129,12 @@
 	{/each}
 
 	{#if view.untracked.length > 0}
-		<h2 class="sub">No data yet</h2>
+		<h2 class="sub">Todavía sin datos</h2>
 		<div class="untracked-list">
 			{#each view.untracked as ex (ex.id)}
 				<div class="untracked">
 					<span class="ex-name">{ex.name}</span>
-					<span class="muted small">Log it to start tracking</span>
+					<span class="muted small">Regístralo para empezar a seguirlo</span>
 				</div>
 			{/each}
 		</div>
@@ -159,7 +162,7 @@
 			{/if}
 			<div class="ex-delta">
 				{#if p.delta && p.delta.verdict === 'new'}
-					<span class="status-text neutral">First week</span>
+					<span class="status-text neutral">Primera semana</span>
 				{:else if p.delta && IMPROVEMENT_VERDICTS.includes(p.delta.verdict)}
 					<span class="status-text positive">{VERDICT_LABEL[p.delta.verdict]}</span>
 					{#if p.delta.weight !== 0}<StatDelta
@@ -171,9 +174,9 @@
 						<StatDelta value={displayStat(p.delta.volume, unit)} unit=" vol" />
 					{/if}
 				{:else if p.delta && p.delta.verdict === 'down'}
-					<span class="status-text negative">Down</span>
+					<span class="status-text negative">Bajó</span>
 				{:else}
-					<span class="status-text neutral">Same</span>
+					<span class="status-text neutral">Igual</span>
 				{/if}
 			</div>
 		</div>

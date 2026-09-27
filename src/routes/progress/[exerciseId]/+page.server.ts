@@ -10,7 +10,7 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
 		pageApi<Session[]>(cookies, '/api/sessions')
 	]);
 	const exercise = exercises.find((item) => item.id === params.exerciseId);
-	if (!exercise) throw error(404, 'Exercise not found');
+	if (!exercise) throw error(404, 'Ejercicio no encontrado');
 	const weeks = weeklyStatsForExercise(sessions, exercise.id);
 	const latest = weeks.length > 0 ? weeks[weeks.length - 1] : null;
 	const previous = weeks.length >= 2 ? weeks[weeks.length - 2] : null;

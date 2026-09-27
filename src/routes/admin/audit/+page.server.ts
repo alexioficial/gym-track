@@ -15,7 +15,7 @@ interface AuditItem {
 }
 
 function requireAdmin(locals: App.Locals) {
-	if (!locals.user?.isAdmin) throw error(403, 'Admins only');
+	if (!locals.user?.isAdmin) throw error(403, 'Solo para administradores');
 }
 
 export const load: PageServerLoad = async ({ locals, cookies, url }) => {

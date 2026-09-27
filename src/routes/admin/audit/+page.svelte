@@ -7,7 +7,7 @@
 
 	let { data }: { data: PageData } = $props();
 	function dateTime(value: string): string {
-		return new Date(value).toLocaleString();
+		return new Date(value).toLocaleString('es');
 	}
 
 	async function applyFilters(event: SubmitEvent) {
@@ -27,23 +27,23 @@
 	}
 </script>
 
-<svelte:head><title>Request audit · Gym Tracker</title></svelte:head>
+<svelte:head><title>Auditoría de peticiones · Gym Tracker</title></svelte:head>
 
-<PageHeader title="Request audit" subtitle="Encrypted request records retained for 30 days.">
+<PageHeader title="Auditoría de peticiones" subtitle="Registros cifrados que se guardan 30 días.">
 	{#snippet action()}<a href="/admin" class="btn btn-subtle btn-sm"
-			><Icon name="users" size={15} /> Users</a
+			><Icon name="users" size={15} /> Usuarios</a
 		>{/snippet}
 </PageHeader>
 
 <p class="notice">
-	Only an authenticated administrator can request decryption. Raw headers, cookies and bodies are
-	never stored in readable form in MongoDB.
+	Solo un administrador con sesión iniciada puede pedir el descifrado. Las contraseñas, cookies y
+	cabeceras de autenticación se censuran antes de guardarse.
 </p>
 
 <form class="filters" onsubmit={applyFilters}>
 	<div class="filter-grid">
 		<label
-			><span>From</span><input
+			><span>Desde</span><input
 				class="input"
 				type="date"
 				name="from"
@@ -51,7 +51,7 @@
 			/></label
 		>
 		<label
-			><span>To</span><input
+			><span>Hasta</span><input
 				class="input"
 				type="date"
 				name="to"
@@ -59,13 +59,13 @@
 			/></label
 		>
 		<label
-			><span>Method</span><select class="input" name="method" value={data.filters.method ?? ''}
-				><option value="">All</option><option>GET</option><option>POST</option><option>PUT</option
+			><span>Método</span><select class="input" name="method" value={data.filters.method ?? ''}
+				><option value="">Todos</option><option>GET</option><option>POST</option><option>PUT</option
 				><option>DELETE</option><option>OPTIONS</option></select
 			></label
 		>
 		<label
-			><span>Path (exact)</span><input
+			><span>Ruta (exacta)</span><input
 				class="input"
 				name="path"
 				placeholder="/api/auth/login"
@@ -73,14 +73,14 @@
 			/></label
 		>
 		<label
-			><span>Client</span><select class="input" name="client" value={data.filters.client ?? ''}
-				><option value="">All</option><option value="web">Web</option><option value="mobile-app"
-					>Mobile app</option
-				><option value="unknown">Unknown</option></select
+			><span>Cliente</span><select class="input" name="client" value={data.filters.client ?? ''}
+				><option value="">Todos</option><option value="web">Web</option><option value="mobile-app"
+					>App móvil</option
+				><option value="unknown">Desconocido</option></select
 			></label
 		>
 		<label
-			><span>Status</span><input
+			><span>Estado</span><input
 				class="input"
 				name="status"
 				inputmode="numeric"
@@ -90,24 +90,26 @@
 		>
 	</div>
 	<div class="filter-actions">
-		<button type="button" class="btn btn-subtle" onclick={clearFilters}>Clear</button>
-		<button type="submit" class="btn btn-primary">Apply filters</button>
+		<button type="button" class="btn btn-subtle" onclick={clearFilters}>Limpiar</button>
+		<button type="submit" class="btn btn-primary">Aplicar filtros</button>
 	</div>
 </form>
 
-<p class="count muted">Showing {data.items.length} most recent matching requests (up to 100).</p>
+<p class="count muted">
+	Mostrando las {data.items.length} peticiones más recientes que coinciden (máximo 100).
+</p>
 {#if data.items.length}
-	<div class="record-table" role="table" aria-label="Request audit records">
+	<div class="record-table" role="table" aria-label="Registros de auditoría">
 		<div class="record-head" role="row">
-			<span>Request</span><span>Client</span><span>IP address</span><span>Time</span><span
-				>Status</span
+			<span>Petición</span><span>Cliente</span><span>Dirección IP</span><span>Hora</span><span
+				>Estado</span
 			>
 		</div>
 		{#each data.items as item (item.id)}
 			<a class="record" href={`/admin/audit/${item.id}`} role="row">
 				<code class:bad={item.status >= 400}>{item.method} {item.path}</code>
 				<span>{item.clientKind}</span>
-				<span>{item.reportedClientIp ?? 'IP unavailable'}</span>
+				<span>{item.reportedClientIp ?? 'IP no disponible'}</span>
 				<span class="request-time"
 					>{dateTime(item.createdAt)} <small>{item.durationMs} ms</small></span
 				>
@@ -116,7 +118,7 @@
 		{/each}
 	</div>
 {:else}
-	<section class="empty"><p>No requests match these filters.</p></section>
+	<section class="empty"><p>Ninguna petición coincide con estos filtros.</p></section>
 {/if}
 
 <style>

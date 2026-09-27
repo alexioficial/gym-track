@@ -51,7 +51,7 @@
 	{/if}
 	<div class="app-shell">
 		<aside class="desktop-rail">
-			<a href={resolve('/')} class="brand rail-brand" aria-label="Gym Track home">
+			<a href={resolve('/')} class="brand rail-brand" aria-label="Inicio de Gym Track">
 				<span class="brand-mark"><Icon name="dumbbell" size={19} stroke={2.5} /></span>
 				<span class="brand-word">GYM TRACK</span>
 			</a>
@@ -59,20 +59,20 @@
 			<div class="rail-account">
 				{#if data.user}
 					<div class="rail-user">
-						<span class="rail-user-label">Signed in</span>
+						<span class="rail-user-label">Sesión iniciada</span>
 						<strong title={data.user.username}>{data.user.username}</strong>
 					</div>
 					<div class="rail-units"><UnitToggle /></div>
 					{#if data.user.isAdmin}
 						<a class="rail-action" href={resolve('/admin')}>
 							<Icon name="users" size={18} />
-							<span>Administration</span>
+							<span>Administración</span>
 						</a>
 					{/if}
 				{/if}
 				<button class="rail-action" onclick={requestLogout}>
 					<Icon name="logout" size={18} />
-					<span>Log out</span>
+					<span>Cerrar sesión</span>
 				</button>
 				{#if data.user}<SyncIndicator />{/if}
 			</div>
@@ -81,7 +81,7 @@
 		<div class="app-main">
 			<header class="topbar">
 				<div class="topbar-inner">
-					<a href={resolve('/')} class="brand" aria-label="Gym Track home">
+					<a href={resolve('/')} class="brand" aria-label="Inicio de Gym Track">
 						<span class="brand-mark"><Icon name="dumbbell" size={18} stroke={2.5} /></span>
 					</a>
 					<div class="account">
@@ -92,14 +92,19 @@
 								<a
 									class="icon-btn"
 									href={resolve('/admin')}
-									title="Manage users"
-									aria-label="Manage users"
+									title="Gestionar usuarios"
+									aria-label="Gestionar usuarios"
 								>
 									<Icon name="users" size={18} />
 								</a>
 							{/if}
 						{/if}
-						<button class="icon-btn" title="Log out" aria-label="Log out" onclick={requestLogout}>
+						<button
+							class="icon-btn"
+							title="Cerrar sesión"
+							aria-label="Cerrar sesión"
+							onclick={requestLogout}
+						>
 							<Icon name="logout" size={18} />
 						</button>
 						{#if data.user}<SyncIndicator />{/if}
@@ -118,10 +123,12 @@
 
 	<ConfirmDialog
 		open={unsyncedChanges > 0}
-		title="Log out and lose changes?"
-		message={`${unsyncedChanges} change${unsyncedChanges === 1 ? ' has' : 's have'} not reached the server yet. Logging out now deletes ${unsyncedChanges === 1 ? 'it' : 'them'} from this device. Connect to the internet first to keep ${unsyncedChanges === 1 ? 'it' : 'them'}.`}
-		confirmLabel="Log out anyway"
-		busyLabel="Logging out…"
+		title="¿Cerrar sesión y perder cambios?"
+		message={unsyncedChanges === 1
+			? '1 cambio todavía no ha llegado al servidor. Si cierras sesión ahora, se borrará de este dispositivo. Conéctate a internet primero para conservarlo.'
+			: `${unsyncedChanges} cambios todavía no han llegado al servidor. Si cierras sesión ahora, se borrarán de este dispositivo. Conéctate a internet primero para conservarlos.`}
+		confirmLabel="Cerrar sesión igualmente"
+		busyLabel="Cerrando sesión…"
 		busy={loggingOut}
 		onCancel={() => (unsyncedChanges = 0)}
 		onConfirm={() => void logout()}

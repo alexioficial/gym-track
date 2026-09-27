@@ -4,17 +4,17 @@
 	import type { RejectedChange } from './types';
 
 	const nouns: Record<RejectedChange['entity'], string> = {
-		exercise: 'exercise',
-		routine: 'routine',
-		session: 'workout',
-		schedule: 'schedule',
-		settings: 'setting'
+		exercise: 'Ejercicio',
+		routine: 'Rutina',
+		session: 'Entrenamiento',
+		schedule: 'Calendario',
+		settings: 'Ajuste'
 	};
 	const verbs: Record<RejectedChange['operation'], string> = {
-		create: 'New',
-		update: 'Edited',
-		delete: 'Deleted',
-		set: 'Updated'
+		create: 'nuevo',
+		update: 'editado',
+		delete: 'borrado',
+		set: 'actualizado'
 	};
 </script>
 
@@ -23,16 +23,16 @@
 		<div class="head">
 			<strong>
 				{$rejectedChanges.length === 1
-					? 'A change could not be saved'
-					: `${$rejectedChanges.length} changes could not be saved`}
+					? 'No se pudo guardar un cambio'
+					: `No se pudieron guardar ${$rejectedChanges.length} cambios`}
 			</strong>
-			<button type="button" class="close" aria-label="Dismiss" onclick={dismissRejectedChanges}>
+			<button type="button" class="close" aria-label="Cerrar" onclick={dismissRejectedChanges}>
 				<Icon name="x" size={16} />
 			</button>
 		</div>
 		<ul>
 			{#each $rejectedChanges as change (change.mutationId)}
-				<li>{verbs[change.operation]} {nouns[change.entity]}: {change.error}</li>
+				<li>{nouns[change.entity]} {verbs[change.operation]}: {change.error}</li>
 			{/each}
 		</ul>
 	</section>

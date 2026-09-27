@@ -16,8 +16,8 @@
 		open,
 		title,
 		message,
-		confirmLabel = 'Delete',
-		busyLabel = 'Deleting…',
+		confirmLabel = 'Borrar',
+		busyLabel = 'Borrando…',
 		busy = false,
 		onConfirm,
 		onCancel
@@ -58,7 +58,8 @@
 				<p id="confirm-dialog-message">{message}</p>
 			</div>
 			<div class="dialog-actions">
-				<button type="button" class="btn btn-subtle" disabled={busy} onclick={cancel}>Cancel</button
+				<button type="button" class="btn btn-subtle" disabled={busy} onclick={cancel}
+					>Cancelar</button
 				>
 				<button
 					type="button"

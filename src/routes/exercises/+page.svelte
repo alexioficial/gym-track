@@ -18,16 +18,16 @@
 	const exercises = $derived($offlineData?.exercises ?? data.exercises);
 
 	const MUSCLE_GROUPS = [
-		'Chest',
-		'Back',
-		'Legs',
-		'Shoulders',
-		'Biceps',
-		'Triceps',
-		'Core',
-		'Glutes',
-		'Calves',
-		'Forearms',
+		'Pecho',
+		'Espalda',
+		'Piernas',
+		'Hombros',
+		'Bíceps',
+		'Tríceps',
+		'Abdomen',
+		'Glúteos',
+		'Pantorrillas',
+		'Antebrazos',
 		'Cardio'
 	];
 
@@ -62,7 +62,7 @@
 			mutationError = null;
 			closeForms();
 		} catch (error) {
-			mutationError = error instanceof Error ? error.message : 'Could not save your exercise';
+			mutationError = error instanceof Error ? error.message : 'No se pudo guardar tu ejercicio';
 		}
 	}
 
@@ -75,7 +75,7 @@
 			mutationError = null;
 			closeForms();
 		} catch (error) {
-			mutationError = error instanceof Error ? error.message : 'Could not save your exercise';
+			mutationError = error instanceof Error ? error.message : 'No se pudo guardar tu ejercicio';
 		}
 	}
 
@@ -88,7 +88,7 @@
 			mutationError = null;
 			closeForms();
 		} catch (error) {
-			mutationError = error instanceof Error ? error.message : 'Could not delete your exercise';
+			mutationError = error instanceof Error ? error.message : 'No se pudo borrar tu ejercicio';
 		} finally {
 			pendingDelete = null;
 			deleting = false;
@@ -96,12 +96,12 @@
 	}
 </script>
 
-<svelte:head><title>Exercises - Gym Tracker</title></svelte:head>
+<svelte:head><title>Ejercicios - Gym Tracker</title></svelte:head>
 
-<PageHeader title="Exercises" subtitle="Your movement catalog">
+<PageHeader title="Ejercicios" subtitle="Tu catálogo de ejercicios">
 	{#snippet action()}
 		<button class="btn btn-primary" onclick={startNew}>
-			<Icon name="plus" size={16} stroke={2.5} /> New
+			<Icon name="plus" size={16} stroke={2.5} /> Nuevo
 		</button>
 	{/snippet}
 </PageHeader>
@@ -116,36 +116,36 @@
 
 {#snippet fields(ex: Exercise | null)}
 	<div class="field">
-		<label class="label" for="name-{ex?.id ?? 'new'}">Name</label>
+		<label class="label" for="name-{ex?.id ?? 'new'}">Nombre</label>
 		<input
 			id="name-{ex?.id ?? 'new'}"
 			name="name"
 			class="input"
-			placeholder="e.g. Bench press"
+			placeholder="p. ej. Press de banca"
 			maxlength={NAME_MAX}
 			value={ex?.name ?? ''}
 			required
 		/>
 	</div>
 	<div class="field">
-		<label class="label" for="mg-{ex?.id ?? 'new'}">Muscle group</label>
+		<label class="label" for="mg-{ex?.id ?? 'new'}">Grupo muscular</label>
 		<input
 			id="mg-{ex?.id ?? 'new'}"
 			name="muscleGroup"
 			class="input"
 			list="muscle-groups"
-			placeholder="e.g. Chest"
+			placeholder="p. ej. Pecho"
 			maxlength={MUSCLE_GROUP_MAX}
 			value={ex?.muscleGroup ?? ''}
 		/>
 	</div>
 	<div class="field">
-		<label class="label" for="notes-{ex?.id ?? 'new'}">Notes (optional)</label>
+		<label class="label" for="notes-{ex?.id ?? 'new'}">Notas (opcional)</label>
 		<input
 			id="notes-{ex?.id ?? 'new'}"
 			name="notes"
 			class="input"
-			placeholder="Grip, machine, tempo…"
+			placeholder="Agarre, máquina, tempo…"
 			maxlength={NOTES_MAX}
 			value={ex?.notes ?? ''}
 		/>
@@ -156,8 +156,8 @@
 	<form class="form-card" onsubmit={createExercise}>
 		{@render fields(null)}
 		<div class="form-actions">
-			<button type="button" class="btn btn-subtle" onclick={closeForms}>Cancel</button>
-			<button type="submit" class="btn btn-primary"><Icon name="check" size={16} /> Save</button>
+			<button type="button" class="btn btn-subtle" onclick={closeForms}>Cancelar</button>
+			<button type="submit" class="btn btn-primary"><Icon name="check" size={16} /> Guardar</button>
 		</div>
 	</form>
 {/if}
@@ -165,19 +165,19 @@
 {#if exercises.length === 0 && !showNew}
 	<EmptyState
 		icon="dumbbell"
-		title="No exercises yet"
-		message="Create your first exercise to start building routines."
+		title="Todavía no hay ejercicios"
+		message="Crea tu primer ejercicio para empezar a armar rutinas."
 	>
 		<button class="btn btn-primary" onclick={startNew}>
-			<Icon name="plus" size={16} stroke={2.5} /> New exercise
+			<Icon name="plus" size={16} stroke={2.5} /> Nuevo ejercicio
 		</button>
 	</EmptyState>
 {:else}
 	<div class="exercise-ledger">
 		<div class="exercise-head" aria-hidden="true">
-			<span>Exercise</span>
-			<span>Muscle group</span>
-			<span>Notes</span>
+			<span>Ejercicio</span>
+			<span>Grupo muscular</span>
+			<span>Notas</span>
 			<span></span>
 		</div>
 		{#each exercises as ex (ex.id)}
@@ -190,12 +190,12 @@
 							class="btn btn-danger"
 							onclick={() => (pendingDelete = { id: ex.id, name: ex.name })}
 						>
-							<Icon name="trash" size={15} /> Delete
+							<Icon name="trash" size={15} /> Borrar
 						</button>
 						<div class="spacer"></div>
-						<button type="button" class="btn btn-subtle" onclick={closeForms}>Cancel</button>
+						<button type="button" class="btn btn-subtle" onclick={closeForms}>Cancelar</button>
 						<button type="submit" class="btn btn-primary"
-							><Icon name="check" size={16} /> Save</button
+							><Icon name="check" size={16} /> Guardar</button
 						>
 					</div>
 				</form>
@@ -204,7 +204,7 @@
 					<span class="row-name">{ex.name}</span>
 					<span class="row-muscle">{ex.muscleGroup || '—'}</span>
 					<span class="row-notes">{ex.notes || '—'}</span>
-					<button class="icon-action" aria-label="Edit" onclick={() => startEdit(ex)}>
+					<button class="icon-action" aria-label="Editar" onclick={() => startEdit(ex)}>
 						<Icon name="pencil" size={16} />
 					</button>
 				</div>
@@ -215,11 +215,11 @@
 
 <ConfirmDialog
 	open={pendingDelete !== null}
-	title="Delete exercise?"
+	title="¿Borrar ejercicio?"
 	message={pendingDelete
-		? `“${pendingDelete.name}” will be removed from your exercise catalog. This cannot be undone.`
+		? `«${pendingDelete.name}» se quitará de tu catálogo de ejercicios. No se puede deshacer.`
 		: ''}
-	confirmLabel="Delete exercise"
+	confirmLabel="Borrar ejercicio"
 	busy={deleting}
 	onCancel={() => (pendingDelete = null)}
 	onConfirm={() => void deleteExercise()}

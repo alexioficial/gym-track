@@ -63,18 +63,18 @@
 	}
 </script>
 
-<svelte:head><title>Log session - Gym Tracker</title></svelte:head>
+<svelte:head><title>Registrar sesión - Gym Tracker</title></svelte:head>
 
 <PageHeader
-	title={logMode === 'create' ? 'New session' : 'Modify last log'}
+	title={logMode === 'create' ? 'Nueva sesión' : 'Modificar el último registro'}
 	subtitle={logMode === 'create'
-		? 'Log what you did today'
+		? 'Registra lo que hiciste hoy'
 		: latestSession
-			? `Editing ${formatDate(latestSession.date)}`
-			: 'There are no sessions to modify'}
+			? `Editando ${formatDate(latestSession.date)}`
+			: 'No hay sesiones para modificar'}
 />
 
-<div class="log-mode" role="group" aria-label="Choose logging action">
+<div class="log-mode" role="group" aria-label="Elige qué quieres registrar">
 	<button
 		type="button"
 		class="mode-option"
@@ -83,7 +83,7 @@
 		onclick={() => (logMode = 'create')}
 	>
 		<Icon name="plus" size={17} stroke={2.5} />
-		<span>New log</span>
+		<span>Nuevo registro</span>
 	</button>
 	<button
 		type="button"
@@ -94,7 +94,7 @@
 		onclick={() => (logMode = 'edit-last')}
 	>
 		<Icon name="pencil" size={16} />
-		<span>Modify last log</span>
+		<span>Modificar el último</span>
 	</button>
 </div>
 
@@ -124,16 +124,19 @@
 
 {#if history.length > 0}
 	<section class="block">
-		<h2 class="block-title">History</h2>
+		<h2 class="block-title">Historial</h2>
 		<div class="history-ledger">
 			{#each history as s (s.id)}
 				<a href={resolve('/log/[id]', { id: s.id })} class="sess">
 					<span class="dot" style="background:{s.routineColor ?? 'var(--color-muted)'}"></span>
 					<div class="sess-info">
-						<span class="sess-routine">{s.routineName ?? 'Free session'}</span>
+						<span class="sess-routine">{s.routineName ?? 'Sesión libre'}</span>
 						<span class="muted sess-date">{formatDate(s.date)}</span>
 					</div>
-					<span class="muted sess-meta stat-num">{s.exerciseCount} ex · {s.setCount} sets</span>
+					<span class="muted sess-meta stat-num"
+						>{s.exerciseCount} ej. · {s.setCount}
+						{s.setCount === 1 ? 'serie' : 'series'}</span
+					>
 					<Icon name="chevron" size={16} />
 				</a>
 			{/each}

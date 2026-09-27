@@ -101,7 +101,7 @@
 			mutationError = null;
 			close();
 		} catch (error) {
-			mutationError = error instanceof Error ? error.message : 'Could not save your routine';
+			mutationError = error instanceof Error ? error.message : 'No se pudo guardar tu rutina';
 		}
 	}
 
@@ -114,7 +114,7 @@
 			mutationError = null;
 			close();
 		} catch (error) {
-			mutationError = error instanceof Error ? error.message : 'Could not save your routine';
+			mutationError = error instanceof Error ? error.message : 'No se pudo guardar tu rutina';
 		}
 	}
 
@@ -127,7 +127,7 @@
 			mutationError = null;
 			close();
 		} catch (error) {
-			mutationError = error instanceof Error ? error.message : 'Could not delete your routine';
+			mutationError = error instanceof Error ? error.message : 'No se pudo borrar tu rutina';
 		} finally {
 			pendingDelete = null;
 			deleting = false;
@@ -148,7 +148,7 @@
 			});
 			mutationError = null;
 		} catch (error) {
-			mutationError = error instanceof Error ? error.message : 'Could not duplicate your routine';
+			mutationError = error instanceof Error ? error.message : 'No se pudo duplicar tu rutina';
 		} finally {
 			duplicatingId = null;
 		}
@@ -159,17 +159,18 @@
 			await queueOfflineMutation('schedule', 'set', day, { routineId: routineId || null });
 			mutationError = null;
 		} catch (error) {
-			mutationError = error instanceof Error ? error.message : 'Could not update your schedule';
+			mutationError =
+				error instanceof Error ? error.message : 'No se pudo actualizar tu calendario';
 		}
 	}
 </script>
 
-<svelte:head><title>Routines - Gym Tracker</title></svelte:head>
+<svelte:head><title>Rutinas - Gym Tracker</title></svelte:head>
 
-<PageHeader title="Routines" subtitle="Build your routines and assign them to the week">
+<PageHeader title="Rutinas" subtitle="Arma tus rutinas y asígnalas a la semana">
 	{#snippet action()}
 		<button class="btn btn-primary" onclick={startNew}>
-			<Icon name="plus" size={16} stroke={2.5} /> New
+			<Icon name="plus" size={16} stroke={2.5} /> Nueva
 		</button>
 	{/snippet}
 </PageHeader>
@@ -178,7 +179,7 @@
 
 <!-- Weekly calendar -->
 <section class="block">
-	<h2 class="block-title">Week schedule</h2>
+	<h2 class="block-title">Calendario semanal</h2>
 	<div class="week">
 		{#each WEEKDAYS as day (day)}
 			{@const assigned = schedule[day] ? routineById.get(schedule[day]!) : null}
@@ -192,7 +193,7 @@
 						class="input day-select"
 						onchange={(e) => void setDay(day, e.currentTarget.value)}
 					>
-						<option value="" selected={!schedule[day]}>Rest</option>
+						<option value="" selected={!schedule[day]}>Descanso</option>
 						{#each routines as r (r.id)}
 							<option value={r.id} selected={schedule[day] === r.id}>{r.name}</option>
 						{/each}
@@ -206,12 +207,12 @@
 <!-- Routine form (reusable fields) -->
 {#snippet routineFields(routine: Routine | null)}
 	<div class="field">
-		<label class="label" for="rname-{routine?.id ?? 'new'}">Routine name</label>
+		<label class="label" for="rname-{routine?.id ?? 'new'}">Nombre de la rutina</label>
 		<input
 			id="rname-{routine?.id ?? 'new'}"
 			name="name"
 			class="input"
-			placeholder="e.g. Push, Upper, Leg A…"
+			placeholder="p. ej. Empuje, Torso, Pierna A…"
 			maxlength={NAME_MAX}
 			value={routine?.name ?? ''}
 			required
@@ -227,7 +228,7 @@
 						type="radio"
 						name="color"
 						value={color}
-						aria-label="Routine color {i + 1}"
+						aria-label="Color de rutina {i + 1}"
 						checked={routine ? routine.color === color : i === 0}
 					/>
 					<span class="swatch-dot"></span>
@@ -237,14 +238,16 @@
 	</div>
 
 	<div class="field">
-		<span class="label">Exercises & sets</span>
+		<span class="label">Ejercicios y series</span>
 		{#if exercises.length === 0}
 			<p class="muted hint">
-				First create exercises in the <a href={resolve('/exercises')} class="accent">Exercises</a> tab.
+				Primero crea ejercicios en la pestaña <a href={resolve('/exercises')} class="accent"
+					>Ejercicios</a
+				>.
 			</p>
 		{:else}
 			{#if assigned.length > 0}
-				<p class="muted micro">In the order you'll do them — use ↑ ↓ to reorder.</p>
+				<p class="muted micro">En el orden en que los harás; usa ↑ ↓ para reordenar.</p>
 				<div class="assigned">
 					{#each assigned as a, i (a.rowId)}
 						<div class="arow">
@@ -252,7 +255,7 @@
 								<button
 									type="button"
 									class="reo"
-									aria-label="Move up"
+									aria-label="Subir"
 									disabled={i === 0}
 									onclick={() => move(i, -1)}
 								>
@@ -261,7 +264,7 @@
 								<button
 									type="button"
 									class="reo"
-									aria-label="Move down"
+									aria-label="Bajar"
 									disabled={i === assigned.length - 1}
 									onclick={() => move(i, 1)}
 								>
@@ -278,7 +281,7 @@
 								<button
 									type="button"
 									class="step"
-									aria-label="Fewer sets"
+									aria-label="Menos series"
 									disabled={a.sets <= MIN_ROUTINE_SETS}
 									onclick={() => changeSets(a.rowId, -1)}
 								>
@@ -288,7 +291,7 @@
 								<button
 									type="button"
 									class="step"
-									aria-label="More sets"
+									aria-label="Más series"
 									disabled={a.sets >= MAX_ROUTINE_SETS}
 									onclick={() => changeSets(a.rowId, 1)}
 								>
@@ -298,7 +301,7 @@
 							<button
 								type="button"
 								class="arow-del"
-								aria-label="Remove"
+								aria-label="Quitar"
 								onclick={() => removeExercise(a.rowId)}
 							>
 								<Icon name="x" size={16} />
@@ -332,9 +335,9 @@
 	<form class="form-card" onsubmit={createRoutine}>
 		{@render routineFields(null)}
 		<div class="form-actions">
-			<button type="button" class="btn btn-subtle" onclick={close}>Cancel</button>
+			<button type="button" class="btn btn-subtle" onclick={close}>Cancelar</button>
 			<button type="submit" class="btn btn-primary"
-				><Icon name="check" size={16} /> Create routine</button
+				><Icon name="check" size={16} /> Crear rutina</button
 			>
 		</div>
 	</form>
@@ -342,16 +345,16 @@
 
 <!-- Routine list -->
 <section class="block">
-	<h2 class="block-title">Your routines</h2>
+	<h2 class="block-title">Tus rutinas</h2>
 
 	{#if routines.length === 0 && !showNew}
 		<EmptyState
 			icon="calendar"
-			title="No routines yet"
-			message="Create a routine and assign exercises to it."
+			title="Todavía no hay rutinas"
+			message="Crea una rutina y asígnale ejercicios."
 		>
 			<button class="btn btn-primary" onclick={startNew}>
-				<Icon name="plus" size={16} stroke={2.5} /> New routine
+				<Icon name="plus" size={16} stroke={2.5} /> Nueva rutina
 			</button>
 		</EmptyState>
 	{:else}
@@ -366,12 +369,12 @@
 								class="btn btn-danger"
 								onclick={() => (pendingDelete = { id: routine.id, name: routine.name })}
 							>
-								<Icon name="trash" size={15} /> Delete
+								<Icon name="trash" size={15} /> Borrar
 							</button>
 							<div class="spacer"></div>
-							<button type="button" class="btn btn-subtle" onclick={close}>Cancel</button>
+							<button type="button" class="btn btn-subtle" onclick={close}>Cancelar</button>
 							<button type="submit" class="btn btn-primary"
-								><Icon name="check" size={16} /> Save</button
+								><Icon name="check" size={16} /> Guardar</button
 							>
 						</div>
 					</form>
@@ -382,14 +385,14 @@
 							<button
 								type="button"
 								class="icon-action"
-								aria-label="Duplicate {routine.name}"
-								title="Duplicate"
+								aria-label="Duplicar {routine.name}"
+								title="Duplicar"
 								disabled={duplicatingId !== null}
 								onclick={() => void duplicateRoutine(routine)}
 							>
 								<Icon name="copy" size={16} />
 							</button>
-							<button class="icon-action" aria-label="Edit" onclick={() => startEdit(routine.id)}>
+							<button class="icon-action" aria-label="Editar" onclick={() => startEdit(routine.id)}>
 								<Icon name="pencil" size={16} />
 							</button>
 						</div>
@@ -400,13 +403,15 @@
 										<li>
 											<span class="exercise-order stat-num">{String(i + 1).padStart(2, '0')}</span>
 											<span class="exercise-name">{exerciseName.get(re.exerciseId)}</span>
-											<span class="exercise-sets stat-num">{re.sets} sets</span>
+											<span class="exercise-sets stat-num"
+												>{re.sets} {re.sets === 1 ? 'serie' : 'series'}</span
+											>
 										</li>
 									{/if}
 								{/each}
 							</ol>
 						{:else}
-							<p class="muted hint">No exercises assigned</p>
+							<p class="muted hint">Sin ejercicios asignados</p>
 						{/if}
 					</div>
 				{/if}
@@ -417,11 +422,11 @@
 
 <ConfirmDialog
 	open={pendingDelete !== null}
-	title="Delete routine?"
+	title="¿Borrar rutina?"
 	message={pendingDelete
-		? `“${pendingDelete.name}” and its weekly assignments will be removed. Your workout history will remain intact.`
+		? `Se quitarán «${pendingDelete.name}» y sus días asignados en la semana. Tu historial de entrenamientos no se toca.`
 		: ''}
-	confirmLabel="Delete routine"
+	confirmLabel="Borrar rutina"
 	busy={deleting}
 	onCancel={() => (pendingDelete = null)}
 	onConfirm={() => void deleteRoutine()}

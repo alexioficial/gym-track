@@ -18,32 +18,33 @@
 			});
 			window.location.assign('/');
 		} catch (error) {
-			loginError = error instanceof ClientApiError ? error.message : 'Could not reach the API';
+			loginError =
+				error instanceof ClientApiError ? error.message : 'No se pudo conectar con el servidor';
 			loading = false;
 		}
 	}
 </script>
 
-<svelte:head><title>Sign in - Gym Tracker</title></svelte:head>
+<svelte:head><title>Iniciar sesión - Gym Tracker</title></svelte:head>
 
 <div class="auth-wrap">
 	<main class="auth-sheet">
 		<section class="identity" aria-label="Training Ledger">
 			<div class="brand-mark"><Icon name="dumbbell" size={24} stroke={2.5} /></div>
 			<p class="eyebrow">Training Ledger</p>
-			<h1>Pick up where<br />you left off.</h1>
+			<h1>Sigue donde<br />lo dejaste.</h1>
 			<p class="identity-copy">
-				Your routines, working sets and training history in one focused record.
+				Tus rutinas, tus series y tu historial de entrenamiento en un solo registro.
 			</p>
 		</section>
 
 		<section class="sign-in">
-			<p class="eyebrow accent">Account access</p>
-			<h2>Sign in</h2>
-			<p class="muted auth-sub">Use your Gym Tracker account.</p>
+			<p class="eyebrow accent">Acceso a tu cuenta</p>
+			<h2>Iniciar sesión</h2>
+			<p class="muted auth-sub">Usa tu cuenta de Gym Tracker.</p>
 
 			<form onsubmit={submit}>
-				<label class="label" for="username">Username</label>
+				<label class="label" for="username">Usuario</label>
 				<input
 					id="username"
 					name="username"
@@ -52,12 +53,12 @@
 					autocapitalize="none"
 					autocorrect="off"
 					spellcheck="false"
-					placeholder="username"
+					placeholder="usuario"
 					class="input field"
 					required
 				/>
 
-				<label class="label" for="password">Password</label>
+				<label class="label" for="password">Contraseña</label>
 				<input
 					id="password"
 					name="password"
@@ -71,7 +72,7 @@
 				{#if loginError}<p class="error">{loginError}</p>{/if}
 
 				<button type="submit" class="btn btn-primary auth-btn" disabled={loading}>
-					{#if loading}Signing in…{:else}<Icon name="lock" size={16} /> Sign in{/if}
+					{#if loading}Entrando…{:else}<Icon name="lock" size={16} /> Entrar{/if}
 				</button>
 			</form>
 		</section>

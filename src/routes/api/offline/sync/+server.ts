@@ -16,7 +16,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 	try {
 		body = await request.json();
 	} catch {
-		return json({ error: 'Invalid request body' }, { status: 400 });
+		return json({ error: 'Petición no válida' }, { status: 400 });
 	}
 	try {
 		return json(

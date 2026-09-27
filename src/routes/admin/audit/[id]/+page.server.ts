@@ -3,7 +3,7 @@ import type { PageServerLoad } from './$types';
 import { pageApi } from '$lib/server/api';
 
 export const load: PageServerLoad = async ({ locals, cookies, params }) => {
-	if (!locals.user?.isAdmin) throw error(403, 'Admins only');
+	if (!locals.user?.isAdmin) throw error(403, 'Solo para administradores');
 	return {
 		record: await pageApi<Record<string, unknown>>(cookies, `/api/admin/audit/${params.id}`)
 	};

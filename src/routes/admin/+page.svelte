@@ -19,7 +19,7 @@
 	let resetOpen = $state<string | null>(null);
 
 	function fmtDate(iso: string): string {
-		return new Date(iso).toLocaleDateString(undefined, {
+		return new Date(iso).toLocaleDateString('es', {
 			year: 'numeric',
 			month: 'short',
 			day: 'numeric'
@@ -27,7 +27,7 @@
 	}
 
 	function message(error: unknown): string {
-		return error instanceof ClientApiError ? error.message : 'Could not reach the API';
+		return error instanceof ClientApiError ? error.message : 'No se pudo conectar con el servidor';
 	}
 
 	async function createUser(event: SubmitEvent) {
@@ -44,7 +44,7 @@
 				password: String(values.get('password') ?? '')
 			});
 			form.reset();
-			notice = { kind: 'good', text: `Created ${username.toLowerCase()}.` };
+			notice = { kind: 'good', text: `Se creó ${username.toLowerCase()}.` };
 			await invalidateAll();
 		} catch (error) {
 			notice = { kind: 'bad', text: message(error) };
@@ -60,7 +60,7 @@
 		notice = null;
 		try {
 			await jsonRequest(`/api/admin/users/${target.id}`, 'DELETE');
-			notice = { kind: 'good', text: 'User deleted.' };
+			notice = { kind: 'good', text: 'Usuario borrado.' };
 			await invalidateAll();
 		} catch (error) {
 			notice = { kind: 'bad', text: message(error) };
@@ -83,7 +83,7 @@
 			});
 			form.reset();
 			resetOpen = null;
-			notice = { kind: 'good', text: 'Password updated.' };
+			notice = { kind: 'good', text: 'Contraseña actualizada.' };
 		} catch (error) {
 			notice = { kind: 'bad', text: message(error) };
 		} finally {
@@ -92,12 +92,12 @@
 	}
 </script>
 
-<svelte:head><title>Users · Gym Tracker</title></svelte:head>
+<svelte:head><title>Usuarios · Gym Tracker</title></svelte:head>
 
-<PageHeader title="Users" subtitle="Create and manage who can sign in">
+<PageHeader title="Usuarios" subtitle="Crea y gestiona quién puede entrar">
 	{#snippet action()}
 		<a href={resolve('/admin/audit')} class="btn btn-subtle btn-sm"
-			><Icon name="trending" size={15} /> Audit</a
+			><Icon name="trending" size={15} /> Auditoría</a
 		>
 	{/snippet}
 </PageHeader>
@@ -113,56 +113,58 @@
 {/if}
 
 <section class="create-card">
-	<h2 class="block-title">New user</h2>
+	<h2 class="block-title">Nuevo usuario</h2>
 	<form onsubmit={createUser}>
 		<div class="create-grid">
 			<div>
-				<label class="label" for="new-username">Username</label>
+				<label class="label" for="new-username">Usuario</label>
 				<input
 					id="new-username"
 					name="username"
 					type="text"
 					class="input"
-					placeholder="e.g. juan.perez"
+					placeholder="p. ej. juan.perez"
 					autocapitalize="none"
 					autocorrect="off"
 					spellcheck="false"
 					pattern={usernamePattern}
-					title="Lowercase letters, numbers, dots and underscores (3–30 chars)"
+					title="Minúsculas, números, puntos y guiones bajos (3–30 caracteres)"
 					required
 				/>
 			</div>
 			<div>
-				<label class="label" for="new-password">Password</label>
+				<label class="label" for="new-password">Contraseña</label>
 				<input
 					id="new-password"
 					name="password"
 					type="password"
 					class="input"
-					placeholder="at least 6 characters"
+					placeholder="al menos 6 caracteres"
 					autocomplete="off"
 					minlength="6"
 					required
 				/>
 			</div>
 		</div>
-		<p class="hint muted">Usernames use lowercase letters, numbers, dots and underscores.</p>
+		<p class="hint muted">
+			Los usuarios solo pueden tener minúsculas, números, puntos y guiones bajos.
+		</p>
 		<button type="submit" class="btn btn-primary" disabled={creating}>
-			{#if creating}Creating…{:else}<Icon name="check" size={16} /> Create user{/if}
+			{#if creating}Creando…{:else}<Icon name="check" size={16} /> Crear usuario{/if}
 		</button>
 	</form>
 </section>
 
 <section class="block">
 	<div class="section-heading">
-		<h2 class="block-title">All users</h2>
+		<h2 class="block-title">Todos los usuarios</h2>
 		<span class="user-count data-value">{data.users.length}</span>
 	</div>
-	<div class="user-table" role="table" aria-label="Users">
+	<div class="user-table" role="table" aria-label="Usuarios">
 		<div class="table-head" role="row">
-			<span role="columnheader">Username</span><span role="columnheader">Access</span><span
-				role="columnheader">Added</span
-			><span role="columnheader">Actions</span>
+			<span role="columnheader">Usuario</span><span role="columnheader">Acceso</span><span
+				role="columnheader">Alta</span
+			><span role="columnheader">Acciones</span>
 		</div>
 		{#each data.users as u (u.id)}
 			<div class="user" role="row">
@@ -171,7 +173,7 @@
 						<span class="user-name">{u.username}</span>
 					</div>
 					<span class="access" class:access-admin={u.isAdmin}
-						>{u.isAdmin ? 'Administrator' : 'Member'}</span
+						>{u.isAdmin ? 'Administrador' : 'Miembro'}</span
 					>
 					<span class="muted user-date">{fmtDate(u.createdAt)}</span>
 
@@ -182,12 +184,12 @@
 								class="btn btn-subtle btn-sm"
 								onclick={() => (resetOpen = resetOpen === u.id ? null : u.id)}
 							>
-								<Icon name="lock" size={14} /> Reset password
+								<Icon name="lock" size={14} /> Cambiar contraseña
 							</button>
 							<button
 								type="button"
 								class="btn btn-danger btn-sm"
-								aria-label="Delete user"
+								aria-label="Borrar usuario"
 								disabled={deletingId === u.id}
 								onclick={() => (pendingDelete = { id: u.id, username: u.username })}
 							>
@@ -203,13 +205,13 @@
 							name="password"
 							type="password"
 							class="input"
-							placeholder="New password (min 6)"
+							placeholder="Nueva contraseña (mín. 6)"
 							autocomplete="off"
 							minlength="6"
 							required
 						/>
 						<button type="submit" class="btn btn-primary btn-sm" disabled={resettingId === u.id}
-							>Set</button
+							>Guardar</button
 						>
 					</form>
 				{/if}
@@ -220,11 +222,11 @@
 
 <ConfirmDialog
 	open={pendingDelete !== null}
-	title="Delete user?"
+	title="¿Borrar usuario?"
 	message={pendingDelete
-		? `“${pendingDelete.username}” and all of their gym data will be permanently deleted. This cannot be undone.`
+		? `«${pendingDelete.username}» y todos sus datos de entrenamiento se borrarán para siempre. No se puede deshacer.`
 		: ''}
-	confirmLabel="Delete user"
+	confirmLabel="Borrar usuario"
 	busy={deletingId !== null}
 	onCancel={() => (pendingDelete = null)}
 	onConfirm={() => void deleteUser()}

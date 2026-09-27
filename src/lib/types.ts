@@ -13,23 +13,23 @@ export const WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as con
 export type Weekday = (typeof WEEKDAYS)[number];
 
 export const WEEKDAY_LABELS: Record<Weekday, string> = {
-	mon: 'Monday',
-	tue: 'Tuesday',
-	wed: 'Wednesday',
-	thu: 'Thursday',
-	fri: 'Friday',
-	sat: 'Saturday',
-	sun: 'Sunday'
+	mon: 'Lunes',
+	tue: 'Martes',
+	wed: 'Miércoles',
+	thu: 'Jueves',
+	fri: 'Viernes',
+	sat: 'Sábado',
+	sun: 'Domingo'
 };
 
 export const WEEKDAY_SHORT: Record<Weekday, string> = {
-	mon: 'Mon',
-	tue: 'Tue',
-	wed: 'Wed',
-	thu: 'Thu',
-	fri: 'Fri',
-	sat: 'Sat',
-	sun: 'Sun'
+	mon: 'Lun',
+	tue: 'Mar',
+	wed: 'Mié',
+	thu: 'Jue',
+	fri: 'Vie',
+	sat: 'Sáb',
+	sun: 'Dom'
 };
 
 // Allowed accent palette for routines (all harmonize with the dark/yellow theme).

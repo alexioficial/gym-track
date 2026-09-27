@@ -39,13 +39,13 @@
 	}
 </script>
 
-<svelte:head><title>Edit session - Gym Tracker</title></svelte:head>
+<svelte:head><title>Editar sesión - Gym Tracker</title></svelte:head>
 
 <a href={resolve('/log')} class="back">
-	<Icon name="back" size={16} /> Back
+	<Icon name="back" size={16} /> Volver
 </a>
 
-<PageHeader title="Edit session" subtitle={formatDate(session.date)} />
+<PageHeader title="Editar sesión" subtitle={formatDate(session.date)} />
 
 {#key session.id}
 	<SessionForm

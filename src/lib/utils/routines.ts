@@ -1,13 +1,14 @@
 const ROUTINE_NAME_MAX = 100;
-const COPY_SUFFIX = /\s+\(Copy(?: \d+)?\)$/i;
+// Also strips the English suffix used before the app was translated.
+const COPY_SUFFIX = /\s+\((?:Copia|Copy)(?: \d+)?\)$/i;
 
 /** Returns the first available, API-safe name for a duplicated routine. */
 export function duplicatedRoutineName(source: string, existingNames: Iterable<string>): string {
 	const used = new Set(Array.from(existingNames, (name) => name.trim().toLocaleLowerCase()));
-	const base = source.trim().replace(COPY_SUFFIX, '').trim() || 'Routine';
+	const base = source.trim().replace(COPY_SUFFIX, '').trim() || 'Rutina';
 	let number = 1;
 	while (true) {
-		const suffix = number === 1 ? ' (Copy)' : ` (Copy ${number})`;
+		const suffix = number === 1 ? ' (Copia)' : ` (Copia ${number})`;
 		const prefix = Array.from(base)
 			.slice(0, ROUTINE_NAME_MAX - suffix.length)
 			.join('')

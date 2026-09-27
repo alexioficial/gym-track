@@ -34,11 +34,11 @@ async function request(cookies: Cookies, path: string, init: RequestInit = {}): 
 		});
 	} catch (err) {
 		if (err instanceof DOMException && err.name === 'TimeoutError')
-			throw new ApiError(504, 'The API took too long to answer');
+			throw new ApiError(504, 'El servidor tardó demasiado en responder');
 		throw err;
 	}
 	if (!response.ok) {
-		let message = 'The API request failed';
+		let message = 'La petición al servidor falló';
 		try {
 			const body = (await response.json()) as { error?: unknown };
 			if (typeof body.error === 'string') message = body.error;
@@ -105,7 +105,7 @@ export async function login<T>(
 		body: JSON.stringify(credentials)
 	});
 	const token = sessionToken(response);
-	if (!token) throw new ApiError(502, 'The API did not create a session');
+	if (!token) throw new ApiError(502, 'El servidor no creó la sesión');
 	writeSessionCookie(cookies, token);
 	return (await response.json()) as T;
 }

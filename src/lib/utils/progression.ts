@@ -126,32 +126,32 @@ export function isoWeekKey(ymd: string): string {
 }
 
 const MONTHS_SHORT = [
-	'Jan',
-	'Feb',
-	'Mar',
-	'Apr',
-	'May',
-	'Jun',
-	'Jul',
-	'Aug',
-	'Sep',
-	'Oct',
-	'Nov',
-	'Dec'
+	'ene',
+	'feb',
+	'mar',
+	'abr',
+	'may',
+	'jun',
+	'jul',
+	'ago',
+	'sep',
+	'oct',
+	'nov',
+	'dic'
 ];
 
-/** Short date label, e.g. "Jul 14". */
+/** Short date label, e.g. "14 jul". */
 export function shortLabel(ymd: string): string {
 	const d = parseDate(ymd);
-	return `${MONTHS_SHORT[d.getMonth()]} ${d.getDate()}`;
+	return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`;
 }
 
-const DOW_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DOW_SHORT = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
-/** Date with weekday, e.g. "Mon, Jul 14". */
+/** Date with weekday, e.g. "Lun, 14 jul". */
 export function formatDate(ymd: string): string {
 	const d = parseDate(ymd);
-	return `${DOW_SHORT[d.getDay()]}, ${MONTHS_SHORT[d.getMonth()]} ${d.getDate()}`;
+	return `${DOW_SHORT[d.getDay()]}, ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`;
 }
 
 /** Today's date in YYYY-MM-DD format (local time). */
@@ -312,13 +312,13 @@ export function buildExerciseProgress(
 export const IMPROVEMENT_VERDICTS: Verdict[] = ['weight', 'reps', 'both', 'volume'];
 
 export const VERDICT_LABEL: Record<Verdict, string> = {
-	weight: 'More weight',
-	reps: 'More reps',
-	both: 'Weight + reps',
-	volume: 'More volume',
-	same: 'Same',
-	down: 'Down',
-	new: 'First week'
+	weight: 'Más peso',
+	reps: 'Más reps',
+	both: 'Peso + reps',
+	volume: 'Más volumen',
+	same: 'Igual',
+	down: 'Bajó',
+	new: 'Primera semana'
 };
 
 /**
@@ -420,9 +420,9 @@ export function buildWeeklyRecap(progress: ExerciseProgress[]): WeeklyRecap | nu
 
 	return {
 		weekKey: currKey,
-		label: isThisWeek ? 'This week' : `Week of ${shortLabel(currStart)}`,
+		label: isThisWeek ? 'Esta semana' : `Semana del ${shortLabel(currStart)}`,
 		rangeLabel: `${shortLabel(currStart)} – ${shortLabel(addDays(currStart, 6))}`,
-		prevLabel: `vs week of ${shortLabel(prevStart)}`,
+		prevLabel: `vs. semana del ${shortLabel(prevStart)}`,
 		improved,
 		same,
 		down,

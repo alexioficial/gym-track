@@ -18,22 +18,22 @@ export interface SessionInput {
 
 /** Returns a user-facing reason the API would reject this session, or null. */
 export function sessionProblem(input: SessionInput): string | null {
-	if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date)) return 'Enter a valid session date';
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date)) return 'Introduce una fecha válida';
 	const year = Number(input.date.slice(0, 4));
-	if (year < 1900 || year > 2100) return 'Enter a valid session date';
-	if (input.entries.length === 0) return 'Add at least one set with reps';
+	if (year < 1900 || year > 2100) return 'Introduce una fecha válida';
+	if (input.entries.length === 0) return 'Añade al menos una serie con repeticiones';
 	if (input.entries.length > MAX_SESSION_ENTRIES)
-		return `A session can have at most ${MAX_SESSION_ENTRIES} exercises`;
+		return `Una sesión puede tener como máximo ${MAX_SESSION_ENTRIES} ejercicios`;
 	if ((input.notes ?? '').trim().length > NOTES_MAX)
-		return `Notes can be at most ${NOTES_MAX} characters`;
+		return `Las notas pueden tener como máximo ${NOTES_MAX} caracteres`;
 	for (const entry of input.entries) {
 		if (entry.sets.length > MAX_SETS_PER_ENTRY)
-			return `An exercise can have at most ${MAX_SETS_PER_ENTRY} sets`;
+			return `Un ejercicio puede tener como máximo ${MAX_SETS_PER_ENTRY} series`;
 		for (const set of entry.sets) {
 			if (!Number.isFinite(set.weight) || set.weight < 0 || set.weight > MAX_WEIGHT)
-				return `Weight must be between 0 and ${MAX_WEIGHT}`;
+				return `El peso debe estar entre 0 y ${MAX_WEIGHT} lb`;
 			if (!Number.isFinite(set.reps) || set.reps <= 0 || set.reps > MAX_REPS)
-				return `Reps must be more than 0 and at most ${MAX_REPS}`;
+				return `Las repeticiones deben ser más de 0 y como máximo ${MAX_REPS}`;
 		}
 	}
 	return null;

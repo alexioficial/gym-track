@@ -6,7 +6,7 @@
 	const unit = $derived(weightUnitOf($offlineData, page.data.user));
 </script>
 
-<div class="units" role="group" aria-label="Weight unit">
+<div class="units" role="group" aria-label="Unidad de peso">
 	{#each WEIGHT_UNITS as option (option)}
 		<button
 			type="button"

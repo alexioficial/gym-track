@@ -59,9 +59,9 @@
 	<div class="chart">
 		<div class="legend">
 			<span class="lg lg-line">e1RM</span>
-			<span class="lg lg-bar">Volume</span>
+			<span class="lg lg-bar">Volumen</span>
 		</div>
-		<svg viewBox="0 0 {W} {H}" class="svg" role="img" aria-label="Progress by week">
+		<svg viewBox="0 0 {W} {H}" class="svg" role="img" aria-label="Progreso por semana">
 			<!-- volume bars -->
 			{#each geo.points as p (p.cx)}
 				<rect

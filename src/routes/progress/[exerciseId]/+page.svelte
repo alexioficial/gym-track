@@ -42,19 +42,19 @@
 	function message(d: Delta): string {
 		switch (d.verdict) {
 			case 'both':
-				return 'You lifted more weight and more reps than last week.';
+				return 'Levantaste más peso y más repeticiones que la semana pasada.';
 			case 'weight':
-				return 'You lifted more weight than last week.';
+				return 'Levantaste más peso que la semana pasada.';
 			case 'reps':
-				return 'You did more reps at the same weight.';
+				return 'Hiciste más repeticiones con el mismo peso.';
 			case 'volume':
-				return 'You did more total volume this week.';
+				return 'Hiciste más volumen total esta semana.';
 			case 'same':
-				return 'You held steady compared to last week.';
+				return 'Te mantuviste igual que la semana pasada.';
 			case 'down':
-				return 'You dropped compared to last week. Let’s get after it this week.';
+				return 'Bajaste respecto a la semana pasada. ¡A por ello esta semana!';
 			case 'new':
-				return 'First week logged. Time to build the base!';
+				return 'Primera semana registrada. ¡A construir la base!';
 		}
 	}
 
@@ -65,16 +65,17 @@
 	}
 </script>
 
-<svelte:head><title>{view.exercise.name} - Progress</title></svelte:head>
+<svelte:head><title>{view.exercise.name} - Progreso</title></svelte:head>
 
-<a href={resolve('/progress')} class="back"><Icon name="back" size={16} /> Progress</a>
+<a href={resolve('/progress')} class="back"><Icon name="back" size={16} /> Progreso</a>
 
 <header class="head">
 	<h1 class="head-title">{view.exercise.name}</h1>
 	<div class="head-meta">
 		{#if view.exercise.muscleGroup}<span class="muscle-group">{view.exercise.muscleGroup}</span
 			>{/if}
-		<span class="muted small">{view.weeks.length} {view.weeks.length === 1 ? 'week' : 'weeks'}</span
+		<span class="muted small"
+			>{view.weeks.length} {view.weeks.length === 1 ? 'semana' : 'semanas'}</span
 		>
 	</div>
 </header>
@@ -82,8 +83,8 @@
 {#if !view.latest || !view.delta}
 	<EmptyState
 		icon="trending"
-		title="No data yet"
-		message="Log sessions with this exercise to see your progress."
+		title="Todavía no hay datos"
+		message="Registra sesiones con este ejercicio para ver tu progreso."
 	/>
 {:else}
 	<!-- Verdict of the week -->
@@ -111,7 +112,7 @@
 				/>{/if}
 		</div>
 		<div class="stat">
-			<span class="stat-label muted">Top set</span>
+			<span class="stat-label muted">Mejor serie</span>
 			<span class="stat-value stat-num"
 				>{formatLoad(view.latest.topWeight, unit)}<small>×{view.latest.topReps}</small></span
 			>
@@ -121,7 +122,7 @@
 				/>{/if}
 		</div>
 		<div class="stat">
-			<span class="stat-label muted">Volume</span>
+			<span class="stat-label muted">Volumen</span>
 			<span class="stat-value stat-num"
 				>{displayStat(view.latest.totalVolume, unit)}<small>{unit}</small></span
 			>
@@ -133,13 +134,13 @@
 	<ProgressChart weeks={view.weeks} {unit} />
 
 	<!-- Weekly table -->
-	<h2 class="sub">Week by week</h2>
+	<h2 class="sub">Semana a semana</h2>
 	<div class="table-wrap">
 		<table class="tbl">
 			<thead>
 				<tr>
-					<th>Week</th>
-					<th>Top set</th>
+					<th>Semana</th>
+					<th>Mejor serie</th>
 					<th>e1RM</th>
 					<th>Vol.</th>
 					<th></th>

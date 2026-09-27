@@ -49,11 +49,11 @@
 	);
 </script>
 
-<svelte:head><title>Home - Gym Tracker</title></svelte:head>
+<svelte:head><title>Inicio - Gym Tracker</title></svelte:head>
 
 <section class="hero">
 	<div class="hero-top">
-		<span class="section-label">Today · {view.today.label}</span>
+		<span class="section-label">Hoy · {view.today.label}</span>
 		{#if view.today.routine}
 			<span class="dot" style="background:{view.today.routine.color}"></span>
 		{/if}
@@ -62,19 +62,20 @@
 	{#if view.today.routine}
 		<h1 class="hero-title">{view.today.routine.name}</h1>
 		<p class="muted hero-sub">
-			{view.today.routine.exercises.length} exercises in this routine
+			{view.today.routine.exercises.length}
+			{view.today.routine.exercises.length === 1 ? 'ejercicio' : 'ejercicios'} en esta rutina
 		</p>
 	{:else}
-		<h1 class="hero-title">Rest day</h1>
-		<p class="muted hero-sub">No routine assigned for today</p>
+		<h1 class="hero-title">Día de descanso</h1>
+		<p class="muted hero-sub">No hay rutina asignada para hoy</p>
 	{/if}
 
 	<div class="hero-footer">
-		<span class="hero-prompt">Ready when you are</span>
+		<span class="hero-prompt">Cuando estés listo</span>
 		<!-- The URL is base-aware; the query is appended after resolving the route. -->
 		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 		<a href={logHref} class="btn btn-primary hero-btn">
-			<Icon name="plus" size={18} stroke={2.5} /> Log session
+			<Icon name="plus" size={18} stroke={2.5} /> Registrar sesión
 		</a>
 	</div>
 </section>
@@ -82,22 +83,22 @@
 <section class="counters">
 	<a href={resolve('/exercises')} class="counter">
 		<span class="counter-num stat-num">{view.counts.exercises}</span>
-		<span class="counter-label">Exercises</span>
+		<span class="counter-label">Ejercicios</span>
 	</a>
 	<a href={resolve('/routines')} class="counter">
 		<span class="counter-num stat-num">{view.counts.routines}</span>
-		<span class="counter-label">Routines</span>
+		<span class="counter-label">Rutinas</span>
 	</a>
 	<a href={resolve('/log')} class="counter">
 		<span class="counter-num stat-num">{view.counts.sessions}</span>
-		<span class="counter-label">Sessions</span>
+		<span class="counter-label">Sesiones</span>
 	</a>
 </section>
 
 <section class="block">
 	<div class="block-head">
-		<h2 class="block-title">Your progress</h2>
-		<a href={resolve('/progress')} class="block-link">See all <Icon name="chevron" size={14} /></a>
+		<h2 class="block-title">Tu progreso</h2>
+		<a href={resolve('/progress')} class="block-link">Ver todo <Icon name="chevron" size={14} /></a>
 	</div>
 
 	{#if view.improvements.length > 0}
@@ -127,8 +128,8 @@
 	{:else}
 		<div class="note">
 			<p class="muted">
-				Log your sessions for at least <strong class="subtle">2 weeks</strong> to see where you're improving
-				on each exercise.
+				Registra tus sesiones durante al menos <strong class="subtle">2 semanas</strong> para ver en qué
+				ejercicios estás mejorando.
 			</p>
 		</div>
 	{/if}
@@ -137,17 +138,20 @@
 {#if view.recent.length > 0}
 	<section class="block">
 		<div class="block-head">
-			<h2 class="block-title">Recent sessions</h2>
+			<h2 class="block-title">Sesiones recientes</h2>
 		</div>
 		<div class="ledger-list">
 			{#each view.recent as s (s.id)}
 				<a href={resolve('/log/[id]', { id: s.id })} class="sess">
 					<span class="dot" style="background:{s.routineColor ?? 'var(--color-muted)'}"></span>
 					<div class="sess-info">
-						<span class="sess-routine">{s.routineName ?? 'Free session'}</span>
+						<span class="sess-routine">{s.routineName ?? 'Sesión libre'}</span>
 						<span class="muted sess-date">{formatDate(s.date)}</span>
 					</div>
-					<span class="muted sess-meta stat-num">{s.exerciseCount} ex · {s.setCount} sets</span>
+					<span class="muted sess-meta stat-num"
+						>{s.exerciseCount} ej. · {s.setCount}
+						{s.setCount === 1 ? 'serie' : 'series'}</span
+					>
 					<Icon name="chevron" size={16} />
 				</a>
 			{/each}

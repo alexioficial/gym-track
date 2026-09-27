@@ -2,7 +2,7 @@ import { json, type RequestHandler } from '@sveltejs/kit';
 import { api, ApiError } from '$lib/server/api';
 
 export const POST: RequestHandler = async ({ request, locals, cookies }) => {
-	if (!locals.user?.isAdmin) return json({ error: 'Admins only' }, { status: 403 });
+	if (!locals.user?.isAdmin) return json({ error: 'Solo para administradores' }, { status: 403 });
 	let body: { username?: unknown; password?: unknown };
 	try {
 		body = (await request.json()) as typeof body;

@@ -2,12 +2,14 @@
 	import { synchronize, syncStatus } from './store';
 
 	const label = $derived.by(() => {
-		if ($syncStatus.phase === 'syncing') return 'Syncing changes…';
-		if ($syncStatus.phase === 'offline') return 'Offline';
-		if ($syncStatus.phase === 'error') return 'Sync paused';
+		if ($syncStatus.phase === 'syncing') return 'Sincronizando cambios…';
+		if ($syncStatus.phase === 'offline') return 'Sin conexión';
+		if ($syncStatus.phase === 'error') return 'Sincronización en pausa';
 		if ($syncStatus.pending > 0)
-			return `${$syncStatus.pending} change${$syncStatus.pending === 1 ? '' : 's'} pending`;
-		return 'Synced';
+			return $syncStatus.pending === 1
+				? '1 cambio pendiente'
+				: `${$syncStatus.pending} cambios pendientes`;
+		return 'Sincronizado';
 	});
 	const tone = $derived($syncStatus.phase);
 </script>

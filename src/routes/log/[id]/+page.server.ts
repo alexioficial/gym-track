@@ -22,7 +22,7 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
 			})
 		};
 	} catch (cause) {
-		if (cause instanceof ApiError && cause.status === 404) throw error(404, 'Session not found');
+		if (cause instanceof ApiError && cause.status === 404) throw error(404, 'Sesión no encontrada');
 		throw cause;
 	}
 };

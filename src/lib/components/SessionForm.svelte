@@ -296,7 +296,7 @@
 			if (mode === 'create') clearDraft();
 			mutationError = null;
 		} catch (error) {
-			mutationError = error instanceof Error ? error.message : 'Could not save your session';
+			mutationError = error instanceof Error ? error.message : 'No se pudo guardar tu sesión';
 		} finally {
 			saving = false;
 		}
@@ -314,7 +314,7 @@
 			await onDelete();
 			mutationError = null;
 		} catch (error) {
-			mutationError = error instanceof Error ? error.message : 'Could not delete your session';
+			mutationError = error instanceof Error ? error.message : 'No se pudo borrar tu sesión';
 		} finally {
 			deletePending = false;
 			deleting = false;
@@ -326,19 +326,19 @@
 	{#if draftRecovered}
 		<div class="draft-banner">
 			<Icon name="clipboard" size={16} />
-			<span class="draft-text">Recovered your unsaved session.</span>
-			<button type="button" class="draft-discard" onclick={discardDraft}>Discard</button>
+			<span class="draft-text">Recuperamos tu sesión sin guardar.</span>
+			<button type="button" class="draft-discard" onclick={discardDraft}>Descartar</button>
 		</div>
 	{/if}
 	{#if mutationError}<p class="form-error" aria-live="polite">{mutationError}</p>{/if}
 
 	<div class="top">
 		<div class="field">
-			<label class="label" for="date">Date</label>
+			<label class="label" for="date">Fecha</label>
 			<input id="date" name="date" type="date" class="input" bind:value={date} required />
 		</div>
 		<div class="field">
-			<label class="label" for="routine">Routine</label>
+			<label class="label" for="routine">Rutina</label>
 			<select
 				id="routine"
 				name="routineId"
@@ -346,7 +346,7 @@
 				bind:value={routineId}
 				onchange={onRoutineChange}
 			>
-				<option value="">Free session</option>
+				<option value="">Sesión libre</option>
 				{#each routines as r (r.id)}
 					<option value={r.id}>{r.name}</option>
 				{/each}
@@ -355,8 +355,8 @@
 		{#if selectedRoutine && missingFromRoutine.length > 0}
 			<button type="button" class="btn btn-ghost load-btn" onclick={loadRoutine}>
 				<Icon name="plus" size={15} stroke={2.5} />
-				Add {missingFromRoutine.length}
-				{missingFromRoutine.length === 1 ? 'exercise' : 'exercises'} from {selectedRoutine.name}
+				Añadir {missingFromRoutine.length}
+				{missingFromRoutine.length === 1 ? 'ejercicio' : 'ejercicios'} de {selectedRoutine.name}
 			</button>
 		{/if}
 	</div>
@@ -367,7 +367,7 @@
 			<div class="entry">
 				<div class="entry-head">
 					<div class="entry-title">
-						<span class="entry-name">{exerciseName.get(entry.exerciseId) ?? 'Exercise'}</span>
+						<span class="entry-name">{exerciseName.get(entry.exerciseId) ?? 'Ejercicio'}</span>
 						{#if exerciseMg.get(entry.exerciseId)}
 							<span class="muted entry-mg">{exerciseMg.get(entry.exerciseId)}</span>
 						{/if}
@@ -375,7 +375,7 @@
 					<button
 						type="button"
 						class="icon-action"
-						aria-label="Remove exercise"
+						aria-label="Quitar ejercicio"
 						onclick={() => removeEntry(entry.id)}
 					>
 						<Icon name="x" size={16} />
@@ -384,9 +384,9 @@
 
 				{#if lastByExercise[entry.exerciseId]}
 					{@const last = lastByExercise[entry.exerciseId]}
-					<div class="last-ref" title="Beat this to make progress">
+					<div class="last-ref" title="Supera esto para progresar">
 						<Icon name="history" size={13} />
-						<span class="last-label">Last · {shortLabel(last.date)}</span>
+						<span class="last-label">Última vez · {shortLabel(last.date)}</span>
 						<span class="last-sets">
 							{#each last.sets as s, i (i)}
 								<span class="last-set"
@@ -400,7 +400,7 @@
 				<div class="sets">
 					<div class="set-head muted">
 						<span>#</span>
-						<span>Weight ({unit})</span>
+						<span>Peso ({unit})</span>
 						<span>Reps</span>
 						<span></span>
 					</div>
@@ -431,7 +431,7 @@
 							<button
 								type="button"
 								class="set-del"
-								aria-label="Remove set"
+								aria-label="Quitar serie"
 								onclick={() => removeSet(entry, set.id)}
 							>
 								<Icon name="minus" size={15} />
@@ -446,7 +446,7 @@
 					disabled={entry.sets.length >= MAX_SETS_PER_ENTRY}
 					onclick={() => addSet(entry)}
 				>
-					<Icon name="plus" size={14} stroke={2.5} /> Add set
+					<Icon name="plus" size={14} stroke={2.5} /> Añadir serie
 				</button>
 			</div>
 		{/each}
@@ -456,7 +456,7 @@
 	{#if exercises.length > 0}
 		<div class="add-ex">
 			<select class="input" bind:value={pick}>
-				<option value="">Add exercise…</option>
+				<option value="">Añadir ejercicio…</option>
 				{#each exercises as ex (ex.id)}
 					<option value={ex.id}>{ex.name}</option>
 				{/each}
@@ -467,25 +467,24 @@
 				disabled={!pick || entries.length >= MAX_SESSION_ENTRIES}
 				onclick={() => addExercise(pick)}
 			>
-				<Icon name="plus" size={16} stroke={2.5} /> Add
+				<Icon name="plus" size={16} stroke={2.5} /> Añadir
 			</button>
 		</div>
 	{:else if entries.length === 0}
 		<p class="muted empty-note">
-			You have no exercises. Create them in <a href={resolve('/exercises')} class="accent"
-				>Exercises</a
+			No tienes ejercicios. Créalos en <a href={resolve('/exercises')} class="accent">Ejercicios</a
 			>.
 		</p>
 	{/if}
 
 	<div class="field">
-		<label class="label" for="notes">Notes (optional)</label>
+		<label class="label" for="notes">Notas (opcional)</label>
 		<input
 			id="notes"
 			name="notes"
 			class="input"
 			maxlength={NOTES_MAX}
-			placeholder="How you felt, any pain…"
+			placeholder="Cómo te sentiste, alguna molestia…"
 			bind:value={notes}
 		/>
 	</div>
@@ -494,23 +493,23 @@
 		{#if mode === 'edit'}
 			{#if onDelete}
 				<button type="button" class="btn btn-danger" onclick={() => (deletePending = true)}>
-					<Icon name="trash" size={15} /> Delete
+					<Icon name="trash" size={15} /> Borrar
 				</button>
 			{/if}
 		{/if}
 		<div class="spacer"></div>
 		<button type="submit" class="btn btn-primary save-btn" disabled={!canSave || saving}>
 			<Icon name="check" size={17} stroke={2.5} />
-			{saving ? 'Saving…' : 'Save session'}
+			{saving ? 'Guardando…' : 'Guardar sesión'}
 		</button>
 	</div>
 </form>
 
 <ConfirmDialog
 	open={deletePending}
-	title="Delete session?"
-	message="This workout and all of its logged sets will be permanently deleted. This cannot be undone."
-	confirmLabel="Delete session"
+	title="¿Borrar sesión?"
+	message="Este entrenamiento y todas sus series se borrarán para siempre. No se puede deshacer."
+	confirmLabel="Borrar sesión"
 	busy={deleting}
 	onCancel={() => (deletePending = false)}
 	onConfirm={() => void remove()}

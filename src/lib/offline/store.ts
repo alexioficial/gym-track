@@ -227,7 +227,7 @@ async function updateStatus(
 
 async function ensureInitialized(): Promise<void> {
 	if (initializing) await initializing;
-	if (!currentUserId || !currentSnapshot) throw new Error('Offline data is not ready yet');
+	if (!currentUserId || !currentSnapshot) throw new Error('Tus datos locales aún no están listos');
 }
 
 /**
@@ -329,8 +329,10 @@ export async function synchronize(): Promise<void> {
 			if (!response.ok) {
 				const message = await response
 					.json()
-					.then((body: { error?: string }) => body.error ?? 'Could not synchronize your changes')
-					.catch(() => 'Could not synchronize your changes');
+					.then(
+						(body: { error?: string }) => body.error ?? 'No se pudieron sincronizar tus cambios'
+					)
+					.catch(() => 'No se pudieron sincronizar tus cambios');
 				throw new Error(message);
 			}
 			const body = (await response.json()) as OfflineSyncResponse;
@@ -355,7 +357,7 @@ export async function synchronize(): Promise<void> {
 							mutationId: item.mutationId,
 							entity: item.entity,
 							operation: item.operation,
-							error: item.error ?? 'The server rejected this change'
+							error: item.error ?? 'El servidor rechazó este cambio'
 						}))
 					]);
 				}
@@ -366,7 +368,7 @@ export async function synchronize(): Promise<void> {
 		} catch (error) {
 			const message =
 				error instanceof DOMException && error.name === 'TimeoutError'
-					? 'The server took too long to answer'
+					? 'El servidor tardó demasiado en responder'
 					: error instanceof Error
 						? error.message
 						: null;

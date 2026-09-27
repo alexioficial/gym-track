@@ -12,14 +12,14 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 	const username = typeof body.username === 'string' ? body.username.trim() : '';
 	const password = typeof body.password === 'string' ? body.password : '';
 	if (!username || !password) {
-		return json({ error: 'Enter your username and password' }, { status: 400 });
+		return json({ error: 'Introduce tu usuario y contraseña' }, { status: 400 });
 	}
 	try {
 		return json(await login<SessionUser>(cookies, { username, password }));
 	} catch (error) {
 		if (error instanceof ApiError) {
 			return json(
-				{ error: error.status === 401 ? 'Wrong username or password' : error.message },
+				{ error: error.status === 401 ? 'Usuario o contraseña incorrectos' : error.message },
 				{ status: error.status }
 			);
 		}

@@ -6,21 +6,21 @@
 	const json = $derived(JSON.stringify(data.record, null, 2));
 </script>
 
-<svelte:head><title>Decrypted request · Gym Tracker</title></svelte:head>
+<svelte:head><title>Petición descifrada · Gym Tracker</title></svelte:head>
 <PageHeader
-	title="Decrypted request"
-	subtitle="Sensitive data — visible only to this administrator session."
+	title="Petición descifrada"
+	subtitle="Datos sensibles: solo visibles en esta sesión de administrador."
 >
 	{#snippet action()}<a href="/admin/audit" class="btn btn-subtle btn-sm"
-			><Icon name="trending" size={15} /> Back</a
+			><Icon name="trending" size={15} /> Volver</a
 		>{/snippet}
 </PageHeader>
 <p class="warning">
-	Do not copy, share, or screenshot this record. It may contain passwords, session cookies and other
-	sensitive request data.
+	No copies, compartas ni hagas capturas de este registro. Puede contener datos personales y otros
+	datos sensibles de la petición.
 </p>
-<section class="payload-section" aria-label="Decrypted JSON payload">
-	<p class="payload-label">Decrypted JSON</p>
+<section class="payload-section" aria-label="JSON descifrado">
+	<p class="payload-label">JSON descifrado</p>
 	<pre class="payload">{json}</pre>
 </section>
 

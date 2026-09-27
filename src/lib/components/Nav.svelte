@@ -10,11 +10,11 @@
 	let { variant = 'bottom' }: Props = $props();
 
 	const items = [
-		{ href: resolve('/'), label: 'Home', icon: 'home' },
-		{ href: resolve('/routines'), label: 'Routines', icon: 'calendar' },
-		{ href: resolve('/log'), label: 'Log', icon: 'plus' },
-		{ href: resolve('/progress'), label: 'Progress', icon: 'trending' },
-		{ href: resolve('/exercises'), label: 'Exercises', icon: 'dumbbell' }
+		{ href: resolve('/'), label: 'Inicio', icon: 'home' },
+		{ href: resolve('/routines'), label: 'Rutinas', icon: 'calendar' },
+		{ href: resolve('/log'), label: 'Registrar', icon: 'plus' },
+		{ href: resolve('/progress'), label: 'Progreso', icon: 'trending' },
+		{ href: resolve('/exercises'), label: 'Ejercicios', icon: 'dumbbell' }
 	];
 
 	function isActive(href: string): boolean {
@@ -26,7 +26,7 @@
 
 <nav
 	class="nav {variant}"
-	aria-label={variant === 'rail' ? 'Primary navigation' : 'Mobile navigation'}
+	aria-label={variant === 'rail' ? 'Navegación principal' : 'Navegación móvil'}
 >
 	{#each items as item (item.href)}
 		<a

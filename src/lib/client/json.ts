@@ -24,7 +24,7 @@ export async function jsonRequest<T>(
 	const payload = (await response.json().catch(() => ({}))) as { error?: unknown };
 	if (!response.ok) {
 		throw new ClientApiError(
-			typeof payload.error === 'string' ? payload.error : 'The request failed',
+			typeof payload.error === 'string' ? payload.error : 'La petición falló',
 			response.status
 		);
 	}
