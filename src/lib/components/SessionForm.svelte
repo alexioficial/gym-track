@@ -1,17 +1,21 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { get } from 'svelte/store';
 	import { browser } from '$app/environment';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import Icon from './Icon.svelte';
 	import ConfirmDialog from './ConfirmDialog.svelte';
+	import type { Exercise, LastPerformance, Routine, Session } from '$lib/types';
+	import { offlineData, weightUnitOf } from '$lib/offline/store';
 	import {
-		UNIT,
-		type Exercise,
-		type LastPerformance,
-		type Routine,
-		type Session
-	} from '$lib/types';
+		LB_PER_KG,
+		formatLoad,
+		isWeightUnit,
+		storedWeight,
+		weightField,
+		type WeightField
+	} from '$lib/units';
 	import { shortLabel, todayYmd } from '$lib/utils/progression';
 	import { missingExerciseOccurrences } from '$lib/utils/routines';
 	import {
@@ -59,7 +63,12 @@
 	/** Trim a value for display: "135", "5.5" — no trailing ".0". */
 	const fmt = (n: number) => String(Math.round(n * 100) / 100);
 
-	type EditSet = { id: number; weight: number | null; reps: number | null };
+	// Fixed for the life of the form: typed values are read in the unit they were typed in.
+	const unit = weightUnitOf(get(offlineData), page.data.user);
+	const maxWeight = unit === 'kg' ? Math.floor(MAX_WEIGHT / LB_PER_KG) : MAX_WEIGHT;
+
+	type EditSet = WeightField & { id: number; reps: number | null };
+	const emptySet = (): EditSet => ({ id: nextId(), ...weightField(null, unit), reps: null });
 	type EditEntry = { id: number; exerciseId: string; sets: EditSet[] };
 
 	let counter = 0;
@@ -70,7 +79,7 @@
 			return initial.session.entries.map((e) => ({
 				id: nextId(),
 				exerciseId: e.exerciseId,
-				sets: e.sets.map((s) => ({ id: nextId(), weight: s.weight, reps: s.reps }))
+				sets: e.sets.map((s) => ({ id: nextId(), ...weightField(s.weight, unit), reps: s.reps }))
 			}));
 		}
 		// When creating with a preselected routine, preload its exercises + planned sets.
@@ -111,7 +120,7 @@
 			.map((e) => ({
 				exerciseId: e.exerciseId,
 				sets: e.sets
-					.map((s) => ({ weight: Number(s.weight ?? 0), reps: Number(s.reps ?? 0) }))
+					.map((s) => ({ weight: storedWeight(s, unit), reps: Number(s.reps ?? 0) }))
 					.filter((s) => s.reps > 0 && s.weight >= 0)
 			}))
 			.filter((e) => e.sets.length > 0)
@@ -156,17 +165,24 @@
 			if (raw) {
 				const d = JSON.parse(raw);
 				const fresh = d && typeof d.savedAt === 'number' && Date.now() - d.savedAt < DRAFT_MAX_AGE;
+				// Drafts from before units existed were typed in pounds.
+				const draftUnit = isWeightUnit(d?.unit) ? d.unit : 'lb';
+				const restoreSet = (s: Partial<EditSet> | null): EditSet => {
+					const field: WeightField = {
+						weight: typeof s?.weight === 'number' ? s.weight : null,
+						storedLb: typeof s?.storedLb === 'number' ? s.storedLb : null,
+						shown: typeof s?.shown === 'number' ? s.shown : null
+					};
+					const lb = field.weight === null ? null : storedWeight(field, draftUnit);
+					return { id: nextId(), ...weightField(lb, unit), reps: s?.reps ?? null };
+				};
 				const restored: EditEntry[] = Array.isArray(d?.entries)
 					? d.entries
 							.filter((e: EditEntry) => e && exercises.some((x) => x.id === e.exerciseId))
 							.map((e: EditEntry) => ({
 								id: nextId(),
 								exerciseId: String(e.exerciseId),
-								sets: (Array.isArray(e.sets) ? e.sets : []).map((s: EditSet) => ({
-									id: nextId(),
-									weight: s?.weight ?? null,
-									reps: s?.reps ?? null
-								}))
+								sets: (Array.isArray(e.sets) ? e.sets : []).map(restoreSet)
 							}))
 					: [];
 				const typed = restored.some((e) => e.sets.some((s) => s.weight != null || s.reps != null));
@@ -189,7 +205,14 @@
 	$effect(() => {
 		if (mode !== 'create' || !browser) return;
 		// Read reactive state so this effect re-runs when the working session changes.
-		const snapshot = JSON.stringify({ savedAt: Date.now(), date, routineId, notes, entries });
+		const snapshot = JSON.stringify({
+			savedAt: Date.now(),
+			unit,
+			date,
+			routineId,
+			notes,
+			entries
+		});
 		const meaningful = hasData;
 		if (!loaded) return; // don't write (or clobber) until the initial draft load ran
 		if (meaningful) localStorage.setItem(DRAFT_KEY, snapshot);
@@ -201,7 +224,7 @@
 		entries.push({
 			id: nextId(),
 			exerciseId: id,
-			sets: [{ id: nextId(), weight: null, reps: null }]
+			sets: [emptySet()]
 		});
 		pick = '';
 	}
@@ -212,7 +235,7 @@
 		return {
 			id: nextId(),
 			exerciseId: re.exerciseId,
-			sets: Array.from({ length: n }, () => ({ id: nextId(), weight: null, reps: null }))
+			sets: Array.from({ length: n }, emptySet)
 		};
 	}
 
@@ -247,7 +270,7 @@
 
 	function addSet(entry: EditEntry) {
 		const last = entry.sets.at(-1);
-		entry.sets.push({ id: nextId(), weight: last?.weight ?? null, reps: last?.reps ?? null });
+		entry.sets.push(last ? { ...last, id: nextId() } : emptySet());
 	}
 
 	function removeSet(entry: EditEntry, setId: number) {
@@ -366,7 +389,8 @@
 						<span class="last-label">Last · {shortLabel(last.date)}</span>
 						<span class="last-sets">
 							{#each last.sets as s, i (i)}
-								<span class="last-set">{fmt(s.weight)}<span class="ls-x">×</span>{fmt(s.reps)}</span
+								<span class="last-set"
+									>{formatLoad(s.weight, unit)}<span class="ls-x">×</span>{fmt(s.reps)}</span
 								>
 							{/each}
 						</span>
@@ -376,7 +400,7 @@
 				<div class="sets">
 					<div class="set-head muted">
 						<span>#</span>
-						<span>Weight ({UNIT})</span>
+						<span>Weight ({unit})</span>
 						<span>Reps</span>
 						<span></span>
 					</div>
@@ -389,9 +413,9 @@
 								inputmode="decimal"
 								step="0.5"
 								min="0"
-								max={MAX_WEIGHT}
+								max={maxWeight}
 								class="input set-input"
-								placeholder={prev ? fmt(prev.weight) : '0'}
+								placeholder={prev ? formatLoad(prev.weight, unit) : '0'}
 								bind:value={set.weight}
 							/>
 							<input

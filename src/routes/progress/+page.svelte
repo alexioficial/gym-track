@@ -5,8 +5,9 @@
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import Sparkline from '$lib/components/Sparkline.svelte';
 	import StatDelta from '$lib/components/StatDelta.svelte';
-	import { offlineData } from '$lib/offline/store';
-	import { UNIT, type ExerciseProgress, type Verdict } from '$lib/types';
+	import { offlineData, weightUnitOf } from '$lib/offline/store';
+	import type { ExerciseProgress, Verdict } from '$lib/types';
+	import { displayStat, formatLoad } from '$lib/units';
 	import {
 		IMPROVEMENT_VERDICTS,
 		VERDICT_LABEL,
@@ -17,6 +18,7 @@
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+	const unit = $derived(weightUnitOf($offlineData, data.user));
 	const view = $derived.by(() => {
 		if (!$offlineData) return data;
 		const progress = buildExerciseProgress($offlineData.sessions, $offlineData.exercises);
@@ -87,10 +89,13 @@
 								{it.currTopWeight}<span class="mul">×</span>{it.currTopReps}
 							</span>
 							<span class="rl-deltas">
-								{#if it.weight !== 0}<StatDelta value={it.weight} unit=" {UNIT}" />{/if}
+								{#if it.weight !== 0}<StatDelta
+										value={displayStat(it.weight, unit)}
+										unit=" {unit}"
+									/>{/if}
 								{#if it.reps !== 0}<StatDelta value={it.reps} unit=" reps" />{/if}
 								{#if it.weight === 0 && it.reps === 0 && it.volume !== 0}
-									<StatDelta value={it.volume} unit=" vol" />
+									<StatDelta value={displayStat(it.volume, unit)} unit=" vol" />
 								{/if}
 							</span>
 						</div>
@@ -145,10 +150,11 @@
 			{#if p.latest}
 				<div class="ex-stats muted stat-num">
 					<span
-						><strong class="subtle">{p.latest.topWeight}</strong> {UNIT} × {p.latest.topReps}</span
+						><strong class="subtle">{formatLoad(p.latest.topWeight, unit)}</strong>
+						{unit} × {p.latest.topReps}</span
 					>
 					<span class="sep">·</span>
-					<span>e1RM <strong class="accent">{p.latest.bestE1rm}</strong></span>
+					<span>e1RM <strong class="accent">{displayStat(p.latest.bestE1rm, unit)}</strong></span>
 				</div>
 			{/if}
 			<div class="ex-delta">
@@ -156,10 +162,13 @@
 					<span class="status-text neutral">First week</span>
 				{:else if p.delta && IMPROVEMENT_VERDICTS.includes(p.delta.verdict)}
 					<span class="status-text positive">{VERDICT_LABEL[p.delta.verdict]}</span>
-					{#if p.delta.weight !== 0}<StatDelta value={p.delta.weight} unit=" {UNIT}" />{/if}
+					{#if p.delta.weight !== 0}<StatDelta
+							value={displayStat(p.delta.weight, unit)}
+							unit=" {unit}"
+						/>{/if}
 					{#if p.delta.reps !== 0}<StatDelta value={p.delta.reps} unit=" reps" />{/if}
 					{#if p.delta.weight === 0 && p.delta.reps === 0 && p.delta.volume !== 0}
-						<StatDelta value={p.delta.volume} unit=" vol" />
+						<StatDelta value={displayStat(p.delta.volume, unit)} unit=" vol" />
 					{/if}
 				{:else if p.delta && p.delta.verdict === 'down'}
 					<span class="status-text negative">Down</span>

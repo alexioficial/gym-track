@@ -1,10 +1,12 @@
 <script lang="ts">
-	import { UNIT, type WeeklyStat } from '$lib/types';
+	import type { WeeklyStat } from '$lib/types';
+	import { displayStat, type WeightUnit } from '$lib/units';
 
 	interface Props {
 		weeks: WeeklyStat[];
+		unit: WeightUnit;
 	}
-	let { weeks }: Props = $props();
+	let { weeks, unit }: Props = $props();
 
 	// Geometry (fixed viewBox, scales to 100% of the container).
 	const W = 340;
@@ -81,7 +83,7 @@
 			{/each}
 
 			<!-- e1RM max/min labels -->
-			<text x={PL} y={12} class="axis-val">{geo.eMax} {UNIT}</text>
+			<text x={PL} y={12} class="axis-val">{displayStat(geo.eMax, unit)} {unit}</text>
 
 			<!-- x-axis labels -->
 			{#each geo.labels as p (p.cx)}

@@ -2,6 +2,7 @@ import { browser } from '$app/environment';
 import { writable } from 'svelte/store';
 import type { Exercise, Routine, Session, Weekday } from '$lib/types';
 import { newestSessionFirst } from '$lib/utils/progression';
+import { DEFAULT_WEIGHT_UNIT, isWeightUnit, type WeightUnit } from '$lib/units';
 import {
 	isWeekday,
 	type OfflineEntity,
@@ -140,6 +141,11 @@ function sortSnapshot(snapshot: OfflineSnapshot): void {
 
 function applyMutation(snapshot: OfflineSnapshot, mutation: OfflineMutation): OfflineSnapshot {
 	const next = clone(snapshot);
+	if (mutation.entity === 'settings') {
+		if (isWeightUnit(mutation.payload.weightUnit))
+			next.settings = { ...next.settings, weightUnit: mutation.payload.weightUnit };
+		return next;
+	}
 	if (mutation.entity === 'schedule') {
 		if (mutation.operation === 'set' && isWeekday(mutation.entityId)) {
 			next.schedule[mutation.entityId] =
@@ -222,6 +228,23 @@ async function updateStatus(
 async function ensureInitialized(): Promise<void> {
 	if (initializing) await initializing;
 	if (!currentUserId || !currentSnapshot) throw new Error('Offline data is not ready yet');
+}
+
+/**
+ * The unit to show. The local snapshot wins because it already includes
+ * unsynced changes; the user from the server covers server-side rendering.
+ */
+export function weightUnitOf(
+	snapshot: OfflineSnapshot | null | undefined,
+	user: { weightUnit?: WeightUnit } | null | undefined
+): WeightUnit {
+	const local = snapshot?.settings?.weightUnit;
+	if (isWeightUnit(local)) return local;
+	return isWeightUnit(user?.weightUnit) ? user.weightUnit : DEFAULT_WEIGHT_UNIT;
+}
+
+export function setWeightUnit(weightUnit: WeightUnit): Promise<void> {
+	return queueOfflineMutation('settings', 'set', 'weightUnit', { weightUnit });
 }
 
 export function newEntityId(): string {

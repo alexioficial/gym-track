@@ -75,7 +75,7 @@ export function coalesce(
 	const open = (item: OfflineMutation) => !sent.has(item.mutationId);
 	const sameTarget = (item: OfflineMutation) =>
 		item.entity === mutation.entity && item.entityId === mutation.entityId;
-	if (mutation.entity === 'schedule')
+	if (mutation.entity === 'schedule' || mutation.entity === 'settings')
 		return [...queue.filter((item) => !(open(item) && sameTarget(item))), mutation];
 
 	const create = queue.find(

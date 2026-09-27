@@ -9,6 +9,7 @@
 	import SyncIndicator from '$lib/offline/SyncIndicator.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import RejectedChanges from '$lib/offline/RejectedChanges.svelte';
+	import UnitToggle from '$lib/components/UnitToggle.svelte';
 	import { clearOfflineData, pendingChangeCount, synchronize } from '$lib/offline/store';
 	import type { LayoutData } from './$types';
 
@@ -61,6 +62,7 @@
 						<span class="rail-user-label">Signed in</span>
 						<strong title={data.user.username}>{data.user.username}</strong>
 					</div>
+					<div class="rail-units"><UnitToggle /></div>
 					{#if data.user.isAdmin}
 						<a class="rail-action" href={resolve('/admin')}>
 							<Icon name="users" size={18} />
@@ -85,6 +87,7 @@
 					<div class="account">
 						{#if data.user}
 							<span class="user-name" title={data.user.username}>{data.user.username}</span>
+							<UnitToggle />
 							{#if data.user.isAdmin}
 								<a
 									class="icon-btn"
@@ -257,6 +260,9 @@
 			font-size: 0.9rem;
 			text-overflow: ellipsis;
 			white-space: nowrap;
+		}
+		.rail-units {
+			padding: 0 0.75rem 0.5rem;
 		}
 		.rail-action {
 			display: flex;

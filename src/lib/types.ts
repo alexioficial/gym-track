@@ -1,13 +1,12 @@
 // Types that travel to the client (serializable — ids as strings).
-
-/** Weight unit used across the whole app. */
-export const UNIT = 'lbs';
+import type { WeightUnit } from './units';
 
 /** The authenticated user, as exposed to the client (ids as strings). */
 export interface SessionUser {
 	id: string;
 	username: string;
 	isAdmin: boolean;
+	weightUnit?: WeightUnit;
 }
 
 export const WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;

@@ -2,8 +2,9 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import { resolve } from '$app/paths';
 	import StatDelta from '$lib/components/StatDelta.svelte';
-	import { offlineData } from '$lib/offline/store';
-	import { UNIT, WEEKDAYS, WEEKDAY_LABELS } from '$lib/types';
+	import { offlineData, weightUnitOf } from '$lib/offline/store';
+	import { WEEKDAYS, WEEKDAY_LABELS } from '$lib/types';
+	import { displayStat } from '$lib/units';
 	import {
 		IMPROVEMENT_VERDICTS,
 		VERDICT_LABEL,
@@ -13,6 +14,7 @@
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+	const unit = $derived(weightUnitOf($offlineData, data.user));
 
 	const view = $derived.by(() => {
 		if (!$offlineData) return data;
@@ -109,13 +111,13 @@
 						</div>
 						<div class="imp-metrics">
 							{#if p.delta.weight !== 0}
-								<StatDelta value={p.delta.weight} unit=" {UNIT}" />
+								<StatDelta value={displayStat(p.delta.weight, unit)} unit=" {unit}" />
 							{/if}
 							{#if p.delta.reps !== 0}
 								<StatDelta value={p.delta.reps} unit=" reps" />
 							{/if}
 							{#if p.delta.weight === 0 && p.delta.reps === 0 && p.delta.volume !== 0}
-								<StatDelta value={p.delta.volume} unit=" {UNIT} vol" />
+								<StatDelta value={displayStat(p.delta.volume, unit)} unit=" {unit} vol" />
 							{/if}
 						</div>
 					</a>

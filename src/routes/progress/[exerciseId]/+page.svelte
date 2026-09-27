@@ -4,8 +4,9 @@
 	import ProgressChart from '$lib/components/ProgressChart.svelte';
 	import StatDelta from '$lib/components/StatDelta.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
-	import { offlineData } from '$lib/offline/store';
-	import { UNIT, type Delta } from '$lib/types';
+	import { offlineData, weightUnitOf } from '$lib/offline/store';
+	import type { Delta } from '$lib/types';
+	import { displayStat, formatLoad } from '$lib/units';
 	import {
 		IMPROVEMENT_VERDICTS,
 		VERDICT_LABEL,
@@ -15,6 +16,7 @@
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+	const unit = $derived(weightUnitOf($offlineData, data.user));
 
 	const view = $derived.by(() => {
 		if (!$offlineData) return data;
@@ -100,25 +102,35 @@
 	<div class="stats">
 		<div class="stat">
 			<span class="stat-label muted">e1RM</span>
-			<span class="stat-value stat-num accent">{view.latest.bestE1rm}<small>{UNIT}</small></span>
-			{#if view.previous}<StatDelta value={view.delta.e1rm} unit=" {UNIT}" />{/if}
+			<span class="stat-value stat-num accent"
+				>{displayStat(view.latest.bestE1rm, unit)}<small>{unit}</small></span
+			>
+			{#if view.previous}<StatDelta
+					value={displayStat(view.delta.e1rm, unit)}
+					unit=" {unit}"
+				/>{/if}
 		</div>
 		<div class="stat">
 			<span class="stat-label muted">Top set</span>
 			<span class="stat-value stat-num"
-				>{view.latest.topWeight}<small>×{view.latest.topReps}</small></span
+				>{formatLoad(view.latest.topWeight, unit)}<small>×{view.latest.topReps}</small></span
 			>
-			{#if view.previous}<StatDelta value={view.delta.weight} unit=" {UNIT}" />{/if}
+			{#if view.previous}<StatDelta
+					value={displayStat(view.delta.weight, unit)}
+					unit=" {unit}"
+				/>{/if}
 		</div>
 		<div class="stat">
 			<span class="stat-label muted">Volume</span>
-			<span class="stat-value stat-num">{view.latest.totalVolume}<small>{UNIT}</small></span>
-			{#if view.previous}<StatDelta value={view.delta.volume} unit="" />{/if}
+			<span class="stat-value stat-num"
+				>{displayStat(view.latest.totalVolume, unit)}<small>{unit}</small></span
+			>
+			{#if view.previous}<StatDelta value={displayStat(view.delta.volume, unit)} unit="" />{/if}
 		</div>
 	</div>
 
 	<!-- Chart -->
-	<ProgressChart weeks={view.weeks} />
+	<ProgressChart weeks={view.weeks} {unit} />
 
 	<!-- Weekly table -->
 	<h2 class="sub">Week by week</h2>
@@ -137,9 +149,9 @@
 				{#each rows as r (r.week.weekKey)}
 					<tr>
 						<td class="w-label">{r.week.label}</td>
-						<td class="stat-num">{r.week.topWeight} × {r.week.topReps}</td>
-						<td class="stat-num accent">{r.week.bestE1rm}</td>
-						<td class="stat-num muted">{r.week.totalVolume}</td>
+						<td class="stat-num">{formatLoad(r.week.topWeight, unit)} × {r.week.topReps}</td>
+						<td class="stat-num accent">{displayStat(r.week.bestE1rm, unit)}</td>
+						<td class="stat-num muted">{displayStat(r.week.totalVolume, unit)}</td>
 						<td class="w-verdict">
 							<span class={badgeClass(r.delta)}>{VERDICT_LABEL[r.delta.verdict]}</span>
 						</td>

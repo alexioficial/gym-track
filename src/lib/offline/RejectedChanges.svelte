@@ -7,7 +7,8 @@
 		exercise: 'exercise',
 		routine: 'routine',
 		session: 'workout',
-		schedule: 'schedule'
+		schedule: 'schedule',
+		settings: 'setting'
 	};
 	const verbs: Record<RejectedChange['operation'], string> = {
 		create: 'New',

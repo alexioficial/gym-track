@@ -1,6 +1,7 @@
 import type { Exercise, Routine, Schedule, Session, Weekday } from '$lib/types';
+import type { WeightUnit } from '$lib/units';
 
-export type OfflineEntity = 'exercise' | 'routine' | 'session' | 'schedule';
+export type OfflineEntity = 'exercise' | 'routine' | 'session' | 'schedule' | 'settings';
 export type OfflineOperation = 'create' | 'update' | 'delete' | 'set';
 
 export interface OfflineSnapshot {
@@ -8,6 +9,8 @@ export interface OfflineSnapshot {
 	routines: Routine[];
 	sessions: Session[];
 	schedule: Schedule;
+	/** Missing in snapshots saved before settings existed. */
+	settings?: { weightUnit: WeightUnit };
 }
 
 export interface OfflineMutation {
