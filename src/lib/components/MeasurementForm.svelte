@@ -151,7 +151,8 @@
 					name: item.name.trim(),
 					value: kept(item, (value) => toStoredCm(value, lengthUnit)) ?? 0
 				})),
-			photos
+			// A plain copy: the queue clones payloads, and reactive proxies cannot be cloned.
+			photos: $state.snapshot(photos)
 		};
 		problem = measurementProblem(payload);
 		if (problem) return;
