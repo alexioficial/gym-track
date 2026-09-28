@@ -69,6 +69,12 @@
 							<span>Administración</span>
 						</a>
 					{/if}
+					{#if data.user.role === 'coach'}
+						<a class="rail-action" href={resolve('/coach')}>
+							<Icon name="users" size={18} />
+							<span>Mis clientes</span>
+						</a>
+					{/if}
 				{/if}
 				<button class="rail-action" onclick={requestLogout}>
 					<Icon name="logout" size={18} />
@@ -94,6 +100,16 @@
 									href={resolve('/admin')}
 									title="Gestionar usuarios"
 									aria-label="Gestionar usuarios"
+								>
+									<Icon name="users" size={18} />
+								</a>
+							{/if}
+							{#if data.user.role === 'coach'}
+								<a
+									class="icon-btn"
+									href={resolve('/coach')}
+									title="Mis clientes"
+									aria-label="Mis clientes"
 								>
 									<Icon name="users" size={18} />
 								</a>

@@ -25,6 +25,8 @@
 		/** Label for records someone else wrote, e.g. «Anotado por tu entrenador». */
 		authorLabel?: (measurement: Measurement) => string | null;
 		photoUserId?: string;
+		/** Hides the button for new records. */
+		readOnly?: boolean;
 		onSave: (payload: MeasurementPayload, id: string | null) => Promise<void>;
 		onDelete: (id: string) => Promise<void>;
 	}
@@ -36,6 +38,7 @@
 		canEdit,
 		authorLabel = () => null,
 		photoUserId,
+		readOnly = false,
 		onSave,
 		onDelete
 	}: Props = $props();
@@ -97,7 +100,7 @@
 			/>
 		{/key}
 	</section>
-{:else}
+{:else if !readOnly}
 	<button type="button" class="btn btn-primary new" onclick={() => (editing = 'new')}>
 		<Icon name="plus" size={16} /> Nuevo registro
 	</button>
