@@ -26,6 +26,13 @@
 		});
 	}
 
+	function roleLabel(user: PageData['users'][number]): string {
+		if (user.role === 'owner') return 'Administrador';
+		if (user.role === 'coach') return 'Entrenador';
+		const coach = user.coachId && data.users.find((item) => item.id === user.coachId);
+		return coach ? `Cliente de ${coach.username}` : 'Miembro';
+	}
+
 	function message(error: unknown): string {
 		return error instanceof ClientApiError ? error.message : 'No se pudo conectar con el servidor';
 	}
@@ -96,9 +103,14 @@
 
 <PageHeader title="Usuarios" subtitle="Crea y gestiona quién puede entrar">
 	{#snippet action()}
-		<a href={resolve('/admin/audit')} class="btn btn-subtle btn-sm"
-			><Icon name="trending" size={15} /> Auditoría</a
-		>
+		<div class="header-links">
+			<a href={resolve('/admin/coaches')} class="btn btn-subtle btn-sm"
+				><Icon name="users" size={15} /> Entrenadores</a
+			>
+			<a href={resolve('/admin/audit')} class="btn btn-subtle btn-sm"
+				><Icon name="trending" size={15} /> Auditoría</a
+			>
+		</div>
 	{/snippet}
 </PageHeader>
 
@@ -147,7 +159,8 @@
 			</div>
 		</div>
 		<p class="hint muted">
-			Los usuarios solo pueden tener minúsculas, números, puntos y guiones bajos.
+			Los usuarios solo pueden tener minúsculas, números, puntos y guiones bajos. Las cuentas
+			creadas aquí entrenan por su cuenta; los entrenadores se crean en «Entrenadores».
 		</p>
 		<button type="submit" class="btn btn-primary" disabled={creating}>
 			{#if creating}Creando…{:else}<Icon name="check" size={16} /> Crear usuario{/if}
@@ -172,9 +185,7 @@
 					<div class="user-info">
 						<span class="user-name">{u.username}</span>
 					</div>
-					<span class="access" class:access-admin={u.isAdmin}
-						>{u.isAdmin ? 'Administrador' : 'Miembro'}</span
-					>
+					<span class="access" class:access-admin={u.role !== 'client'}>{roleLabel(u)}</span>
 					<span class="muted user-date">{fmtDate(u.createdAt)}</span>
 
 					{#if !u.isAdmin}
@@ -233,6 +244,12 @@
 />
 
 <style>
+	.header-links {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		gap: 0.5rem;
+	}
 	.banner {
 		border-radius: 0.7rem;
 		padding: 0.7rem 0.9rem;

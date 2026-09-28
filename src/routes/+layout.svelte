@@ -113,6 +113,17 @@
 			</header>
 
 			<main class="content">
+				{#if data.user?.readOnly}
+					<p class="read-only" role="status">
+						<Icon name="lock" size={16} />
+						<span>
+							{data.user.role === 'coach'
+								? 'Tu cuenta está en solo lectura porque el pago está vencido.'
+								: 'Tu cuenta está en solo lectura porque el pago de tu entrenador está vencido.'}
+							Puedes ver todo; lo que anotes se guarda en este dispositivo y se subirá cuando se renueve.
+						</span>
+					</p>
+				{/if}
 				{#if data.user}<RejectedChanges />{/if}
 				{@render children()}
 			</main>
@@ -136,6 +147,23 @@
 {/if}
 
 <style>
+	.read-only {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.6rem;
+		margin-bottom: 1.25rem;
+		padding: 0.75rem 0.875rem;
+		border: 1px solid color-mix(in srgb, var(--color-accent) 45%, transparent);
+		border-left: 3px solid var(--color-accent);
+		border-radius: var(--radius-control);
+		background: color-mix(in srgb, var(--color-accent) 8%, var(--color-bg));
+		font-size: 0.88rem;
+	}
+	.read-only :global(svg) {
+		flex-shrink: 0;
+		margin-top: 0.1rem;
+		color: var(--color-accent-bright);
+	}
 	.app-shell {
 		min-height: 100dvh;
 	}

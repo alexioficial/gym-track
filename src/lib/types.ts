@@ -2,11 +2,18 @@
 import type { WeightUnit } from './units';
 
 /** The authenticated user, as exposed to the client (ids as strings). */
+export type Role = 'owner' | 'coach' | 'client';
+
 export interface SessionUser {
 	id: string;
 	username: string;
+	/** True only for the owner. */
 	isAdmin: boolean;
+	role: Role;
 	weightUnit?: WeightUnit;
+	coachId?: string;
+	/** The coach's payment is overdue: the API refuses writes until it is renewed. */
+	readOnly: boolean;
 }
 
 export const WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;

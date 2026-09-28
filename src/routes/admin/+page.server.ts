@@ -1,11 +1,14 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { pageApi } from '$lib/server/api';
+import type { Role } from '$lib/types';
 
 interface AdminUser {
 	id: string;
 	username: string;
 	isAdmin: boolean;
+	role: Role;
+	coachId?: string;
 	createdAt: string;
 }
 
