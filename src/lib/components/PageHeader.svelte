@@ -29,13 +29,6 @@
 		gap: 1.5rem;
 		margin-bottom: 2rem;
 	}
-	.page-title {
-		margin: 0;
-		font-size: clamp(1.75rem, 4vw, 2rem);
-		font-weight: 700;
-		line-height: 0.95;
-		letter-spacing: 0.025em;
-	}
 	.page-subtitle {
 		margin: 0.5rem 0 0;
 		font-size: 0.925rem;

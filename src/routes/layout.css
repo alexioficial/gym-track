@@ -308,6 +308,14 @@
 	.ledger-row:last-child {
 		border-bottom: 0;
 	}
+	/* Page headings, with or without PageHeader. */
+	.page-title {
+		margin: 0;
+		font-size: clamp(1.75rem, 4vw, 2rem);
+		font-weight: 700;
+		line-height: 0.95;
+		letter-spacing: 0.025em;
+	}
 	.section-label {
 		margin: 0;
 		color: var(--color-subtle);
