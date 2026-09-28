@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { clientActivity, lastSessionLabel, sortClients } from '../src/lib/coach.ts';
+import { clientActivity, lastSessionLabel, rosterSummary, sortClients } from '../src/lib/coach.ts';
 
 const client = (username, lastSessionDate, recentSessionDates = []) => ({
 	id: username,
@@ -42,5 +42,22 @@ describe('coach client list', () => {
 			today
 		);
 		expect(sorted.map((item) => item.username)).toEqual(['memo', 'ana', 'bea', 'zoe']);
+	});
+
+	test('summarises from the local copy, including offline sessions', () => {
+		const summary = rosterSummary({
+			client: client('dani', '2026-09-01', []),
+			snapshot: {
+				exercises: [],
+				routines: [],
+				schedule: {},
+				sessions: [
+					{ id: '1', date: '2026-09-28', routineId: null, entries: [] },
+					{ id: '2', date: '2026-09-30', routineId: null, entries: [] }
+				]
+			}
+		});
+		expect(summary.lastSessionDate).toBe('2026-09-30');
+		expect(clientActivity(summary, today).sessionsThisWeek).toBe(2);
 	});
 });

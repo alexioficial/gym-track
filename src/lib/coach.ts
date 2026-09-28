@@ -62,6 +62,21 @@ export function lastSessionLabel(activity: ClientActivity): string {
 	return `Hace ${activity.daysSince} días`;
 }
 
+/**
+ * The summary from the client's local copy, so sessions the coach logged
+ * offline count right away.
+ */
+export function rosterSummary(entry: CoachClient): ClientSummary {
+	const dates = entry.snapshot.sessions
+		.map((session) => session.date)
+		.sort((a, b) => b.localeCompare(a));
+	return {
+		...entry.client,
+		lastSessionDate: dates[0],
+		recentSessionDates: dates
+	};
+}
+
 /** Inactive clients first (longest first), then the rest by name. */
 export function sortClients(clients: ClientSummary[], today: string): ClientSummary[] {
 	const rank = (client: ClientSummary) => {
