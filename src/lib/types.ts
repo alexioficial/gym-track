@@ -115,6 +115,8 @@ export interface Session {
 	routineId: string | null;
 	notes?: string;
 	entries: SessionEntry[];
+	/** Set when the user's coach logged it; the user can see it but not change it. */
+	loggedBy?: string;
 }
 
 export type Schedule = Record<Weekday, string | null>;
