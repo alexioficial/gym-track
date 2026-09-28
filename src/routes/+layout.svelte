@@ -11,6 +11,11 @@
 	import RejectedChanges from '$lib/offline/RejectedChanges.svelte';
 	import UnitToggle from '$lib/components/UnitToggle.svelte';
 	import { clearOfflineData, pendingChangeCount, synchronize } from '$lib/offline/store';
+	import {
+		clearCoachData,
+		pendingCoachChangeCount,
+		synchronizeCoach
+	} from '$lib/offline/coach-store';
 	import type { LayoutData } from './$types';
 
 	let { children, data }: { children: import('svelte').Snippet; data: LayoutData } = $props();
@@ -22,14 +27,14 @@
 
 	// Logging out deletes the local copy, so unsynced changes would be lost.
 	async function requestLogout() {
-		if (navigator.onLine) await synchronize();
-		unsyncedChanges = await pendingChangeCount();
+		if (navigator.onLine) await Promise.all([synchronize(), synchronizeCoach()]);
+		unsyncedChanges = (await pendingChangeCount()) + (await pendingCoachChangeCount());
 		if (unsyncedChanges === 0) await logout();
 	}
 
 	async function logout() {
 		loggingOut = true;
-		await clearOfflineData(data.user?.id);
+		await Promise.all([clearOfflineData(data.user?.id), clearCoachData(data.user?.id)]);
 		navigator.serviceWorker?.controller?.postMessage({ type: 'clear-user-data' });
 		if (navigator.onLine) {
 			await fetch('/api/auth/logout', {
@@ -47,7 +52,11 @@
 	{@render children()}
 {:else}
 	{#if data.user && data.offline}
-		<OfflineBootstrap userId={data.user.id} seed={data.offline} />
+		<OfflineBootstrap
+			userId={data.user.id}
+			seed={data.offline}
+			coach={data.user.role === 'coach'}
+		/>
 	{/if}
 	<div class="app-shell">
 		<aside class="desktop-rail">

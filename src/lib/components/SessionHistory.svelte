@@ -11,9 +11,21 @@
 		routines: Routine[];
 		unit: WeightUnit;
 		pageSize?: number;
+		/** Link to edit a session, when the viewer may. */
+		editHref?: (session: Session) => string | null;
+		/** Label for sessions someone else logged, e.g. «Anotada por ti». */
+		authorLabel?: (session: Session) => string | null;
 	}
 
-	let { sessions, exercises, routines, unit, pageSize = 20 }: Props = $props();
+	let {
+		sessions,
+		exercises,
+		routines,
+		unit,
+		pageSize = 20,
+		editHref = () => null,
+		authorLabel = () => null
+	}: Props = $props();
 
 	let shown = $state(untrack(() => pageSize));
 
@@ -32,6 +44,8 @@
 	<div class="ledger-section history">
 		{#each visible as session (session.id)}
 			{@const routine = session.routineId ? routineById.get(session.routineId) : undefined}
+			{@const author = authorLabel(session)}
+			{@const edit = editHref(session)}
 			<details class="session">
 				<summary>
 					<span class="dot" style="background:{routine?.color ?? 'var(--color-muted)'}"></span>
@@ -39,6 +53,7 @@
 						<span class="routine">{routine?.name ?? 'Sesión libre'}</span>
 						<span class="muted small">{formatDate(session.date)}</span>
 					</span>
+					{#if author}<span class="badge badge-accent">{author}</span>{/if}
 					<span class="muted small stat-num"
 						>{session.entries.length} ej. · {setCount(session)}
 						{setCount(session) === 1 ? 'serie' : 'series'}</span
@@ -59,6 +74,10 @@
 					{/each}
 				</ul>
 				{#if session.notes}<p class="notes muted">{session.notes}</p>{/if}
+				{#if edit}
+					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- callers pass resolve()d paths -->
+					<a class="btn btn-subtle btn-sm edit" href={edit}>Editar</a>
+				{/if}
 			</details>
 		{/each}
 	</div>
@@ -135,5 +154,11 @@
 	}
 	.more {
 		margin-top: 1rem;
+	}
+	.edit {
+		margin: 0 0 0.9rem 1.35rem;
+		min-height: 2.2rem;
+		padding: 0.4rem 0.8rem;
+		font-size: 0.8rem;
 	}
 </style>

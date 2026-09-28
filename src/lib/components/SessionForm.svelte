@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { get } from 'svelte/store';
 	import { browser } from '$app/environment';
 	import { resolve } from '$app/paths';
@@ -23,6 +23,7 @@
 		MAX_SESSION_ENTRIES,
 		MAX_SETS_PER_ENTRY,
 		MAX_WEIGHT,
+		NAME_MAX,
 		NOTES_MAX,
 		sessionProblem
 	} from '$lib/limits';
@@ -42,6 +43,10 @@
 		onDelete?: () => Promise<void>;
 		/** Reference: what the user did the last time they logged each exercise. */
 		lastByExercise?: Record<string, LastPerformance>;
+		/** Where the unsaved draft lives; a coach keeps one per client. */
+		draftKey?: string;
+		/** Lets the form add a new exercise to the catalogue; returns its id. */
+		onCreateExercise?: (input: { name: string; muscleGroup: string }) => Promise<string>;
 	}
 	let {
 		exercises,
@@ -50,6 +55,8 @@
 		session = null,
 		initialRoutineId = '',
 		lastByExercise = {},
+		draftKey,
+		onCreateExercise,
 		onSave,
 		onDelete
 	}: Props = $props();
@@ -136,7 +143,7 @@
 	// app backgrounded, tab reloaded) the in-memory state would be lost. We mirror
 	// the working session to localStorage as it changes and restore it on return.
 	// Scoped per user so a shared device never offers one person's draft to another.
-	const DRAFT_KEY = `gym:log-draft:${page.data.user?.id ?? 'anonymous'}`;
+	const DRAFT_KEY = untrack(() => draftKey) ?? `gym:log-draft:${page.data.user?.id ?? 'anonymous'}`;
 	const DRAFT_MAX_AGE = 1000 * 60 * 60 * 24 * 2; // ignore drafts older than 2 days
 	let loaded = $state(false);
 	let draftRecovered = $state(false);
@@ -218,6 +225,23 @@
 		if (meaningful) localStorage.setItem(DRAFT_KEY, snapshot);
 		else localStorage.removeItem(DRAFT_KEY);
 	});
+
+	let newExerciseName = $state('');
+	let creatingExercise = $state(false);
+
+	async function createExercise() {
+		const name = newExerciseName.trim();
+		if (!name || !onCreateExercise || creatingExercise) return;
+		creatingExercise = true;
+		try {
+			addExercise(await onCreateExercise({ name, muscleGroup: '' }));
+			newExerciseName = '';
+		} catch (error) {
+			mutationError = error instanceof Error ? error.message : 'No se pudo crear el ejercicio';
+		} finally {
+			creatingExercise = false;
+		}
+	}
 
 	function addExercise(id: string) {
 		if (!id) return;
@@ -470,11 +494,39 @@
 				<Icon name="plus" size={16} stroke={2.5} /> Añadir
 			</button>
 		</div>
-	{:else if entries.length === 0}
+	{:else if entries.length === 0 && !onCreateExercise}
 		<p class="muted empty-note">
 			No tienes ejercicios. Créalos en <a href={resolve('/exercises')} class="accent">Ejercicios</a
 			>.
 		</p>
+	{/if}
+	{#if onCreateExercise}
+		<div class="add-ex">
+			<input
+				class="input"
+				type="text"
+				maxlength={NAME_MAX}
+				placeholder="Nuevo ejercicio, p. ej. Remo con mancuerna"
+				aria-label="Nombre del ejercicio nuevo"
+				bind:value={newExerciseName}
+				onkeydown={(event) => {
+					if (event.key === 'Enter') {
+						event.preventDefault();
+						void createExercise();
+					}
+				}}
+			/>
+			<button
+				type="button"
+				class="btn btn-subtle"
+				disabled={!newExerciseName.trim() ||
+					creatingExercise ||
+					entries.length >= MAX_SESSION_ENTRIES}
+				onclick={createExercise}
+			>
+				<Icon name="plus" size={16} stroke={2.5} /> Crear
+			</button>
+		</div>
 	{/if}
 
 	<div class="field">

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { jsonRequest, ClientApiError } from '$lib/client/json';
 	import PageHeader from '$lib/components/PageHeader.svelte';
@@ -9,25 +8,21 @@
 		INACTIVE_DAYS,
 		clientActivity,
 		lastSessionLabel,
+		rosterSummary,
 		sortClients,
 		type ClientSummary
 	} from '$lib/coach';
+	import { coachData, synchronizeCoach } from '$lib/offline/coach-store';
 	import { GRACE_DAYS, addDays, formatDay, planLabel } from '$lib/owner';
 	import { todayYmd } from '$lib/utils/progression';
-	import type { PageData } from './$types';
-
-	let { data }: { data: PageData } = $props();
 
 	const today = todayYmd();
 	const usernamePattern = '[a-z0-9._]{3,30}';
-	const coach = $derived(data.roster.coach);
-	const active = $derived(
-		sortClients(
-			data.roster.clients.filter((client) => !client.disabled),
-			today
-		)
-	);
-	const disabled = $derived(data.roster.clients.filter((client) => client.disabled));
+	// The layout only renders this page once the coach's copy is loaded.
+	const roster = $derived($coachData!);
+	const coach = $derived(roster.coach);
+	const active = $derived(sortClients(roster.clients.map(rosterSummary), today));
+	const disabled = $derived(roster.disabled);
 	const full = $derived(coach.maxClients !== null && coach.activeClients >= coach.maxClients);
 	const inactiveCount = $derived(
 		active.filter((client) => clientActivity(client, today).inactive).length
@@ -63,7 +58,7 @@
 				kind: 'good',
 				text: `Se creó ${client.username}. Dale su usuario y contraseña para que entre.`
 			};
-			await invalidateAll();
+			await synchronizeCoach();
 		} catch (error) {
 			failure(error);
 		} finally {
@@ -77,7 +72,7 @@
 		try {
 			await jsonRequest(`/api/coach/clients/${client.id}/status`, 'PUT', { disabled: false });
 			notice = { kind: 'good', text: `${client.username} vuelve a estar activo.` };
-			await invalidateAll();
+			await synchronizeCoach();
 		} catch (error) {
 			failure(error);
 		} finally {
