@@ -78,6 +78,27 @@ export function storedWeight(field: WeightField, unit: WeightUnit): number {
 	return toStoredLb(Number(field.weight ?? 0), unit);
 }
 
+/** Body measurements are always stored in centimetres. */
+export type LengthUnit = 'cm' | 'in';
+
+export const LENGTH_UNITS: readonly LengthUnit[] = ['cm', 'in'];
+export const DEFAULT_LENGTH_UNIT: LengthUnit = 'cm';
+export const CM_PER_IN = 2.54;
+
+export function isLengthUnit(value: unknown): value is LengthUnit {
+	return value === 'cm' || value === 'in';
+}
+
+/** Converts a typed length to the stored centimetres (2 decimals, like the API). */
+export function toStoredCm(value: number, unit: LengthUnit): number {
+	return unit === 'cm' ? round(value, 2) : round(value * CM_PER_IN, 2);
+}
+
+/** Lengths are read to one decimal in either unit. */
+export function displayLength(cm: number, unit: LengthUnit): number {
+	return round(unit === 'cm' ? cm : cm / CM_PER_IN, 1);
+}
+
 /** e1RM, volume and deltas are not loads: exact conversion, 1 decimal. */
 export function displayStat(lb: number, unit: WeightUnit): number {
 	return round(fromStoredLb(lb, unit), 1);

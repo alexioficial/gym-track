@@ -1,8 +1,15 @@
 import { browser } from '$app/environment';
 import { writable } from 'svelte/store';
-import type { Exercise, Routine, Session, Weekday } from '$lib/types';
+import type { Exercise, Measurement, Routine, Session, Weekday } from '$lib/types';
 import { newestSessionFirst } from '$lib/utils/progression';
-import { DEFAULT_WEIGHT_UNIT, isWeightUnit, type WeightUnit } from '$lib/units';
+import {
+	DEFAULT_LENGTH_UNIT,
+	DEFAULT_WEIGHT_UNIT,
+	isLengthUnit,
+	isWeightUnit,
+	type LengthUnit,
+	type WeightUnit
+} from '$lib/units';
 import {
 	isWeekday,
 	type OfflineEntity,
@@ -128,8 +135,9 @@ async function replaceMutations(userId: string, mutations: OfflineMutation[]): P
 
 function entityItems(
 	snapshot: OfflineSnapshot,
-	entity: Exclude<OfflineEntity, 'schedule'>
-): Exercise[] | Routine[] | Session[] {
+	entity: Exclude<OfflineEntity, 'schedule' | 'settings'>
+): Exercise[] | Routine[] | Session[] | Measurement[] {
+	if (entity === 'measurement') return (snapshot.measurements ??= []);
 	return snapshot[`${entity}s` as 'exercises' | 'routines' | 'sessions'];
 }
 
@@ -137,6 +145,7 @@ function sortSnapshot(snapshot: OfflineSnapshot): void {
 	snapshot.exercises.sort((a, b) => a.name.localeCompare(b.name));
 	snapshot.routines.sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
 	snapshot.sessions.sort(newestSessionFirst);
+	snapshot.measurements?.sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
 }
 
 function applyMutation(snapshot: OfflineSnapshot, mutation: OfflineMutation): OfflineSnapshot {
@@ -144,6 +153,8 @@ function applyMutation(snapshot: OfflineSnapshot, mutation: OfflineMutation): Of
 	if (mutation.entity === 'settings') {
 		if (isWeightUnit(mutation.payload.weightUnit))
 			next.settings = { ...next.settings, weightUnit: mutation.payload.weightUnit };
+		if (isLengthUnit(mutation.payload.lengthUnit))
+			next.settings = { ...next.settings, lengthUnit: mutation.payload.lengthUnit };
 		return next;
 	}
 	if (mutation.entity === 'schedule') {
@@ -180,6 +191,18 @@ function applyMutation(snapshot: OfflineSnapshot, mutation: OfflineMutation): Of
 							? mutation.payload.order
 							: next.routines.length,
 					exercises
+				});
+			} else if (mutation.entity === 'measurement') {
+				(items as Measurement[]).push({
+					...(clone(mutation.payload) as Omit<Measurement, 'id' | 'createdAt'>),
+					id: mutation.entityId,
+					items: Array.isArray(mutation.payload.items)
+						? (mutation.payload.items as Measurement['items'])
+						: [],
+					photos: Array.isArray(mutation.payload.photos)
+						? (mutation.payload.photos as string[])
+						: [],
+					createdAt: mutation.createdAt
 				});
 			} else {
 				(items as Session[]).push({
@@ -245,6 +268,19 @@ export function weightUnitOf(
 
 export function setWeightUnit(weightUnit: WeightUnit): Promise<void> {
 	return queueOfflineMutation('settings', 'set', 'weightUnit', { weightUnit });
+}
+
+export function lengthUnitOf(
+	snapshot: OfflineSnapshot | null | undefined,
+	user: { lengthUnit?: LengthUnit } | null | undefined
+): LengthUnit {
+	const local = snapshot?.settings?.lengthUnit;
+	if (isLengthUnit(local)) return local;
+	return isLengthUnit(user?.lengthUnit) ? user.lengthUnit : DEFAULT_LENGTH_UNIT;
+}
+
+export function setLengthUnit(lengthUnit: LengthUnit): Promise<void> {
+	return queueOfflineMutation('settings', 'set', 'lengthUnit', { lengthUnit });
 }
 
 export function newEntityId(): string {

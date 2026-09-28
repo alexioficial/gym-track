@@ -37,7 +37,8 @@ async function request(cookies: Cookies, path: string, init: RequestInit = {}): 
 			throw new ApiError(504, 'El servidor tardó demasiado en responder');
 		throw err;
 	}
-	if (!response.ok) {
+	const redirected = init.redirect === 'manual' && response.status >= 300 && response.status < 400;
+	if (!response.ok && !redirected) {
 		let message = 'La petición al servidor falló';
 		try {
 			const body = (await response.json()) as { error?: unknown };
@@ -54,6 +55,12 @@ export async function api<T>(cookies: Cookies, path: string, init: RequestInit =
 	const response = await request(cookies, path, init);
 	if (response.status === 204) return undefined as T;
 	return (await response.json()) as T;
+}
+
+/** Where the API redirects to, for endpoints that answer with a redirect. */
+export async function apiRedirect(cookies: Cookies, path: string): Promise<string | null> {
+	const response = await request(cookies, path, { redirect: 'manual' });
+	return response.headers.get('location');
 }
 
 /**

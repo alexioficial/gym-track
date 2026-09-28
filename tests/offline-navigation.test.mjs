@@ -22,7 +22,14 @@ describe('offline navigation fallback', () => {
 
 describe('offline route warming', () => {
 	test('warms only the bounded top-level app shells', () => {
-		expect(CORE_OFFLINE_ROUTES).toEqual(['/', '/routines', '/log', '/progress', '/exercises']);
+		expect(CORE_OFFLINE_ROUTES).toEqual([
+			'/',
+			'/routines',
+			'/log',
+			'/progress',
+			'/exercises',
+			'/measurements'
+		]);
 	});
 
 	test('tracks the warmed build independently for every user', () => {

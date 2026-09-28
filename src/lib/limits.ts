@@ -9,6 +9,13 @@ export const MAX_SETS_PER_ENTRY = 20;
 export const MAX_SESSION_ENTRIES = 50;
 export const MAX_ROUTINE_EXERCISES = 50;
 export const MAX_ROUTINE_SETS = 10;
+export const MEASUREMENT_ITEMS_MAX = 30;
+export const MEASUREMENT_NAME_MAX = 60;
+/** Centimetres; also bounds height. */
+export const MAX_LENGTH_CM = 300;
+/** Pounds. */
+export const MAX_BODY_WEIGHT = 1500;
+export const MEASUREMENT_PHOTOS_MAX = 6;
 
 export interface SessionInput {
 	date: string;
@@ -36,5 +43,42 @@ export function sessionProblem(input: SessionInput): string | null {
 				return `Las repeticiones deben ser más de 0 y como máximo ${MAX_REPS}`;
 		}
 	}
+	return null;
+}
+
+export interface MeasurementPayload {
+	date: string;
+	bodyWeight: number | null;
+	height: number | null;
+	bodyFat: number | null;
+	items: Array<{ name: string; value: number }>;
+	photos: string[];
+}
+
+/** Returns a user-facing reason the API would reject this check-in, or null. */
+export function measurementProblem(input: MeasurementPayload): string | null {
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date)) return 'Introduce una fecha válida';
+	const empty =
+		input.bodyWeight === null &&
+		input.height === null &&
+		input.bodyFat === null &&
+		input.items.length === 0 &&
+		input.photos.length === 0;
+	if (empty) return 'Anota al menos una medida, el peso o una foto';
+	const inRange = (value: number | null, max: number) =>
+		value === null || (Number.isFinite(value) && value > 0 && value <= max);
+	if (!inRange(input.bodyWeight, MAX_BODY_WEIGHT)) return 'Revisa el peso corporal';
+	if (!inRange(input.height, MAX_LENGTH_CM)) return 'Revisa la altura';
+	if (!inRange(input.bodyFat, 100)) return 'El % de grasa debe estar entre 0 y 100';
+	if (input.items.length > MEASUREMENT_ITEMS_MAX)
+		return `Como máximo ${MEASUREMENT_ITEMS_MAX} medidas por registro`;
+	for (const item of input.items) {
+		if (!item.name.trim()) return 'Ponle nombre a cada medida';
+		if (item.name.trim().length > MEASUREMENT_NAME_MAX)
+			return `Los nombres pueden tener como máximo ${MEASUREMENT_NAME_MAX} caracteres`;
+		if (!inRange(item.value, MAX_LENGTH_CM)) return `Revisa el valor de «${item.name.trim()}»`;
+	}
+	if (input.photos.length > MEASUREMENT_PHOTOS_MAX)
+		return `Como máximo ${MEASUREMENT_PHOTOS_MAX} fotos por registro`;
 	return null;
 }

@@ -1,7 +1,8 @@
-import type { Exercise, Routine, Schedule, Session, Weekday } from '$lib/types';
-import type { WeightUnit } from '$lib/units';
+import type { Exercise, Measurement, Routine, Schedule, Session, Weekday } from '$lib/types';
+import type { LengthUnit, WeightUnit } from '$lib/units';
 
-export type OfflineEntity = 'exercise' | 'routine' | 'session' | 'schedule' | 'settings';
+export type OfflineEntity =
+	'exercise' | 'routine' | 'session' | 'schedule' | 'settings' | 'measurement';
 export type OfflineOperation = 'create' | 'update' | 'delete' | 'set';
 
 export interface OfflineSnapshot {
@@ -10,7 +11,9 @@ export interface OfflineSnapshot {
 	sessions: Session[];
 	schedule: Schedule;
 	/** Missing in snapshots saved before settings existed. */
-	settings?: { weightUnit: WeightUnit };
+	settings?: { weightUnit?: WeightUnit; lengthUnit?: LengthUnit };
+	/** Missing in snapshots saved before measurements existed. */
+	measurements?: Measurement[];
 }
 
 export interface OfflineMutation {

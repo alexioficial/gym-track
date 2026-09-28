@@ -1,4 +1,11 @@
-export const CORE_OFFLINE_ROUTES = ['/', '/routines', '/log', '/progress', '/exercises'] as const;
+export const CORE_OFFLINE_ROUTES = [
+	'/',
+	'/routines',
+	'/log',
+	'/progress',
+	'/exercises',
+	'/measurements'
+] as const;
 
 const WARM_VERSION_PREFIX = 'gym-tracker:offline-routes:';
 

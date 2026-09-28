@@ -8,7 +8,8 @@
 		routine: 'Rutina',
 		session: 'Entrenamiento',
 		schedule: 'Calendario',
-		settings: 'Ajuste'
+		settings: 'Ajuste',
+		measurement: 'Registro de medidas'
 	};
 	const verbs: Record<RejectedChange['operation'], string> = {
 		create: 'nuevo',

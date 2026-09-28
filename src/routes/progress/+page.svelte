@@ -38,7 +38,13 @@
 
 <svelte:head><title>Progreso - Gym Tracker</title></svelte:head>
 
-<PageHeader title="Progreso" subtitle="Tu sobrecarga progresiva, semana a semana" />
+<PageHeader title="Progreso" subtitle="Tu sobrecarga progresiva, semana a semana">
+	{#snippet action()}
+		<a href={resolve('/measurements')} class="btn btn-subtle">
+			<Icon name="activity" size={16} /> Cuerpo
+		</a>
+	{/snippet}
+</PageHeader>
 
 {#if view.groups.length === 0}
 	<EmptyState

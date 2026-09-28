@@ -1,5 +1,5 @@
 // Types that travel to the client (serializable — ids as strings).
-import type { WeightUnit } from './units';
+import type { LengthUnit, WeightUnit } from './units';
 
 /** The authenticated user, as exposed to the client (ids as strings). */
 export type Role = 'owner' | 'coach' | 'client';
@@ -11,6 +11,7 @@ export interface SessionUser {
 	isAdmin: boolean;
 	role: Role;
 	weightUnit?: WeightUnit;
+	lengthUnit?: LengthUnit;
 	coachId?: string;
 	/** The coach's payment is overdue: the API refuses writes until it is renewed. */
 	readOnly: boolean;
@@ -185,4 +186,28 @@ export interface WeeklyRecap {
 	same: number;
 	down: number;
 	items: WeeklyRecapItem[];
+}
+
+export interface MeasurementItem {
+	name: string;
+	/** Centimetres. */
+	value: number;
+}
+
+/** A body check-in. Any field may be missing, but not all of them. */
+export interface Measurement {
+	id: string;
+	date: string;
+	/** Pounds, like set weights. */
+	bodyWeight?: number;
+	/** Centimetres. */
+	height?: number;
+	/** Percent. */
+	bodyFat?: number;
+	items: MeasurementItem[];
+	/** Keys in the photo bucket; shown through /api/photos/<key>. */
+	photos: string[];
+	/** Set when the user's coach wrote it. */
+	loggedBy?: string;
+	createdAt: number;
 }
