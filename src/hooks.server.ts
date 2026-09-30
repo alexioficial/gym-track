@@ -6,6 +6,9 @@ import type { SessionUser } from '$lib/types';
 const PUBLIC_ROUTES = new Set(['/login', '/api/auth/login']);
 
 export const handle: Handle = async ({ event, resolve }) => {
+	// Healthcheck: skip the session lookup (it calls the API on every request).
+	if (event.url.pathname === '/health') return resolve(event);
+
 	try {
 		event.locals.user = await api<SessionUser>(event.cookies, '/api/auth/me');
 	} catch (error) {
