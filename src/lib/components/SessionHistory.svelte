@@ -11,6 +11,8 @@
 		routines: Routine[];
 		unit: WeightUnit;
 		pageSize?: number;
+		/** Start with every session expanded, e.g. when showing a single one. */
+		expanded?: boolean;
 		/** Link to edit a session, when the viewer may. */
 		editHref?: (session: Session) => string | null;
 		/** Label for sessions someone else logged, e.g. «Anotada por ti». */
@@ -23,6 +25,7 @@
 		routines,
 		unit,
 		pageSize = 20,
+		expanded = false,
 		editHref = () => null,
 		authorLabel = () => null
 	}: Props = $props();
@@ -46,7 +49,7 @@
 			{@const routine = session.routineId ? routineById.get(session.routineId) : undefined}
 			{@const author = authorLabel(session)}
 			{@const edit = editHref(session)}
-			<details class="session">
+			<details class="session" open={expanded}>
 				<summary>
 					<span class="dot" style="background:{routine?.color ?? 'var(--color-muted)'}"></span>
 					<span class="info">

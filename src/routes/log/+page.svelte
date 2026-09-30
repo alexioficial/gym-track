@@ -5,6 +5,7 @@
 	import { newEntityId, offlineData, queueOfflineMutation } from '$lib/offline/store';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import SessionForm from '$lib/components/SessionForm.svelte';
+	import { latestOwnSession } from '$lib/coach-log';
 	import { formatDate, lastPerformanceByExercise } from '$lib/utils/progression';
 	import type { PageData } from './$types';
 
@@ -13,7 +14,10 @@
 	const exercises = $derived($offlineData?.exercises ?? data.exercises);
 	const routines = $derived($offlineData?.routines ?? data.routines);
 	const sessions = $derived($offlineData?.sessions ?? []);
-	const latestSession = $derived($offlineData ? (sessions[0] ?? null) : data.latestSession);
+	const latestSession = $derived($offlineData ? latestOwnSession(sessions) : data.latestSession);
+	const coachSessions = $derived(
+		$offlineData ? sessions.filter((session) => session.loggedBy) : data.coachSessions
+	);
 	const history = $derived.by(() => {
 		if (!$offlineData) return data.history;
 		const routineById = new Map(routines.map((routine) => [routine.id, routine]));
@@ -25,6 +29,7 @@
 				routineName: routine?.name ?? null,
 				routineColor: routine?.color ?? null,
 				exerciseCount: session.entries.length,
+				byCoach: Boolean(session.loggedBy),
 				setCount: session.entries.reduce((count, entry) => count + entry.sets.length, 0)
 			};
 		});
@@ -106,6 +111,7 @@
 			{routines}
 			initialRoutineId={data.initialRoutineId}
 			{lastByExercise}
+			{coachSessions}
 			onSave={saveSession}
 		/>
 	{/key}
@@ -133,6 +139,7 @@
 						<span class="sess-routine">{s.routineName ?? 'Sesión libre'}</span>
 						<span class="muted sess-date">{formatDate(s.date)}</span>
 					</div>
+					{#if s.byCoach}<span class="badge badge-accent">Tu entrenador</span>{/if}
 					<span class="muted sess-meta stat-num"
 						>{s.exerciseCount} ej. · {s.setCount}
 						{s.setCount === 1 ? 'serie' : 'series'}</span

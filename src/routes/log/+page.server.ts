@@ -1,5 +1,6 @@
 import type { PageServerLoad } from './$types';
 import { pageApi } from '$lib/server/api';
+import { latestOwnSession } from '$lib/coach-log';
 import { lastPerformanceByExercise } from '$lib/utils/progression';
 import type { Exercise, Routine, Session } from '$lib/types';
 
@@ -18,20 +19,24 @@ export const load: PageServerLoad = async ({ url, cookies }) => {
 			routineName: routine?.name ?? null,
 			routineColor: routine?.color ?? null,
 			exerciseCount: session.entries.length,
+			byCoach: Boolean(session.loggedBy),
 			setCount: session.entries.reduce((count, entry) => count + entry.sets.length, 0)
 		};
 	});
+	// "Modify the last one" is about what the user wrote, not their coach's sessions.
+	const latest = latestOwnSession(sessions);
 	return {
 		exercises,
 		routines,
 		initialRoutineId: url.searchParams.get('routine') ?? '',
 		history,
-		latestSession: sessions[0] ?? null,
+		latestSession: latest,
+		coachSessions: sessions.filter((session) => session.loggedBy),
 		lastByExercise: lastPerformanceByExercise(sessions),
-		lastByExerciseBeforeLatest: sessions[0]
+		lastByExerciseBeforeLatest: latest
 			? lastPerformanceByExercise(sessions, {
-					excludeSessionId: sessions[0].id,
-					onOrBefore: sessions[0].date
+					excludeSessionId: latest.id,
+					onOrBefore: latest.date
 				})
 			: {}
 	};

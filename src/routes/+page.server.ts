@@ -36,6 +36,7 @@ export const load: PageServerLoad = async ({ cookies }) => {
 			routineName: routine?.name ?? null,
 			routineColor: routine?.color ?? null,
 			exerciseCount: s.entries.length,
+			byCoach: Boolean(s.loggedBy),
 			setCount: s.entries.reduce((acc, e) => acc + e.sets.length, 0)
 		};
 	});

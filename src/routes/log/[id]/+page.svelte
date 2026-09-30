@@ -5,6 +5,9 @@
 	import { offlineData, queueOfflineMutation } from '$lib/offline/store';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import SessionForm from '$lib/components/SessionForm.svelte';
+	import SessionHistory from '$lib/components/SessionHistory.svelte';
+	import { BY_COACH_LABEL } from '$lib/coach-log';
+	import { weightUnitOf } from '$lib/offline/store';
 	import { formatDate, lastPerformanceByExercise } from '$lib/utils/progression';
 	import type { PageData } from './$types';
 
@@ -12,6 +15,7 @@
 	const session = $derived(
 		$offlineData?.sessions.find((item) => item.id === data.session.id) ?? data.session
 	);
+	const unit = $derived(weightUnitOf($offlineData, data.user));
 	const exercises = $derived($offlineData?.exercises ?? data.exercises);
 	const routines = $derived($offlineData?.routines ?? data.routines);
 	const lastByExercise = $derived(
@@ -45,19 +49,30 @@
 	<Icon name="back" size={16} /> Volver
 </a>
 
-<PageHeader title="Editar sesión" subtitle={formatDate(session.date)} />
+{#if session.loggedBy}
+	<PageHeader title="Sesión" subtitle={formatDate(session.date)} />
+	<p class="coach-note">
+		<Icon name="users" size={16} />
+		<span>
+			{BY_COACH_LABEL}. Solo tu entrenador puede cambiarla; tú puedes verla aquí y en tu progreso.
+		</span>
+	</p>
+	<SessionHistory sessions={[session]} {exercises} {routines} {unit} expanded />
+{:else}
+	<PageHeader title="Editar sesión" subtitle={formatDate(session.date)} />
 
-{#key session.id}
-	<SessionForm
-		mode="edit"
-		{session}
-		{exercises}
-		{routines}
-		{lastByExercise}
-		onSave={saveSession}
-		onDelete={deleteSession}
-	/>
-{/key}
+	{#key session.id}
+		<SessionForm
+			mode="edit"
+			{session}
+			{exercises}
+			{routines}
+			{lastByExercise}
+			onSave={saveSession}
+			onDelete={deleteSession}
+		/>
+	{/key}
+{/if}
 
 <style>
 	.back {
@@ -69,6 +84,23 @@
 		color: var(--color-muted);
 		text-decoration: none;
 		margin-bottom: 1.5rem;
+	}
+	.coach-note {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.6rem;
+		margin-bottom: 1.25rem;
+		padding: 0.7rem 0.85rem;
+		border: 1px solid color-mix(in srgb, var(--color-accent) 40%, transparent);
+		border-left: 3px solid var(--color-accent);
+		border-radius: var(--radius-control);
+		background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+		font-size: 0.88rem;
+	}
+	.coach-note :global(svg) {
+		flex-shrink: 0;
+		margin-top: 0.1rem;
+		color: var(--color-accent-bright);
 	}
 	.back:hover {
 		color: var(--color-accent-bright);

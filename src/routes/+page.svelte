@@ -39,6 +39,7 @@
 					routineName: linkedRoutine?.name ?? null,
 					routineColor: linkedRoutine?.color ?? null,
 					exerciseCount: session.entries.length,
+					byCoach: Boolean(session.loggedBy),
 					setCount: session.entries.reduce((count, entry) => count + entry.sets.length, 0)
 				};
 			})
@@ -148,6 +149,7 @@
 						<span class="sess-routine">{s.routineName ?? 'Sesión libre'}</span>
 						<span class="muted sess-date">{formatDate(s.date)}</span>
 					</div>
+					{#if s.byCoach}<span class="badge badge-accent">Tu entrenador</span>{/if}
 					<span class="muted sess-meta stat-num"
 						>{s.exerciseCount} ej. · {s.setCount}
 						{s.setCount === 1 ? 'serie' : 'series'}</span

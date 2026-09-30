@@ -25,7 +25,10 @@ function sortSnapshot(snapshot: OfflineSnapshot): void {
 	snapshot.measurements?.sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
 }
 
-export function applyMutation(snapshot: OfflineSnapshot, mutation: OfflineMutation): OfflineSnapshot {
+export function applyMutation(
+	snapshot: OfflineSnapshot,
+	mutation: OfflineMutation
+): OfflineSnapshot {
 	const next = clone(snapshot);
 	if (mutation.entity === 'settings') {
 		if (isWeightUnit(mutation.payload.weightUnit))

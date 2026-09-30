@@ -7,6 +7,7 @@
 	import Icon from './Icon.svelte';
 	import ConfirmDialog from './ConfirmDialog.svelte';
 	import type { Exercise, LastPerformance, Routine, Session } from '$lib/types';
+	import { coachSessionsOn } from '$lib/coach-log';
 	import { offlineData, weightUnitOf } from '$lib/offline/store';
 	import {
 		LB_PER_KG,
@@ -43,6 +44,8 @@
 		onDelete?: () => Promise<void>;
 		/** Reference: what the user did the last time they logged each exercise. */
 		lastByExercise?: Record<string, LastPerformance>;
+		/** Sessions the user's coach logged; a new one on the same day gets a warning. */
+		coachSessions?: Session[];
 		/** Where the unsaved draft lives; a coach keeps one per client. */
 		draftKey?: string;
 		/** Lets the form add a new exercise to the catalogue; returns its id. */
@@ -55,6 +58,7 @@
 		session = null,
 		initialRoutineId = '',
 		lastByExercise = {},
+		coachSessions = [],
 		draftKey,
 		onCreateExercise,
 		onSave,
@@ -104,6 +108,8 @@
 	let notes = $state(initial.session?.notes ?? '');
 	let entries = $state<EditEntry[]>(initEntries());
 	let pick = $state('');
+
+	const coachSameDay = $derived(mode === 'create' ? coachSessionsOn(coachSessions, date) : []);
 
 	const exerciseName = $derived(new Map(exercises.map((e) => [e.id, e.name])));
 	const exerciseMg = $derived(new Map(exercises.map((e) => [e.id, e.muscleGroup])));
@@ -356,6 +362,18 @@
 	{/if}
 	{#if mutationError}<p class="form-error" aria-live="polite">{mutationError}</p>{/if}
 
+	{#each coachSameDay as existing (existing.id)}
+		<div class="coach-notice" role="status">
+			<Icon name="users" size={16} />
+			<span>
+				Tu entrenador ya anotó una sesión ese día{routines.find((r) => r.id === existing.routineId)
+					? ` (${routines.find((r) => r.id === existing.routineId)?.name})`
+					: ''}.
+				<a href={resolve('/log/[id]', { id: existing.id })} class="accent">Verla</a> antes de crear otra.
+			</span>
+		</div>
+	{/each}
+
 	<div class="top">
 		<div class="field">
 			<label class="label" for="date">Fecha</label>
@@ -568,6 +586,23 @@
 />
 
 <style>
+	.coach-notice {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.6rem;
+		margin-bottom: 1rem;
+		padding: 0.7rem 0.85rem;
+		border: 1px solid color-mix(in srgb, var(--color-accent) 40%, transparent);
+		border-left: 3px solid var(--color-accent);
+		border-radius: var(--radius-control);
+		background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+		font-size: 0.88rem;
+	}
+	.coach-notice :global(svg) {
+		flex-shrink: 0;
+		margin-top: 0.1rem;
+		color: var(--color-accent-bright);
+	}
 	.form-error {
 		margin: 0 0 1rem;
 		padding: 0.75rem 1rem;

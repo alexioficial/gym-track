@@ -115,7 +115,6 @@ async function replaceMutations(userId: string, mutations: OfflineMutation[]): P
 	await completed(tx);
 }
 
-
 async function updateStatus(
 	phase: SyncStatus['phase'],
 	message: string | null = null
