@@ -20,6 +20,7 @@ import {
 import { applyMutation } from './apply';
 import { completed, request } from './idb';
 import { coalesce, createMutex } from './queue';
+import { purgeUnsupportedOfflineData } from './environment';
 import { clearRoutesWarm } from './warm';
 
 const DB_NAME = 'gym-tracker-offline';
@@ -167,6 +168,7 @@ export async function initializeOffline(userId: string, seed: OfflineSnapshot): 
 	if (!browser || currentUserId === userId) return;
 	currentUserId = userId;
 	initializing = (async () => {
+		await purgeUnsupportedOfflineData();
 		const stored = await readSnapshot(userId);
 		currentSnapshot = stored?.snapshot ?? clone(seed);
 		if (!stored) await writeSnapshot(userId, currentSnapshot);

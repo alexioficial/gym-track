@@ -4,6 +4,7 @@
 	import { onMount } from 'svelte';
 	import { initializeOffline, synchronize } from './store';
 	import { initializeCoach } from './coach-store';
+	import { offlineSupported } from './support';
 	import type { OfflineSnapshot } from './types';
 	import { CORE_OFFLINE_ROUTES, markRoutesWarm, routesAreWarm } from './warm';
 
@@ -34,7 +35,7 @@
 		void initializeOffline(userId, seed).then(async () => {
 			void synchronize();
 			if (coach) void initializeCoach(userId);
-			if ('serviceWorker' in navigator) {
+			if (offlineSupported(location) && 'serviceWorker' in navigator) {
 				try {
 					await navigator.serviceWorker.register('/service-worker.js');
 					await navigator.serviceWorker.ready;

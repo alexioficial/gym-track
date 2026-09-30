@@ -6,6 +6,7 @@ import { writable } from 'svelte/store';
 import type { ClientSummary, CoachClient } from '$lib/coach';
 import type { Coach } from '$lib/owner';
 import { applyMutation } from './apply';
+import { purgeUnsupportedOfflineData } from './environment';
 import { completed, request } from './idb';
 import { coalesce, createMutex } from './queue';
 import type {
@@ -134,6 +135,7 @@ export async function initializeCoach(coachId: string): Promise<void> {
 	if (!browser || currentCoachId === coachId) return initializing ?? undefined;
 	currentCoachId = coachId;
 	initializing = (async () => {
+		await purgeUnsupportedOfflineData();
 		const [stored, queue] = await Promise.all([readRoster(coachId), readMutations(coachId)]);
 		currentRoster = stored ? withPending(stored, queue) : null;
 		coachData.set(currentRoster && clone(currentRoster));
